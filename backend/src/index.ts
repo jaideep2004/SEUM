@@ -37,8 +37,11 @@ app.use('/api/v1/operations', operationsRoutes);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  logger.info({ port: config.port }, `SEUM API running on http://localhost:${config.port}`);
-});
+// Only listen directly when NOT on Vercel serverless
+if (!process.env.VERCEL) {
+  app.listen(config.port, () => {
+    logger.info({ port: config.port }, `SEUM API running on http://localhost:${config.port}`);
+  });
+}
 
 export default app;
