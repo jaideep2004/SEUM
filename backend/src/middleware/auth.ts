@@ -5,6 +5,7 @@ import { config } from '../config';
 import { UnauthorizedError, ForbiddenError } from '../utils/errors';
 
 export interface JwtPayload {
+  id: string;
   userId: string;
   tenantId: string;
   email: string;

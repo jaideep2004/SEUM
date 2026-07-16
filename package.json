@@ -15,5 +15,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "@emnapi/core": "^1.11.2",
+    "@emnapi/runtime": "^1.10.0",
+    "@emnapi/wasi-threads": "^1.2.1"
   }
 }
