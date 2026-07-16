@@ -1,0 +1,54 @@
+.page { max-width: 1200px; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 12px; }
+.backLink:hover { color: var(--color-text); }
+
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+.pageTitle { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); color: var(--color-text-primary); line-height: 1.2; margin-bottom: 4px; }
+.pageDesc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.count { margin-left: 8px; font-weight: 600; color: #f59e0b; }
+
+.searchWrap { position: relative; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); pointer-events: none; }
+.searchInput { padding: 8px 12px 8px 32px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; outline: none; width: 240px; }
+.searchInput:focus { border-color: var(--color-primary); }
+
+.loading { font-size: 12px; color: var(--color-text-tertiary); text-align: center; padding: 48px; }
+
+/* Empty State */
+.emptyState { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 64px 24px; color: var(--color-text-tertiary); }
+.emptyIcon { color: #10b981; }
+.emptyState h3 { font-size: 18px; font-weight: 700; color: var(--color-text); margin: 0; }
+.emptyState p { font-size: 13px; color: var(--color-text-secondary); }
+
+/* Table */
+.tableWrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-card); }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 14px; border-bottom: 1px solid var(--color-border); white-space: nowrap; background: var(--color-bg-subtle); }
+.table td { padding: 12px 14px; font-size: var(--text-sm); color: var(--color-text-primary); border-bottom: 1px solid var(--color-border); }
+.table tbody tr:hover { background: var(--color-surface-hover); }
+.table tbody tr:last-child td { border-bottom: none; }
+
+.routeCell, .busCell, .driverCell, .timeCell { display: flex; align-items: center; gap: 6px; }
+.time { margin-left: 6px; color: var(--color-text-tertiary); font-size: 11px; }
+.reasonCell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); font-size: 12px; }
+.resolutionCell { font-size: 12px; }
+.muted { color: var(--color-text-tertiary); }
+.estTime { font-weight: 600; color: #2563eb; }
+
+.delayBadge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+.delayBadge[data-severity="minor"] { background: #fffbeb; color: #92400e; }
+.delayBadge[data-severity="major"] { background: #fef2f2; color: #991b1b; }
+.delayBadge[data-severity="critical"] { background: #fef2f2; color: #7f1d1d; border: 1px solid #fca5a5; }
+
+.viewLink { display: inline-flex; align-items: center; padding: 4px; border-radius: var(--radius-sm); color: var(--color-text-tertiary); text-decoration: none; }
+.viewLink:hover { color: var(--color-primary); background: var(--color-hover); }
+
+/* Pagination */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; }
+.pagination button { padding: 6px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 11px; font-weight: 600; cursor: pointer; }
+.pagination button:hover:not(:disabled) { background: var(--color-hover); }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { font-size: 11px; color: var(--color-text-secondary); }

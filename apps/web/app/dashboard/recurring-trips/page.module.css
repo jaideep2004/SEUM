@@ -1,0 +1,37 @@
+.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.pageTitle { font-size: 22px; font-weight: 700; margin: 0; color: var(--color-text); }
+.pageDesc { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+.createBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: none; border-radius: var(--radius-md); background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.createBtn:hover { background: var(--color-primary-hover); }
+
+.filters { display: flex; gap: 10px; margin-bottom: 16px; }
+.searchWrap { position: relative; flex: 1; max-width: 280px; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); pointer-events: none; }
+.searchInput { width: 100%; padding: 8px 10px 8px 32px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: 12px; outline: none; }
+.searchInput:focus { border-color: var(--color-primary); }
+.filterSelect { display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.filterSelect select { padding: 8px 0; border: none; background: transparent; color: var(--color-text); font-size: 12px; outline: none; cursor: pointer; }
+
+.tableWrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.table th { padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); background: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); }
+.table td { padding: 10px 14px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+.table tbody tr:last-child td { border-bottom: none; }
+.clickableRow { cursor: pointer; }
+.clickableRow:hover { background: var(--color-hover); }
+.tableEmpty { text-align: center; padding: 40px !important; color: var(--color-text-secondary); }
+.routeCell { font-weight: 500; }
+.timeCell { display: flex; align-items: center; gap: 4px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.dateCell { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--color-text-secondary); }
+.daysText { font-size: 10px; color: var(--color-text-tertiary); margin-left: 2px; }
+.freqBadge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; }
+.muted { color: var(--color-text-tertiary); font-size: 11px; }
+.statusDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.activeDot { background: #10b981; }
+.inactiveDot { background: var(--color-text-tertiary); }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px 0; font-size: 12px; color: var(--color-text-secondary); }
+.pagination button { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: 11px; cursor: pointer; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination button:not(:disabled):hover { background: var(--color-hover); }

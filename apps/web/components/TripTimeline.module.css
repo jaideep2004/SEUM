@@ -1,0 +1,17 @@
+.wrapper { display: flex; flex-direction: column; gap: 12px; }
+.stepper { display: flex; flex-direction: column; gap: 0; }
+.step { display: flex; gap: 10px; }
+.stepConnector { display: flex; flex-direction: column; align-items: center; width: 28px; flex-shrink: 0; }
+.dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.dotPending { background: var(--color-border); color: var(--color-text-tertiary); }
+.dotDone { background: var(--color-primary); color: #fff; }
+.step.cancelled .dotDone { background: var(--color-danger); }
+.line { width: 2px; flex: 1; min-height: 20px; background: var(--color-border); }
+.lineDone { background: var(--color-primary); }
+.step.cancelled .lineDone { background: var(--color-danger); }
+.stepContent { display: flex; flex-direction: column; gap: 2px; padding-bottom: 16px; }
+.stepLabel { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.stepTime { font-size: 10px; color: var(--color-text-tertiary); }
+.statusRow { display: flex; flex-direction: column; gap: 6px; }
+.delayBadge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: #fef3c7; color: #92400e; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; }
+.cancelBadge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: #fef2f2; color: #991b1b; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; }

@@ -1,0 +1,19 @@
+{
+  "name": "seum",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SEUM — Smart ERP for Umrah & Mobility",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,green \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd apps/web && npm run build",
+    "setup": "cd backend && npx tsx src/setup-supabase.ts && npx tsx src/seed.ts",
+    "migrate": "cd backend && npm run migrate",
+    "seed": "cd backend && npm run seed",
+    "setup-supabase": "cd backend && npx tsx src/setup-supabase.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

@@ -1,0 +1,41 @@
+.page { padding: 24px; max-width: 800px; margin: 0 auto; }
+.backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 12px; }
+.backLink:hover { color: var(--color-text); }
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+.pageTitle { font-size: 22px; font-weight: 700; margin: 0; color: var(--color-text); display: flex; align-items: center; gap: 8px; }
+.patternId { font-weight: 400; font-size: 12px; color: var(--color-text-tertiary); }
+.pageDesc { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+.headerActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.statusBadge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.activeBadge { background: #d1fae5; color: #065f46; }
+.inactiveBadge { background: #f3f4f6; color: #6b7280; }
+.actionBtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.actionBtn:hover { background: var(--color-hover); }
+.actionBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.dangerBtn { border-color: #fca5a5; color: #991b1b; }
+.dangerBtn:hover { background: #fef2f2; }
+.contentGrid { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; }
+.cardTitle { font-size: 13px; font-weight: 700; margin: 0 0 12px; color: var(--color-text); }
+.detailRow { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+.detailRow:last-child { margin-bottom: 0; }
+.detailIcon { color: var(--color-text-tertiary); margin-top: 2px; flex-shrink: 0; }
+.detailRow > div { display: flex; flex-direction: column; gap: 1px; }
+.detailLabel { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.detailRow > div > span:last-child { font-size: 12px; color: var(--color-text); }
+.dateList { font-size: 11px !important; color: var(--color-text-secondary) !important; }
+
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: var(--color-surface); border-radius: var(--radius-md); width: 400px; max-width: 90vw; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--color-border); }
+.modalHeader h3 { margin: 0; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.closeBtn { border: none; background: transparent; color: var(--color-text-tertiary); cursor: pointer; padding: 4px; }
+.closeBtn:hover { color: var(--color-text); }
+.modalBody { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.genField { display: flex; flex-direction: column; gap: 4px; }
+.genField label { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.genField input { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 12px; outline: none; }
+.genField input:focus { border-color: var(--color-primary); }
+.genBtn { justify-content: center; padding: 8px 16px !important; font-size: 12px !important; }
+.genResult { text-align: center; padding: 20px 0; }
+.genSuccess { font-size: 14px; color: var(--color-text); margin-bottom: 16px; }

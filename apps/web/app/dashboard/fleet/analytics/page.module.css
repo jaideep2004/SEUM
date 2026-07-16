@@ -1,0 +1,43 @@
+.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+.pageTitle { font-size: 22px; font-weight: 700; margin: 0; color: var(--color-text); }
+.pageDesc { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+
+.exportDropdown { position: relative; }
+.exportBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: 12px; font-weight: 600; cursor: pointer; }
+.exportBtn:hover { background: var(--color-hover); }
+
+.kpiGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpiCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpiLabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); }
+.kpiValue { font-size: 22px; font-weight: 700; color: var(--color-text); }
+.kpiSub { font-size: 11px; color: var(--color-text-secondary); }
+
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.chartCard, .renewalsCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.chartTitle { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
+.chartEmpty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; color: var(--color-text-secondary); font-size: 12px; text-align: center; }
+
+.gaugeWrap { display: flex; justify-content: center; }
+.gaugeSvg { width: 100%; max-width: 200px; height: auto; }
+
+.barChart { display: flex; flex-direction: column; gap: 10px; }
+.barRow { display: flex; align-items: center; gap: 8px; }
+.barLabel { font-size: 11px; color: var(--color-text-secondary); min-width: 50px; font-weight: 600; }
+.barTrack { flex: 1; height: 20px; background: var(--color-bg); border-radius: 9999px; overflow: hidden; }
+.barFill { height: 100%; border-radius: 9999px; transition: width 0.5s; }
+.barCount { font-size: 11px; color: var(--color-text-secondary); min-width: 20px; text-align: right; }
+
+.trendSvg { width: 100%; height: auto; display: block; }
+
+.renewalList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.renewalItem { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--color-bg); }
+.renewalInfo { display: flex; flex-direction: column; gap: 1px; }
+.renewalType { font-size: 12px; font-weight: 600; color: var(--color-text); }
+.renewalBus { font-size: 10px; color: var(--color-text-secondary); }
+.renewalDays { font-size: 14px; }
+
+.loadingState, .emptyState { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; color: var(--color-text-secondary); font-size: 13px; }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

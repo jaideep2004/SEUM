@@ -1,0 +1,23 @@
+.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.pageHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.pageTitle { font-size: 22px; font-weight: 700; margin: 0; color: var(--color-text); }
+.pageDesc { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+.monthNav { display: flex; align-items: center; gap: 12px; }
+.navBtn { padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); cursor: pointer; display: flex; }
+.navBtn:hover { background: var(--color-hover); }
+.monthLabel { font-size: 16px; font-weight: 700; min-width: 120px; text-align: center; color: var(--color-text); }
+
+.calendarWrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow-x: auto; }
+.calendarGrid { display: grid; grid-template-columns: 140px repeat(var(--days, 31), minmax(60px, 1fr)); min-width: max-content; }
+.busLabelCol { padding: 8px 12px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); background: var(--color-bg); display: flex; flex-direction: column; justify-content: center; gap: 1px; min-height: 48px; }
+.plateNumber { font-size: 12px; font-weight: 700; color: var(--color-text); }
+.busModel { font-size: 10px; color: var(--color-text-secondary); }
+.dayHeader { padding: 6px 4px; text-align: center; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); background: var(--color-bg); }
+.dayName { display: block; font-size: 9px; text-transform: uppercase; color: var(--color-text-tertiary); font-weight: 600; }
+.dayNum { display: block; font-size: 13px; font-weight: 700; color: var(--color-text); margin-top: 2px; }
+.dayCell { padding: 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); min-height: 48px; display: flex; flex-direction: column; gap: 2px; }
+.tripBlock { padding: 2px 4px; border-radius: 3px; font-size: 9px; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; line-height: 1.3; }
+
+.loadingState, .emptyState { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; color: var(--color-text-secondary); font-size: 13px; }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

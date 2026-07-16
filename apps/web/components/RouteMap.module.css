@@ -1,0 +1,13 @@
+.wrapper { display: flex; flex-direction: column; gap: 12px; }
+.svg { width: 100%; height: auto; border-radius: var(--radius-md); }
+.legend { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 10px; color: var(--color-text-secondary); }
+.legendItem { display: flex; align-items: center; gap: 4px; }
+.dotPrimary { width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); }
+.dotWarning { width: 8px; height: 8px; border-radius: 50%; background: var(--color-warning); }
+.dotDanger { width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger); }
+.stopList { display: flex; flex-direction: column; gap: 4px; }
+.stopItem { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--color-bg); }
+.stopIndex { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; background: var(--color-primary); flex-shrink: 0; }
+.stopItem:last-child .stopIndex { background: var(--color-danger); }
+.stopName { flex: 1; font-size: 12px; color: var(--color-text); }
+.stopEta { font-size: 10px; color: var(--color-text-secondary); }

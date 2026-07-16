@@ -1,0 +1,21 @@
+.container { display: flex; flex-direction: column; gap: 14px; }
+.empty { font-size: 12px; color: var(--color-text-tertiary); text-align: center; padding: 16px; }
+
+.durationRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+.durationCard { padding: 12px; border-radius: var(--radius-md); background: var(--color-bg-subtle); display: flex; flex-direction: column; gap: 4px; }
+.durationLabel { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.durationValue { font-size: 18px; font-weight: 700; color: var(--color-text); }
+.durationValue.delayed { color: #f59e0b; }
+.durationTime { font-size: 11px; color: var(--color-text-secondary); }
+.delayBadge { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 12px; border-radius: var(--radius-md); background: #fffbeb; color: #92400e; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.delayReason { font-weight: 400; font-size: 10px; color: #a16207; }
+
+.timeline { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.timelineHeader { display: grid; grid-template-columns: 1fr 80px 80px 90px; gap: 8px; padding: 8px 12px; background: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); }
+.headerCell { font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.timelineRow { display: grid; grid-template-columns: 1fr 80px 80px 90px; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); align-items: center; }
+.timelineRow:last-child { border-bottom: none; }
+.eventLabel { font-size: 12px; font-weight: 600; color: var(--color-text); }
+.timeCell { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono, monospace); }
+.statusCell { display: flex; align-items: center; gap: 4px; }
+.statusText { font-size: 10px; font-weight: 600; text-transform: capitalize; }

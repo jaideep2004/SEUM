@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+dist/
+out/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+*.env.local
+*.env.production
+
+# Keep example env
+!.env.example
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+__pycache__/
+
+# Graphify artifacts
+.graphify_ast.json
+.graphify_detect.json
+.graphify_python/
+.graphify_script.py
+.graphify_uncached.txt
+graphify-out/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Turbolinks / parcel
+.cache/
+.turbo/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Misc
+*.log
+.eslintcache

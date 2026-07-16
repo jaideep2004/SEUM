@@ -1,0 +1,419 @@
+.page {
+  max-width: 1400px;
+  animation: fadeIn 0.3s ease;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.4s ease both;
+}
+
+.pageTitle {
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.pageDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* KPI */
+.kpiGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.kpiCard:nth-child(1) { animation-delay: 0.05s; }
+.kpiCard:nth-child(2) { animation-delay: 0.1s; }
+.kpiCard:nth-child(3) { animation-delay: 0.15s; }
+.kpiCard:nth-child(4) { animation-delay: 0.2s; }
+
+.kpiCard:hover { box-shadow: var(--shadow-card-hover); border-color: var(--color-border-hover); transform: translateY(-2px); }
+
+.kpiCardSmall {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.kpiCardSmall:nth-child(1) { animation-delay: 0.25s; }
+.kpiCardSmall:nth-child(2) { animation-delay: 0.3s; }
+.kpiCardSmall:nth-child(3) { animation-delay: 0.35s; }
+.kpiCardSmall:nth-child(4) { animation-delay: 0.4s; }
+
+.kpiTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.kpiIconWrap {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.kpiSmallInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kpiLabel {
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.kpiValue {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.kpiValueSmall {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.kpiChange {
+  font-size: 11px;
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+}
+
+.kpiUp { color: var(--color-success); }
+.kpiWarn { color: var(--color-warning); }
+
+/* Main Grid */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+}
+
+.leftContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rightSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Grid */
+.grid2Col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Card */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.grid2Col .card:nth-child(1) { animation-delay: 0.15s; }
+.grid2Col .card:nth-child(2) { animation-delay: 0.25s; }
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.cardSubtext {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.cardAction {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+/* Donut */
+.donutCenter {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.legendValue {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Revenue Chart */
+.revenueValue {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+.lineChartArea {
+  height: 120px;
+}
+
+.lineChart {
+  width: 100%;
+  height: 100%;
+}
+
+/* Fuel */
+.fuelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.fuelItem, .fuelItemFull {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-subtle);
+}
+
+.fuelItemFull {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.fuelLabel {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.fuelValue {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
+
+/* Alerts */
+.alertList {
+  display: flex;
+  flex-direction: column;
+}
+
+.alertItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.alertItem:last-child { border-bottom: none; }
+.alertItem:first-child { padding-top: 0; }
+
+.alertDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.alertWarning { background: var(--color-warning); }
+.alertDanger { background: var(--color-danger); }
+.alertInfo { background: var(--color-primary); }
+.alertSuccess { background: var(--color-success); }
+
+.alertContent { flex: 1; min-width: 0; }
+
+.alertTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.alertDetail {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.alertTime {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Trip Status */
+.tripStatusList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tripStatusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tripStatusRow:last-child { border-bottom: none; }
+.tripStatusRow:first-child { padding-top: 0; }
+
+.tripStatusLabel {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.tripStatusCount {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+/* Drivers */
+.driverList {
+  display: flex;
+  flex-direction: column;
+}
+
+.driverRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.driverRow:last-child { border-bottom: none; }
+.driverRow:first-child { padding-top: 0; }
+
+.driverAvatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  flex-shrink: 0;
+}
+
+.driverInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.driverName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.driverTrips {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.driverRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+}
