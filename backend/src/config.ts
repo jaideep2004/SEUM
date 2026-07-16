@@ -40,7 +40,7 @@ export const config = {
   },
 
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || 'http://localhost:3000',
   },
 
   auditLogRetentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '90', 10),
