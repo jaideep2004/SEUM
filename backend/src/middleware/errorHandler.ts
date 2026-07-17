@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 import { ZodError } from 'zod';
+import { logger } from '../utils/logger';
 
 function errorCode(status: number): string {
   const map: Record<number, string> = {
@@ -38,13 +39,13 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     });
   }
 
-  console.error('Unhandled error:', err);
+  logger.error({ err, message: err.message, stack: err.stack }, 'Unhandled error');
 
   return res.status(500).json({
     success: false,
     error: {
       code: 'INTERNAL_ERROR',
-      message: 'Internal server error',
+      message: err.message || 'Internal server error',
     },
   });
 }

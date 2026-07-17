@@ -7,15 +7,13 @@ interface RateLimitEntry {
 
 const ipLimits = new Map<string, RateLimitEntry>();
 
-if (!process.env.VERCEL) {
-  const CLEANUP_INTERVAL = 60_000;
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of ipLimits) {
-      if (entry.resetAt <= now) ipLimits.delete(key);
-    }
-  }, CLEANUP_INTERVAL);
-}
+const CLEANUP_INTERVAL = 60_000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of ipLimits) {
+    if (entry.resetAt <= now) ipLimits.delete(key);
+  }
+}, CLEANUP_INTERVAL);
 
 export function rateLimit(windowMs: number, maxRequests: number) {
   return (req: Request, _res: Response, next: NextFunction) => {
