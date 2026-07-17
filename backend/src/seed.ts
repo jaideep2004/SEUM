@@ -29,20 +29,22 @@ async function seed() {
     ];
 
     for (const u of users) {
-      await client.query(
+      const result = await client.query(
         `INSERT INTO users (id, tenant_id, email, name, password_hash)
          VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (email) DO NOTHING`,
+         ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
         [u.id, u.tenantId, u.email, u.name, hash]
       );
 
-      // Assign roles via junction table
+      const userId = result.rows[0].id;
+
       for (const roleName of u.roles) {
         await client.query(
           `INSERT INTO user_roles (user_id, role_id)
            SELECT $1, r.id FROM roles r WHERE r.name = $2
            ON CONFLICT DO NOTHING`,
-          [u.id, roleName]
+          [userId, roleName]
         );
       }
     }
