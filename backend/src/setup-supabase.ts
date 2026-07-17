@@ -304,12 +304,12 @@ ON CONFLICT DO NOTHING;
 -- ============================================================
 INSERT INTO tenants (id, name, contact_email, subscription_tier, plan_id, billing_cycle, subscription_started_at, subscription_renewal_date)
 SELECT
-  'a0000000-0000-0000-0000-000000000001', 'SEUM Platform', 'admin@seum.com', 'enterprise',
+  'a0000000-0000-0000-0000-000000000001'::uuid, 'SEUM Platform', 'admin@seum.com', 'enterprise',
   sp.id, 'monthly', NOW(), NOW() + INTERVAL '1 month'
 FROM subscription_plans sp WHERE sp.name = 'enterprise'
 UNION ALL
 SELECT
-  'a0000000-0000-0000-0000-000000000002', 'Demo Transport Co', 'admin@demotransport.com', 'professional',
+  'a0000000-0000-0000-0000-000000000002'::uuid, 'Demo Transport Co', 'admin@demotransport.com', 'professional',
   sp.id, 'monthly', NOW(), NOW() + INTERVAL '1 month'
 FROM subscription_plans sp WHERE sp.name = 'professional'
 ON CONFLICT (name) DO NOTHING;
