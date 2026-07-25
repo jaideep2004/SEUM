@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "SEUM — Smart ERP for Umrah & Mobility",
+  "workspaces": ["packages/*", "apps/*", "backend"],
   "scripts": {
     "dev": "concurrently -n api,web -c cyan,green \"npm run dev:backend\" \"npm run dev:web\"",
     "dev:web": "cd apps/web && npm run dev",

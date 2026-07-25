@@ -1,0 +1,65 @@
+.page { padding: 24px; max-width: 1280px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); }
+.actionBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+.primaryBtn { background: var(--color-primary); color: #fff; }
+.primaryBtn:hover { opacity: 0.9; }
+.primaryBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.secondaryBtn { background: var(--color-surface-secondary); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.dangerBtn { background: #dc2626; color: #fff; }
+.dangerBtn:hover { background: #b91c1c; }
+.loading { text-align: center; padding: 48px; color: var(--color-text-tertiary); }
+
+.filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filters input, .filters select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.8125rem; background: var(--color-bg); color: var(--color-text-primary); outline: none; }
+.filters input:focus, .filters select:focus { border-color: var(--color-primary); }
+.filterBtn { padding: 6px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface-secondary); color: var(--color-text-secondary); }
+
+.tableWrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-primary); }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; padding: 10px 14px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); background: var(--color-surface-secondary); border-bottom: 1px solid var(--color-border); }
+.table td { padding: 10px 14px; font-size: 0.8125rem; color: var(--color-text-primary); border-bottom: 1px solid var(--color-border); }
+.table tr:last-child td { border-bottom: none; }
+.table tr { cursor: pointer; transition: background 0.1s; }
+.table tr:hover { background: var(--color-surface-secondary); }
+.statusBadge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; }
+.statusPending { background: #f59e0b20; color: #f59e0b; }
+.statusApproved { background: #3b82f620; color: #3b82f6; }
+.statusReimbursed { background: #05966920; color: #059669; }
+.catBadge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.6875rem; font-weight: 500; background: var(--color-surface-secondary); color: var(--color-text-secondary); }
+
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; }
+.modal { background: var(--color-surface-primary); border-radius: 12px; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; padding: 28px; }
+.modal h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; color: var(--color-text-primary); }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.8125rem; background: var(--color-bg); color: var(--color-text-primary); outline: none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary-alpha); }
+.field textarea { min-height: 50px; resize: vertical; }
+.fieldRow { display: flex; gap: 14px; }
+.fieldRow .field { flex: 1; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+.slideover { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+.slideoverPanel { position: fixed; top: 0; right: 0; width: 520px; max-width: 100vw; height: 100%; background: var(--color-surface-primary); padding: 28px; overflow-y: auto; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
+.slideoverHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.slideoverHeader h2 { font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); }
+.closeBtn { cursor: pointer; color: var(--color-text-tertiary); border: none; background: none; padding: 4px; }
+.closeBtn:hover { color: var(--color-text-primary); }
+.infoRow { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.infoLabel { font-size: 0.75rem; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.03em; }
+.infoValue { font-size: 0.875rem; color: var(--color-text-primary); text-align: right; max-width: 60%; word-break: break-word; }
+.receiptImg { max-width: 100%; max-height: 200px; border-radius: 6px; margin-top: 8px; object-fit: contain; background: var(--color-surface-secondary); }
+.actionsRow { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+
+.confirmOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; }
+.confirmModal { background: var(--color-surface-primary); border-radius: 12px; padding: 28px; width: 90%; max-width: 400px; text-align: center; }
+.confirmModal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--color-text-primary); }
+.confirmModal p { font-size: 0.8125rem; color: var(--color-text-secondary); margin-bottom: 20px; }
+.confirmActions { display: flex; justify-content: center; gap: 8px; }
+
+@media (max-width: 768px) {
+  .slideoverPanel { width: 100%; padding: 20px; }
+  .modal { padding: 20px; }
+  .fieldRow { flex-direction: column; gap: 0; }
+}

@@ -22,6 +22,13 @@ export async function exportFleetReport(req: Request, res: Response, next: NextF
       return res.send(csv);
     }
 
+    if (format === 'pdf') {
+      const pdfBuffer = await analyticsService.exportFleetReportPDF(req.user!.tenantId);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="fleet-report.pdf"');
+      return res.send(pdfBuffer);
+    }
+
     return sendSuccess(res, { csv }, 'Fleet report generated');
   } catch (err) {
     next(err);

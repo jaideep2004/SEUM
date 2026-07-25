@@ -9,5 +9,6 @@ router.get('/', authenticate, requireRole('super_admin'), tenantController.listT
 router.get('/:id', authenticate, requireRole('super_admin'), tenantController.getTenant);
 router.patch('/:id', authenticate, requireRole('super_admin'), tenantController.updateTenant);
 router.delete('/:id', authenticate, requireRole('super_admin'), tenantController.deleteTenant);
+router.delete('/:id/permanent', authenticate, requireRole('super_admin'), tenantController.hardDeleteTenant);
 
 export default router;

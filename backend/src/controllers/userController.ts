@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { query } from '../db';
+import { query, queryOne } from '../db';
 import { sendSuccess } from '../utils/response';
+import { NotFoundError } from '../utils/errors';
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -9,6 +10,7 @@ const listQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
   role: z.string().optional(),
   search: z.string().optional(),
+  isActive: z.coerce.boolean().optional(),
 });
 
 export async function listUsers(req: Request, res: Response, next: NextFunction) {
@@ -47,6 +49,12 @@ export async function listUsers(req: Request, res: Response, next: NextFunction)
       paramIndex++;
     }
 
+    if (queryParams.isActive !== undefined) {
+      conditions.push(`u.is_active = $${paramIndex}`);
+      values.push(queryParams.isActive);
+      paramIndex++;
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const countResult = await query<{ count: string }>(
@@ -77,6 +85,36 @@ export async function listUsers(req: Request, res: Response, next: NextFunction)
       total,
       totalPages: Math.ceil(total / queryParams.pageSize),
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const row = await queryOne<{ id: string }>(
+      `UPDATE users SET is_active = false WHERE id = $1 RETURNING id`,
+      [req.params.id]
+    );
+    if (!row) {
+      return next(new NotFoundError('User not found'));
+    }
+    return sendSuccess(res, null, 'User deactivated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function hardDeleteUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    const row = await queryOne<{ id: string }>(
+      'DELETE FROM users WHERE id = $1 RETURNING id',
+      [req.params.id]
+    );
+    if (!row) {
+      return next(new NotFoundError('User not found'));
+    }
+    return sendSuccess(res, null, 'User permanently deleted');
   } catch (err) {
     next(err);
   }

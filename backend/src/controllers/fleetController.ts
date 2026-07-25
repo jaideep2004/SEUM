@@ -3,6 +3,7 @@ import * as fleetService from '../services/fleetService';
 import { createDocumentExpiryNotifications } from '../services/notificationService';
 import { createBusSchema, updateBusSchema, listBusesQuerySchema, createDocumentSchema, updateDocumentSchema, updateReadinessSchema, readinessQuerySchema, createFuelLogSchema, fuelLogQuerySchema, createAssignmentSchema, updateAssignmentSchema, assignmentQuerySchema, calendarQuerySchema } from '../validators/fleet';
 import { sendSuccess, sendPaginated } from '../utils/response';
+import { AppError } from '../utils/errors';
 
 export async function createBus(req: Request, res: Response, next: NextFunction) {
   try {
@@ -215,6 +216,33 @@ export async function listAssignments(req: Request, res: Response, next: NextFun
     const query = assignmentQuerySchema.parse(req.query);
     const result = await fleetService.listAssignments(req.user!.tenantId, query);
     return sendPaginated(res, result.data, result.meta.total, query.page, query.pageSize, 'Assignments retrieved');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteAssignment(req: Request, res: Response, next: NextFunction) {
+  try {
+    const assignment = await fleetService.deleteAssignment(req.user!.tenantId, req.params.id);
+    return sendSuccess(res, assignment, 'Assignment deleted');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function uploadDocument(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.file) throw new AppError(400, 'No file uploaded');
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const doc = await fleetService.createDocument(req.params.id, req.user!.tenantId, {
+      documentType: req.body.documentType,
+      documentNumber: req.body.documentNumber,
+      issueDate: req.body.issueDate,
+      expiryDate: req.body.expiryDate,
+      fileUrl,
+      status: 'active',
+    });
+    return sendSuccess(res, doc, 'Document uploaded', undefined, 201);
   } catch (err) {
     next(err);
   }

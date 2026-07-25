@@ -1,0 +1,37 @@
+.page { padding: 24px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.title { font-size: 22px; font-weight: 700; color: #f1f5f9; margin: 0 0 4px; }
+.period { font-size: 14px; color: #94a3b8; margin: 0; }
+.badgeRow { display: flex; align-items: center; gap: 10px; }
+.statusBadge { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.statusdraft { background: #713f1240; color: #fbbf24; }
+.statusapproved { background: #1e3a5f40; color: #60a5fa; }
+.statuspaid { background: #065f4640; color: #34d399; }
+.paidDate { font-size: 12px; color: #64748b; }
+
+.summaryCards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.summaryCard { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px 20px; min-width: 140px; flex: 1; }
+.summaryLabel { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 4px; }
+.summaryValue { font-size: 18px; font-weight: 700; color: #f1f5f9; }
+.netCard { border-color: #6366f1; }
+.netValue { font-size: 22px; font-weight: 700; color: #6366f1; }
+
+.actions { display: flex; gap: 10px; margin-bottom: 20px; }
+.approveBtn { padding: 8px 20px; border-radius: 6px; border: none; background: #6366f1; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.approveBtn:hover { background: #4f46e5; }
+.payBtn { padding: 8px 20px; border-radius: 6px; border: none; background: #059669; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.payBtn:hover { background: #047857; }
+.deleteBtn { padding: 8px 20px; border-radius: 6px; border: 1px solid #7f1d1d; background: transparent; color: #f87171; font-size: 13px; cursor: pointer; }
+.deleteBtn:hover { background: #7f1d1d40; }
+
+.tableWrap { overflow-x: auto; background: #1e293b; border-radius: 10px; border: 1px solid #334155; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.table th { text-align: left; padding: 10px 12px; color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }
+.table td { padding: 8px 12px; color: #e2e8f0; border-bottom: 1px solid #1e293b; }
+.cellName { color: #f1f5f9; font-weight: 500; }
+.cellCode { color: #64748b; font-family: monospace; font-size: 11px; }
+.cellAmount { text-align: right; font-family: monospace; }
+.totalRow td { font-weight: 700; color: #f1f5f9; border-top: 2px solid #475569; padding-top: 12px; background: #0f172a; }
+
+.loading { color: #94a3b8; text-align: center; padding: 60px; }
+.error { color: #f87171; padding: 16px; background: #7f1d1d40; border-radius: 6px; margin: 24px; }

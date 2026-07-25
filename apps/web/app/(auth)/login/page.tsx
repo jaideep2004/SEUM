@@ -23,6 +23,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -33,8 +34,6 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("seum_access_token", data.data.tokens.accessToken);
-      localStorage.setItem("seum_refresh_token", data.data.tokens.refreshToken);
       localStorage.setItem("seum_user", JSON.stringify(data.data.user));
 
       const role = data.data.user.roles?.[0];

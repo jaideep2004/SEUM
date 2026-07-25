@@ -1,0 +1,51 @@
+.page { max-width: 1100px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+.headerLeft h1 { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); color: var(--color-text); margin: 0; }
+
+.treeWrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.treeItem { border-bottom: 1px solid var(--color-border); }
+.treeItem:last-child { border-bottom: none; }
+.treeRow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; cursor: pointer; transition: background 0.15s;
+}
+.treeRow:hover { background: var(--color-hover); }
+.treeRowContent { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.expandBtn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 2px; display: flex; align-items: center; }
+.expandBtn:hover { color: var(--color-text); }
+.accountCode { font-size: 11px; font-weight: 600; color: var(--color-text-tertiary); min-width: 50px; }
+.accountName { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); }
+.accountDesc { font-size: 11px; color: var(--color-text-tertiary); margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.typeBadge { display: inline-flex; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; text-transform: capitalize; margin-left: auto; }
+.children { padding-left: 36px; }
+
+.actionBtn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: none; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.primaryBtn { background: var(--color-primary); color: #fff; }
+.primaryBtn:hover { opacity: 0.85; }
+.secondaryBtn { background: var(--color-bg-subtle); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.secondaryBtn:hover { background: var(--color-hover); }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: var(--color-surface); border-radius: var(--radius-xl); padding: 24px; width: 480px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+.modal h2 { margin: 0 0 16px; font-size: 18px; font-weight: var(--weight-bold); }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: var(--text-sm); box-sizing: border-box; }
+.field textarea { resize: vertical; min-height: 60px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* Slideover */
+.slideover { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; justify-content: flex-end; }
+.slideoverPanel { background: var(--color-surface); width: 420px; max-width: 90vw; height: 100%; overflow-y: auto; padding: 24px; box-shadow: -4px 0 20px rgba(0,0,0,0.15); }
+.slideoverHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.slideoverHeader h2 { margin: 0; font-size: 18px; font-weight: var(--weight-bold); }
+.closeBtn { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); padding: 4px; }
+.closeBtn:hover { color: var(--color-text); }
+.infoRow { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); }
+.infoLabel { color: var(--color-text-tertiary); }
+.infoValue { font-weight: 600; color: var(--color-text); }
+
+.loading { text-align: center; padding: 60px; color: var(--color-text-tertiary); }

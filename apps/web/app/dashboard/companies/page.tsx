@@ -6,15 +6,12 @@ import { api } from "@/services/api";
 import {
   Building2,
   Search,
-  ChevronLeft,
-  ChevronRight,
   Plus,
+  ChevronRight,
   CreditCard,
   Users,
   Calendar,
-  CheckCircle2,
   XCircle,
-  AlertTriangle,
 } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -31,13 +28,6 @@ interface Tenant {
   userCount?: number;
 }
 
-interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-}
-
 const tierColors: Record<string, { bg: string; text: string }> = {
   starter: { bg: "#6366f1", text: "#fff" },
   professional: { bg: "#059669", text: "#fff" },
@@ -50,33 +40,25 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   const fetchTenants = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/tenants?page=${page}&pageSize=20&search=${search}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("seum_access_token")}`,
-          },
-        }
-      );
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error?.message || "Failed to load");
-      setTenants(data.data);
-      setMeta(data.meta);
+      const data = await api.get<any[]>("/tenants?isActive=true");
+      setTenants(data);
     } catch (err: any) {
       setError(err.message || "Failed to load companies");
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, []);
 
   useEffect(() => { fetchTenants(); }, [fetchTenants]);
+
+  const filtered = search
+    ? tenants.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) || (t.contactEmail || "").toLowerCase().includes(search.toLowerCase()) || (t.domain || "").toLowerCase().includes(search.toLowerCase()))
+    : tenants;
 
   return (
     <div className={styles.page}>
@@ -85,10 +67,10 @@ export default function CompaniesPage() {
         <div>
           <h1 className={styles.headerTitle}>Companies</h1>
           <p className={styles.headerSub}>
-            {meta ? `${meta.total} company${meta.total !== 1 ? "ies" : "y"}` : "Loading..."}
+            {tenants.length} compan{tenants.length !== 1 ? "ies" : "y"}
           </p>
         </div>
-        <button className={styles.addBtn}>
+        <button className={styles.addBtn} onClick={() => router.push("/dashboard/companies/new")}>
           <Plus size={16} />
           Add Company
         </button>
@@ -101,7 +83,7 @@ export default function CompaniesPage() {
             className={styles.searchInput}
             placeholder="Search by name, domain, or email..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
@@ -112,7 +94,7 @@ export default function CompaniesPage() {
         <div className={styles.empty}>Loading companies...</div>
       ) : (
         <div className={styles.cardGrid}>
-          {tenants.map((tenant) => {
+          {filtered.map((tenant) => {
             const tc = tierColors[tenant.subscriptionTier] || tierColors.starter;
             return (
               <div
@@ -174,20 +156,8 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {!loading && tenants.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className={styles.empty}>No companies found</div>
-      )}
-
-      {meta && meta.totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button className={styles.pageBtn} disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            <ChevronLeft size={16} />
-          </button>
-          <span className={styles.pageInfo}>Page {meta.page} of {meta.totalPages}</span>
-          <button className={styles.pageBtn} disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>
-            <ChevronRight size={16} />
-          </button>
-        </div>
       )}
     </div>
   );

@@ -20,6 +20,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import { API_URL } from "@/services/api";
 import DonutChart from "@/components/dashboard/DonutChart";
 import Sparkline from "@/components/dashboard/Sparkline";
 import { ExpiryBadge, getDaysUntilExpiry } from "@/components/fleet/ExpiryBadge";
@@ -77,19 +78,12 @@ export default function FleetDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("seum_access_token");
         const [docRes, fuelRes] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/fleet/documents/expiring?days=365`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/fleet/fuel/efficiency-check`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          ),
+          fetch(`${API_URL}/fleet/documents/expiring?days=365`),
+          fetch(`${API_URL}/fleet/fuel/efficiency-check`),
         ]);
-        const docData = await docRes.json();
         const fuelData = await fuelRes.json();
+        const docData = await docRes.json();
         if (fuelData.success) setFuelAlert(fuelData.data);
         if (docData.success) {
           const docs = docData.data;

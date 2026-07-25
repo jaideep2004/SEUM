@@ -1,0 +1,82 @@
+.page { max-width: 1000px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.loading { text-align: center; padding: 48px; font-size: 12px; color: var(--color-text-tertiary); }
+.backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 16px; }
+.backLink:hover { color: var(--color-text); }
+
+.profileHeader { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); margin-bottom: 16px; }
+.photoWrap { position: relative; }
+.profilePhoto { width: 72px; height: 72px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; overflow: hidden; }
+.photoImg { width: 100%; height: 100%; object-fit: cover; }
+.photoUploadBtn { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text-secondary); font-size: 10px; }
+.photoUploadBtn:hover { background: var(--color-hover); }
+
+.headerInfo { flex: 1; min-width: 0; }
+.headerNameRow { display: flex; align-items: center; gap: 10px; }
+.driverName { font-size: 20px; font-weight: 700; color: var(--color-text); margin: 0; }
+.driverEmail { font-size: 12px; color: var(--color-text-secondary); margin: 2px 0 6px; }
+.headerMeta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--color-text-secondary); }
+.headerMeta span { display: flex; align-items: center; gap: 4px; }
+.editBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.editBtn:hover { background: var(--color-hover); }
+
+.statusBadge { padding: 3px 12px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.expiryBanner { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); margin-bottom: 12px; font-size: 12px; color: #92400e; }
+
+.tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--color-text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tab:hover { background: var(--color-hover); }
+.tabActive { background: var(--color-bg-subtle); color: var(--color-text); box-shadow: inset 0 -2px 0 var(--color-primary); }
+
+.infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.infoCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px; }
+.infoCard h3 { font-size: 12px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+.infoRow { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--color-border-subtle); font-size: 12px; }
+.infoRow:last-child { border-bottom: none; }
+.infoRow span:first-child { color: var(--color-text-secondary); }
+.infoRow span:last-child { color: var(--color-text); font-weight: 500; }
+
+.docSection { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 20px; }
+.docHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.docHeader h3 { font-size: 14px; font-weight: 700; margin: 0; color: var(--color-text); }
+.addDocBtn { padding: 6px 12px; border: 1px solid var(--color-primary); border-radius: var(--radius-sm); background: transparent; color: var(--color-primary); font-size: 11px; font-weight: 600; cursor: pointer; }
+.addDocBtn:hover { background: var(--color-primary); color: #fff; }
+
+.docForm { background: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; }
+.docFormGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.field input, .field select { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 12px; outline: none; }
+.field input:focus, .field select:focus { border-color: var(--color-primary); }
+.docFormActions { display: flex; gap: 8px; justify-content: flex-end; }
+.cancelBtn { padding: 6px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 11px; font-weight: 600; cursor: pointer; }
+.cancelBtn:hover { background: var(--color-hover); }
+.saveBtn { padding: 6px 14px; border: none; border-radius: var(--radius-sm); background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.saveBtn:hover { filter: brightness(1.1); }
+
+.empty { font-size: 12px; color: var(--color-text-tertiary); text-align: center; padding: 24px; }
+
+.docList { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.docTable { width: 100%; border-collapse: collapse; }
+.docTable th { text-align: left; font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; background: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); }
+.docTable td { padding: 10px 12px; font-size: 12px; color: var(--color-text); border-bottom: 1px solid var(--color-border); }
+.docTable tr:last-child td { border-bottom: none; }
+.docType { font-weight: 600; }
+.expiryWarn { color: #f59e0b; font-weight: 600; }
+.deleteDocBtn { border: none; background: none; color: var(--color-text-tertiary); cursor: pointer; padding: 4px; }
+.deleteDocBtn:hover { color: #ef4444; }
+
+.scheduleSection { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 20px; }
+.scheduleSection h3 { font-size: 14px; font-weight: 700; margin: 0 0 14px; color: var(--color-text); }
+.scheduleList { display: flex; flex-direction: column; gap: 6px; }
+.scheduleCard { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border); cursor: pointer; }
+.scheduleCard:hover { background: var(--color-hover); }
+.schedTime { display: flex; flex-direction: column; align-items: center; min-width: 50px; }
+.schedTimeVal { font-size: 14px; font-weight: 700; color: var(--color-text); }
+.schedDate { font-size: 9px; color: var(--color-text-tertiary); }
+.schedRoute { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.schedRouteName { font-size: 12px; font-weight: 600; color: var(--color-text); }
+.schedBus { font-size: 10px; color: var(--color-text-tertiary); }
+.schedStatus { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.confirmBadge { padding: 1px 6px; border-radius: 9999px; font-size: 9px; font-weight: 600; }

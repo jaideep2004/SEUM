@@ -34,6 +34,7 @@ import {
   Map,
   Calendar,
   FileText,
+  Receipt,
   AlertTriangle,
   Headphones,
   ChevronLeft,
@@ -50,6 +51,10 @@ import {
   Repeat,
   CheckCircle2,
   ChevronUp,
+  Clock,
+  DollarSign,
+  BookOpen,
+  Archive,
   Sun,
   Moon,
 } from "lucide-react";
@@ -68,6 +73,7 @@ const superAdminNav: NavItem[] = [
   { label: "System Health", href: "/dashboard/health", icon: HeartPulse },
   { label: "Integrations", href: "/dashboard/integrations", icon: Plug },
   { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ClipboardList },
+  { label: "Archived", href: "/dashboard/archived", icon: Archive },
   { label: "Global Reports", href: "/dashboard/reports", icon: BarChart3 },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
@@ -84,6 +90,14 @@ const companyAdminNav: NavItem[] = [
   { label: "Analytics", href: "/dashboard/fleet/analytics", icon: BarChart3 },
   { label: "HR", href: "/dashboard/hr", icon: Briefcase },
   { label: "Finance", href: "/dashboard/finance", icon: Wallet },
+  { label: "Chart of Accounts", href: "/dashboard/accounts", icon: BookOpen },
+  { label: "Journal Entries", href: "/dashboard/accounting/journal-entries", icon: FileText },
+  { label: "Invoices", href: "/dashboard/accounting/invoices", icon: Receipt },
+  { label: "Expenses", href: "/dashboard/accounting/expenses", icon: Wallet },
+  { label: "Trip Profitability", href: "/dashboard/accounting/trip-profitability", icon: BarChart3 },
+  { label: "Financial Reports", href: "/dashboard/accounting/reports", icon: BarChart3 },
+  { label: "Payroll", href: "/dashboard/accounting/payroll", icon: DollarSign },
+  { label: "Bank Accounts", href: "/dashboard/accounting/bank-accounts", icon: Wallet },
   { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
   { label: "Monitoring", href: "/dashboard/monitoring", icon: Radio },
   { label: "Reports", href: "/dashboard/company/reports", icon: BarChart3 },
@@ -100,6 +114,11 @@ const operationsNav: NavItem[] = [
   { label: "Recurring Trips", href: "/dashboard/recurring-trips", icon: Repeat },
   { label: "Schedules", href: "/dashboard/schedules", icon: Calendar },
   { label: "Drivers", href: "/dashboard/drivers", icon: UserCheck },
+  { label: "Attendance", href: "/dashboard/drivers/attendance", icon: Clock },
+  { label: "Leaves", href: "/dashboard/drivers/leaves", icon: CalendarDays },
+  { label: "Violations", href: "/dashboard/drivers/violations", icon: AlertTriangle },
+  { label: "Scores", href: "/dashboard/drivers/scores", icon: BarChart3 },
+  { label: "Payroll", href: "/dashboard/drivers/payroll", icon: DollarSign },
   { label: "Vehicles", href: "/dashboard/fleet", icon: Bus },
   { label: "Routes", href: "/dashboard/routes", icon: Map },
   { label: "Work Orders", href: "/dashboard/work-orders", icon: FileText },
@@ -202,10 +221,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Fetch notification count
   async function fetchNotifCount() {
     try {
-      const token = localStorage.getItem("seum_access_token");
-      if (!token) return;
       const res = await fetch(`${API_URL}/notifications/count`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success) setNotifCount(data.data.unreadCount);
@@ -214,10 +231,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   async function fetchNotifications() {
     try {
-      const token = localStorage.getItem("seum_access_token");
-      if (!token) return;
       const res = await fetch(`${API_URL}/notifications?pageSize=5`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success) setNotifications(data.data);
@@ -246,19 +261,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   async function handleMarkAllRead() {
     try {
-      const token = localStorage.getItem("seum_access_token");
       await fetch(`${API_URL}/notifications/read-all`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
       setNotifCount(0);
       setNotifications([]);
     } catch {}
   }
 
-  function handleLogout() {
-    localStorage.removeItem("seum_access_token");
-    localStorage.removeItem("seum_refresh_token");
+  async function handleLogout() {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {}
     localStorage.removeItem("seum_user");
     router.push("/login");
   }
@@ -278,7 +297,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     "/dashboard/fleet/fuel/analytics", "/dashboard/fleet/assignments",
     "/dashboard/fleet/assignments/calendar", "/dashboard/fleet/analytics",
     "/dashboard/routes", "/dashboard/trips", "/dashboard/recurring-trips",
-    "/dashboard/users",
+    "/dashboard/users", "/dashboard/drivers", "/dashboard/drivers/attendance", "/dashboard/drivers/leaves", "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
+    "/dashboard/accounts",
+    "/dashboard/accounting/journal-entries",
+    "/dashboard/accounting/invoices",
+    "/dashboard/accounting/expenses",
+    "/dashboard/accounting/trip-profitability",
+    "/dashboard/accounting/reports",
+    "/dashboard/accounting/payroll",
+    "/dashboard/accounting/bank-accounts",
+    "/dashboard/monitoring", "/dashboard/delays", "/dashboard/archived",
   ]);
 
   return (

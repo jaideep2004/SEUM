@@ -9,9 +9,8 @@ import {
   AlertTriangle,
   Gauge,
 } from "lucide-react";
+import { API_URL } from "@/services/api";
 import styles from "./page.module.css";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export default function FuelAnalyticsPage() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -21,10 +20,9 @@ export default function FuelAnalyticsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("seum_access_token");
         const [analyticsRes, alertRes] = await Promise.all([
-          fetch(`${API}/fleet/fuel/analytics`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API}/fleet/fuel/efficiency-check`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/fleet/fuel/analytics`),
+          fetch(`${API_URL}/fleet/fuel/efficiency-check`),
         ]);
         const analyticsData = await analyticsRes.json();
         const alertData = await alertRes.json();

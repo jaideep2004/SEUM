@@ -7,18 +7,18 @@
 ## PHASE 0: Foundation & Infrastructure
 
 ### 0.1 Project Scaffolding
-- [ ] Next.js 14/15 app with TypeScript and `app/` directory
-- [ ] Express.js backend in a `backend/` directory (or as a monorepo with turborepo)
-- [ ] PostgreSQL database setup with connection pooling
-- [ ] Docker Compose for local dev (PostgreSQL, Redis)
-- [ ] Environment config (.env.local, .env.production)
-- [ ] ESLint + Prettier configuration
-- [ ] Shared TypeScript types package (`packages/shared`)
+- ✅ Next.js 14/15 app with TypeScript and `app/` directory
+- ✅ Express.js backend in a `backend/` directory (or as a monorepo with turborepo)
+- ✅ PostgreSQL database setup with connection pooling
+- ✅ Docker Compose for local dev (PostgreSQL, Redis)
+- ✅ Environment config (.env.local, .env.production)
+- ✅ ESLint + Prettier configuration
+- ✅ Shared TypeScript types package (`packages/shared`)
 
 ### 0.2 Database Foundation
-- [ ] Migration tool setup (node-pg-migrate, Prisma Migrate, or Knex)
-- [ ] Seed script foundation
-- [ ] Base schema:
+- ✅ Migration tool setup (node-pg-migrate, Prisma Migrate, or Knex)
+- ✅ Seed script foundation
+- ✅ Base schema:
   - `tenants` (companies / organizations)
   - `users` (all roles, linked to tenant)
   - `roles` (enum or table: super_admin, company_admin, ops_manager, fleet_manager, driver, hr, finance, monitoring, customer_service, executive, maintenance)
@@ -29,443 +29,466 @@
   - `sessions` (JWT refresh tokens)
 
 ### 0.3 Authentication & Authorization
-- [ ] POST `/api/auth/login` — email/password, returns access + refresh tokens
-- [ ] POST `/api/auth/register` — super admin creates company admin (not self-registration)
-- [ ] POST `/api/auth/refresh` — refresh access token
-- [ ] POST `/api/auth/logout` — invalidate token
-- [ ] JWT middleware — verify token, decode tenant + role
-- [ ] RBAC middleware — `requirePermission(resource, action)` factory
-- [ ] Password hashing (bcrypt, 12+ rounds)
-- [ ] Rate limiting on auth endpoints
-- [ ] Login attempt lockout (5 failed attempts → 15 min block)
-- [ ] Forgot password flow (email with reset link)
-- [ ] Reset password endpoint
+- ✅ POST `/api/auth/login` — email/password, returns access + refresh tokens
+- ✅ POST `/api/auth/register` — super admin creates company admin (not self-registration)
+- ✅ POST `/api/auth/refresh` — refresh access token
+- ✅ POST `/api/auth/logout` — invalidate token
+- ✅ JWT middleware — verify token, decode tenant + role
+- ✅ RBAC middleware — `requirePermission(resource, action)` factory
+- ✅ Password hashing (bcrypt, 12+ rounds)
+- ✅ Rate limiting on auth endpoints
+- ✅ Login attempt lockout (5 failed attempts → 15 min block)
+- ✅ Forgot password flow (email with reset link)
+- ✅ Reset password endpoint
 
 ### 0.4 Multi-Tenant Architecture
-- [ ] Row-level tenant isolation (all tables have `tenant_id`)
-- [ ] ORM/query builder scoped to tenant automatically
-- [ ] Tenant creation flow (super admin only):
-  - [ ] `POST /api/tenants` — name, domain, contact info, subscription tier
-  - [ ] `GET /api/tenants` — list all (super admin)
-  - [ ] `GET /api/tenants/:id` — tenant details
-  - [ ] `PATCH /api/tenants/:id` — update tenant
-  - [ ] `DELETE /api/tenants/:id` — soft delete tenant
-- [ ] Subscription / plan model (tier, features, limits, billing cycle)
-- [ ] Feature flags per tenant (which modules are enabled)
+- ✅ Row-level tenant isolation (all tables have `tenant_id`)
+- ✅ Tenant-scoped query helpers (`backend/src/utils/tenantScope.ts`)
+- ✅ Tenant creation flow (super admin only):
+  - ✅ `POST /api/tenants` — name, domain, contact info, subscription tier
+  - ✅ `GET /api/tenants` — list all (super admin)
+  - ✅ `GET /api/tenants/:id` — tenant details
+  - ✅ `PATCH /api/tenants/:id` — update tenant
+  - ✅ `DELETE /api/tenants/:id` — soft delete tenant
+- ✅ Subscription / plan model (tier, features, limits, billing cycle) — API + frontend
+- ✅ Feature flags per tenant — `requireFeature()` middleware at `backend/src/middleware/featureFlag.ts`
 - **Frontend pages:**
-  - [ ] Tenants list page (super admin, with search/filter/pagination)
-  - [ ] Tenant create/edit form page
-  - [ ] Tenant detail/dashboard page (subscription info, usage stats)
-  - [ ] Subscription plan management page (super admin)
+  - ✅ Tenants list page (super admin, with search/filter/pagination)
+  - ✅ Tenant create/edit form page
+  - ✅ Tenant detail/dashboard page (subscription info, usage stats)
+  - ✅ Subscription plan management page (super admin)
 
 ### 0.5 Audit Logging System
-- [ ] Automatic audit log on every CUD operation
-- [ ] Audit log schema: `actor_id`, `action`, `resource`, `resource_id`, `old_value`, `new_value`, `ip_address`, `user_agent`, `timestamp`
-- [ ] `GET /api/audit-logs` — filterable by tenant, user, resource, date range
-- [ ] Audit log retention policy (configurable, auto-archive)
+- ✅ Automatic audit log on every CUD operation
+- ✅ Audit log schema: `actor_id`, `action`, `resource`, `resource_id`, `old_value`, `new_value`, `ip_address`, `user_agent`, `timestamp`
+- ✅ `GET /api/audit-logs` — filterable by tenant, user, resource, date range
+- ✅ Audit log retention policy (configurable, auto-archive)
 - **Frontend pages:**
-  - [ ] Audit log viewer page (filterable table with date range, user, resource type pickers)
-  - [ ] Audit log detail expandable row or modal
+  - ✅ Audit log viewer page (filterable table with date range, user, resource type pickers)
+  - ✅ Audit log detail expandable row or modal
 
 ### 0.6 UI Shell
-- [ ] Login page
-- [ ] Forgot password / reset password pages
-- [ ] Main layout with sidebar navigation (role-dependent)
-- [ ] User avatar / dropdown (profile, logout)
-- [ ] Responsive sidebar (collapsible on mobile)
-- [ ] Notification bell (real-time notification count)
-- [ ] Theme toggle (light/dark mode)
+- ✅ Login page
+- ✅ Forgot password / reset password pages
+- ✅ Main layout with sidebar navigation (role-dependent)
+- ✅ User avatar / dropdown (profile, logout)
+- ✅ Responsive sidebar (collapsible on mobile)
+- ✅ Notification bell (real-time notification count)
+- ✅ Theme toggle (light/dark mode)
 
 ### 0.7 Error Handling & Logging
-- [ ] Global Express error handler middleware
-- [ ] Structured logging (pino or winston)
-- [ ] API response envelope: `{ success: boolean, data?: T, error?: { code, message, details } }`
-- [ ] Client-side error boundary
-- [ ] Toast / notification component for API errors
+- ✅ Global Express error handler middleware
+- ✅ Structured logging (pino or winston)
+- ✅ API response envelope: `{ success: boolean, data?: T, error?: { code, message, details } }`
+- ✅ Client-side error boundary
+- ✅ Toast / notification component for API errors — auto-wired via `apiEvents`
 
 ---
 
 ## PHASE 1: Fleet Management
 
 ### 1.1 Bus / Vehicle Master
-- [ ] `buses` table: tenant_id, plate_number, chassis_number, make, model, year, capacity (seated + standing), color, VIN, engine_number, fuel_type, status (active, maintenance, retired, sold), purchase_date, purchase_price, assigned_depot
-- [ ] `POST /api/fleet/buses` — create bus
-- [ ] `GET /api/fleet/buses` — list buses (filterable by status, depot)
-- [ ] `GET /api/fleet/buses/:id` — single bus detail
-- [ ] `PATCH /api/fleet/buses/:id` — update bus info
-- [ ] `DELETE /api/fleet/buses/:id` — soft delete
-- [ ] `GET /api/fleet/buses/:id/history` — full bus lifecycle history
+- ✅ `buses` table: tenant_id, plate_number, chassis_number, make, model, year, capacity (seated + standing), color, VIN, engine_number, fuel_type, status (active, maintenance, retired, sold), purchase_date, purchase_price, assigned_depot
+- ✅ `POST /api/fleet/buses` — create bus
+- ✅ `GET /api/fleet/buses` — list buses (filterable by status, depot)
+- ✅ `GET /api/fleet/buses/:id` — single bus detail
+- ✅ `PATCH /api/fleet/buses/:id` — update bus info
+- ✅ `DELETE /api/fleet/buses/:id` — soft delete
+- ✅ `GET /api/fleet/buses/:id/history` — full bus lifecycle history
 - **Frontend pages:**
-  - [ ] Buses list page (table with search/filter by status, depot, plate; pagination)
-  - [ ] Bus detail page (full info, status badge, lifecycle history timeline)
-  - [ ] Bus create/edit form (all fields with validation)
-  - [ ] Bus history timeline component (lifecycle events chronologically)
+  - ✅ Buses list page (table with search/filter by status, depot, plate; pagination)
+  - ✅ Bus detail page (full info, status badge, lifecycle history timeline)
+  - ✅ Bus create/edit form (all fields with validation) — create modal + dedicated edit page
+  - ✅ Bus history timeline component (lifecycle events chronologically)
 
 ### 1.2 Vehicle Documents
-- [ ] `bus_documents` table: bus_id, document_type (registration, insurance, permit, inspection, fitness, road_tax), document_number, issue_date, expiry_date, file_url, status
-- [ ] `POST /api/fleet/buses/:id/documents` — upload document
-- [ ] `GET /api/fleet/buses/:id/documents` — list documents
-- [ ] `PATCH /api/fleet/buses/:id/documents/:docId` — update
-- [ ] `DELETE /api/fleet/buses/:id/documents/:docId` — remove
-- [ ] Auto-detect expiring documents (30/14/7 days before) → create notification
-- [ ] Document expiry dashboard widget
+- ✅ `bus_documents` table: bus_id, document_type (registration, insurance, permit, inspection, fitness, road_tax), document_number, issue_date, expiry_date, file_url, status
+- ✅ `POST /api/fleet/buses/:id/documents` — upload document (JSON + multipart file upload)
+- ✅ `GET /api/fleet/buses/:id/documents` — list documents
+- ✅ `PATCH /api/fleet/buses/:id/documents/:docId` — update
+- ✅ `DELETE /api/fleet/buses/:id/documents/:docId` — remove
+- ✅ Auto-detect expiring documents (30/14/7 days before) → create notification
+- ✅ Document expiry dashboard widget
 - **Frontend pages:**
-  - [ ] Documents list page per bus (table with document type, expiry, status)
-  - [ ] Document upload form (file picker, type selector, date fields)
-  - [ ] Expiry badge/banner component (green=ok, yellow=30d, orange=14d, red=7d)
-  - [ ] Document expiry dashboard widget (summary card for fleet dashboard)
+  - ✅ Documents list page per bus (table with document type, expiry, status)
+  - ✅ Document upload form (file picker, type selector, date fields)
+  - ✅ Expiry badge/banner component (green=ok, yellow=30d, orange=14d, red=7d)
+  - ✅ Document expiry dashboard widget (summary card for fleet dashboard)
 
 ### 1.3 Bus Readiness & Status
-- [ ] `bus_readiness` table: bus_id, status (ready, in_maintenance, out_of_service, reserved), checked_by, checked_at, notes, next_scheduled_maintenance_km, next_scheduled_maintenance_date
-- [ ] `POST /api/fleet/readiness` — update readiness status
-- [ ] `GET /api/fleet/readiness` — current readiness for all buses (color-coded)
-- [ ] Fleet dashboard: grid of all buses with readiness indicator (green/yellow/red)
-- [ ] Prevent trip assignment to non-ready buses
+- ✅ `bus_readiness` table: bus_id, status (ready, in_maintenance, out_of_service, reserved), checked_by, checked_at, notes, next_scheduled_maintenance_km, next_scheduled_maintenance_date
+- ✅ `POST /api/fleet/readiness` — update readiness status
+- ✅ `GET /api/fleet/readiness` — current readiness for all buses (color-coded)
+- ✅ Fleet dashboard: grid of all buses with readiness indicator (green/yellow/red)
+- [ ] Prevent trip assignment to non-ready buses (trip creation does not check bus readiness)
 - **Frontend pages:**
-  - [ ] Fleet readiness dashboard (card grid, each bus = card with color-coded status indicator)
-  - [ ] Readiness status update modal (dropdown + notes field)
-  - [ ] Quick-filters: show ready / maintenance / out-of-service only
+  - ✅ Fleet readiness dashboard (card grid, each bus = card with color-coded status indicator)
+  - ✅ Readiness status update modal (dropdown + notes field)
+  - ✅ Quick-filters: show ready / maintenance / out-of-service only
 
 ### 1.4 Fuel Tracking
-- [ ] `fuel_logs` table: bus_id, date, liters, cost_per_liter, total_cost, odometer_reading, station_name, fuel_type, receipt_url, filled_by
-- [ ] `POST /api/fleet/fuel` — log fuel fill
-- [ ] `GET /api/fleet/fuel` — fuel logs (filterable by bus, date range)
-- [ ] `GET /api/fleet/fuel/analytics` — avg km/liter, cost per km, trend chart
-- [ ] Fuel efficiency alerts (sudden drop indicates theft or maintenance issue)
+- ✅ `fuel_logs` table: bus_id, date, liters, cost_per_liter, total_cost, odometer_reading, station_name, fuel_type, receipt_url, filled_by
+- ✅ `POST /api/fleet/fuel` — log fuel fill
+- ✅ `GET /api/fleet/fuel` — fuel logs (filterable by bus, date range)
+- ✅ `GET /api/fleet/fuel/analytics` — avg km/liter, cost per km, trend chart
+- ✅ Fuel efficiency alerts (sudden drop indicates theft or maintenance issue)
 - **Frontend pages:**
-  - [ ] Fuel logs page (table filterable by bus, date range; receipt image preview)
-  - [ ] Fuel log entry form (inline or modal)
-  - [ ] Fuel analytics page (trend chart: km/liter over time; avg cost per km card)
-  - [ ] Efficiency alert banner (shown on fleet dashboard when drop detected)
+  - ✅ Fuel logs page (table filterable by bus, date range; receipt image preview)
+  - ✅ Fuel log entry form (inline or modal)
+  - ✅ Fuel analytics page (trend chart: km/liter over time; avg cost per km card)
+  - ✅ Efficiency alert banner (shown on fleet dashboard when drop detected)
 
 ### 1.5 Bus Assignment & Scheduling
-- [ ] `POST /api/fleet/assign` — assign bus to a depot / route / driver
-- [ ] `GET /api/fleet/assignments` — current and upcoming assignments
-- [ ] `PATCH /api/fleet/assignments/:id` — update / reassign
-- [ ] Bus calendar view (which bus is where, when)
+- ✅ `POST /api/fleet/assign` — assign bus to a depot / route / driver
+- ✅ `GET /api/fleet/assignments` — current and upcoming assignments
+- ✅ `PATCH /api/fleet/assignments/:id` — update / reassign
+- ✅ `DELETE /api/fleet/assignments/:id` — remove assignment
+- ✅ Bus calendar view (which bus is where, when)
 - **Frontend pages:**
-  - [ ] Assignments list page (table with bus, route, driver, dates)
-  - [ ] Assignment create/edit modal (bus selector, route, driver, date range)
-  - [ ] Bus calendar view (monthly calendar, each bus row, trip blocks as colored bars)
+  - ✅ Assignments list page (table with bus, route, driver, dates)
+  - ✅ Assignment create/edit modal (bus selector, route, driver, date range)
+  - ✅ Bus calendar view (monthly calendar, each bus row, trip blocks as colored bars)
 
 ### 1.6 Fleet Analytics Dashboard
-- [ ] Total buses count (active, maintenance, retired)
-- [ ] Fleet utilization rate (% of buses in use vs available)
-- [ ] Average bus age
-- [ ] Upcoming document renewals
-- [ ] Fuel efficiency trends (km/liter over time)
-- [ ] Maintenance cost per bus
-- [ ] Export fleet report (PDF / CSV)
+- ✅ Total buses count (active, maintenance, retired)
+- ✅ Fleet utilization rate (% of buses in use vs available)
+- ✅ Average bus age
+- ✅ Upcoming document renewals
+- ✅ Fuel efficiency trends (km/liter over time)
+- [ ] Maintenance cost per bus — depends on Phase 6 (Maintenance Module)
+- ✅ Export fleet report (PDF / CSV)
 - **Frontend pages:**
-  - [ ] Fleet analytics dashboard page (summary cards + charts: utilization gauge, bus age bar, fuel trend line)
-  - [ ] Upcoming renewals widget (sorted list with countdown days)
-  - [ ] Export report button (PDF / CSV dropdown)
-  - [ ] Maintenance cost per bus chart
+  - ✅ Fleet analytics dashboard page (summary cards + charts: utilization gauge, bus age bar, fuel trend line)
+  - ✅ Upcoming renewals widget (sorted list with countdown days)
+  - ✅ Export report button (PDF / CSV dropdown)
+  - [ ] Maintenance cost per bus chart — placeholder until Phase 6
 
 ---
 
 ## PHASE 2: Trip & Operations Management
 
 ### 2.1 Route Master
-- [ ] `routes` table: tenant_id, name, code, origin, destination, distance_km, estimated_duration_minutes, description, route_type (regular, hajj, umrah, charter, shuttle), status
-- [ ] `route_stops` table: route_id, stop_name, stop_order, latitude, longitude, estimated_arrival_minutes
-- [ ] `POST /api/operations/routes` — create route
-- [ ] `GET /api/operations/routes` — list routes
-- [ ] `GET /api/operations/routes/:id` — route with stops
-- [ ] `PATCH /api/operations/routes/:id` — update
-- [ ] `DELETE /api/operations/routes/:id` — soft delete
-- [ ] `POST /api/operations/routes/:id/stops` — add stop
-- [ ] `DELETE /api/operations/routes/:id/stops/:stopId` — remove stop
-- [ ] Route visualization on map
+- ✅ `routes` table: tenant_id, name, code, origin, destination, distance_km, estimated_duration_minutes, description, route_type (regular, hajj, umrah, charter, shuttle), status
+- ✅ `route_stops` table: route_id, stop_name, stop_order, latitude, longitude, estimated_arrival_minutes
+- ✅ `POST /api/operations/routes` — create route
+- ✅ `GET /api/operations/routes` — list routes
+- ✅ `GET /api/operations/routes/:id` — route with stops
+- ✅ `PATCH /api/operations/routes/:id` — update
+- ✅ `DELETE /api/operations/routes/:id` — soft delete
+- ✅ `POST /api/operations/routes/:id/stops` — add stop
+- ✅ `DELETE /api/operations/routes/:id/stops/:stopId` — remove stop
+- ✅ Route visualization on map — `RouteMap` component (polyline + stop markers + popups)
 - **Frontend pages:**
-  - [ ] Routes list page (table with origin/destination, type tags, status)
-  - [ ] Route detail page (map with route polyline + stops as markers)
-  - [ ] Route create/edit form (origin/destination autocomplete, stop order drag-and-drop)
-  - [ ] Route map visualization component (polyline + stop markers + info popups)
+  - ✅ Routes list page (table with origin/destination, type tags, status)
+  - ✅ Route detail page (map with route polyline + stops as markers)
+  - ✅ Route create/edit form (origin/destination, stop order management)
+  - ✅ Route map visualization component (`RouteMap.tsx` — polyline + stop markers + info popups)
 
 ### 2.2 Trip Scheduling
-- [ ] `trips` table: tenant_id, route_id, bus_id, driver_id, trip_type, scheduled_date, scheduled_start_time, scheduled_end_time, actual_start_time, actual_end_time, status (scheduled, en_route, completed, cancelled, delayed), delay_minutes, delay_reason, notes, rejection_reason, created_by, approved_by
-- [ ] `trip_passengers` table: trip_id, passenger_name, passenger_id_number, contact_number, seat_number, booking_reference
-- [ ] `POST /api/operations/trips` — create trip (operations manager)
-- [ ] `GET /api/operations/trips` — list trips (filterable by date, status, bus, route, driver)
-- [ ] `GET /api/operations/trips/:id` — trip detail with full timeline
-- [ ] `PATCH /api/operations/trips/:id` — update trip
-- [ ] `DELETE /api/operations/trips/:id` — cancel trip
-- [ ] `POST /api/operations/trips/:id/start` — mark trip as en_route
-- [ ] `POST /api/operations/trips/:id/complete` — mark trip as completed
-- [ ] `POST /api/operations/trips/:id/delay` — report delay (reason, estimated new time)
-- [ ] `POST /api/operations/trips/:id/cancel` — cancel with reason
-- [ ] Trip calendar view (daily / weekly / monthly)
-- [ ] Trip timeline card (visual: scheduled → en_route → completed)
+- ✅ `trips` table: tenant_id, route_id, bus_id, driver_id, trip_type, scheduled_date, scheduled_start_time, scheduled_end_time, actual_start_time, actual_end_time, status (scheduled, en_route, completed, cancelled, delayed), delay_minutes, delay_reason, notes, rejection_reason, created_by, approved_by
+- ✅ `trip_passengers` table: trip_id, passenger_name, passenger_id_number, contact_number, seat_number, booking_reference
+- ✅ `POST /api/operations/trips` — create trip (operations manager)
+- ✅ `GET /api/operations/trips` — list trips (filterable by date, status, bus, route, driver)
+- ✅ `GET /api/operations/trips/:id` — trip detail with full timeline
+- ✅ `PATCH /api/operations/trips/:id` — update trip
+- ✅ `DELETE /api/operations/trips/:id` — cancel trip
+- ✅ `POST /api/operations/trips/:id/start` — mark trip as en_route
+- ✅ `POST /api/operations/trips/:id/complete` — mark trip as completed
+- ✅ `POST /api/operations/trips/:id/delay` — report delay (reason, estimated new time)
+- ✅ `POST /api/operations/trips/:id/cancel` — cancel with reason
+- ✅ Trip calendar view (daily / weekly / monthly)
+- ✅ Trip timeline card (visual: scheduled → en_route → completed) — `TripTimeline` component
 - **Frontend pages:**
-  - [ ] Trips list page (table filterable by date range, status, bus, route, driver)
-  - [ ] Trip create form (route selector fills bus/driver suggestions, date/time pickers)
-  - [ ] Trip detail page (full info + status timeline + passenger list)
-  - [ ] Trip status action buttons (Start / Complete / Delay / Cancel with reason modal)
-  - [ ] Trip calendar view (daily/weekly/monthly toggle, trip blocks on calendar)
-  - [ ] Trip timeline card component (stepper: scheduled → en_route → completed)
+  - ✅ Trips list page (table filterable by date range, status, bus, route, driver)
+  - ✅ Trip create form (route selector, bus/driver suggestions, date/time pickers)
+  - ✅ Trip detail page (full info + status timeline + passenger list)
+  - ✅ Trip status action buttons (Start / Complete / Delay / Cancel with reason modal)
+  - ✅ Trip calendar view (daily/weekly/monthly toggle, trip blocks on calendar)
+  - ✅ Trip timeline card component (`TripTimeline.tsx` — stepper: scheduled → en_route → completed)
 
 ### 2.3 Recurring Trips
-- [ ] `recurring_trip_patterns` table: route_id, bus_id, driver_id, frequency (daily, weekdays, weekends, custom_days), days_of_week, start_date, end_date, specific_dates[]
-- [ ] `POST /api/operations/recurring-trips` — create pattern
-- [ ] `GET /api/operations/recurring-trips` — list patterns
-- [ ] `POST /api/operations/recurring-trips/:id/generate` — generate actual trips for date range
+- ✅ `recurring_trip_patterns` table: route_id, bus_id, driver_id, frequency (daily, weekdays, weekends, custom_days), days_of_week, start_date, end_date, specific_dates[]
+- ✅ `POST /api/operations/recurring-trips` — create pattern
+- ✅ `GET /api/operations/recurring-trips` — list patterns
+- ✅ `GET /api/operations/recurring-trips/:id` — pattern detail
+- ✅ `PATCH /api/operations/recurring-trips/:id` — update pattern
+- ✅ `DELETE /api/operations/recurring-trips/:id` — delete pattern
+- ✅ `POST /api/operations/recurring-trips/:id/generate` — generate actual trips for date range
+- ✅ `GET /api/operations/recurring-trips/:id/calendar` — pattern calendar view
 - [ ] Auto-generation cron job (weekly trips for next 2 weeks)
 - **Frontend pages:**
-  - [ ] Recurring patterns list page (frequency badge, route, bus, driver)
-  - [ ] Recurring pattern create/edit form (day-of-week checkboxes, date range picker)                        ----------DONE
-  - [ ] Generate trips button + date range picker modal
+  - ✅ Recurring patterns list page (frequency badge, route, bus, driver)
+  - ✅ Recurring pattern create/edit form (day-of-week checkboxes, date range picker)
+  - ✅ Generate trips button + date range picker modal
 
 ### 2.4 Driver Assignment to Trips
-- [ ] `POST /api/operations/trips/:id/assign-driver` — assign driver to trip
-- [ ] `GET /api/operations/drivers/available` — list available drivers (not on another trip, not on leave)
-- [ ] Driver schedule view (all trips assigned to a specific driver)
-- [ ] Driver trip notification (push / SMS / WhatsApp when assigned)
-- [ ] Driver trip confirmation flow (accept / reject trip)
+- ✅ `POST /api/operations/trips/:id/assign-driver` — assign driver to trip
+- ✅ `GET /api/operations/drivers/available` — list available drivers (not on another trip, not on leave)
+- ✅ Driver schedule view (all trips assigned to a specific driver)
+- ✅ Driver trip notification (in-app notification created on driver assignment via `notificationService`)
+- ✅ Driver trip confirmation flow (accept / reject trip)
 - **Frontend pages:**
-  - [ ] Driver assign modal on trip detail (avail driver list with status indicators)
-  - [ ] Driver schedule page (day/week view, all trips assigned to selected driver)
-  - [ ] Trip confirmation status badge (accepted/rejected/pending on trip card)
+  - ✅ Driver assign modal on trip detail (avail driver list with status indicators)
+  - ✅ Driver schedule page (day/week view, all trips assigned to selected driver)
+  - ✅ Trip confirmation status badge (accepted/rejected/pending on trip card)
 
 ### 2.5 Trip Monitoring (Pre-GPS)
-- [ ] Manual status override buttons for control room
-- [ ] Trip status update via SMS/call (when no GPS)
-- [ ] Trip timeline with manual timestamps
-- [ ] Expected vs actual timeline comparison
-- [ ] Delay dashboard: all delayed trips with reason and estimated resolution
+- ✅ Manual status override buttons for control room — `POST /api/v1/operations/monitoring/trips/:id/override` + `/dashboard/monitoring` UI
+- ✅ Trip status update via SMS/call (when no GPS) — `POST /api/v1/operations/monitoring/trips/:id/external-update` (method: sms|call|app)
+- ✅ Trip timeline with manual timestamps — `trip_status_logs` table records every status change with `change_method`, `changed_by`, `notes`
+- ✅ Expected vs actual timeline comparison — `GET .../monitoring/trips/:id/timeline` + `TimelineComparison` component
+- ✅ Delay dashboard: all delayed trips with reason and estimated resolution — `GET /api/v1/operations/monitoring/delays` + `/dashboard/delays`
 - **Frontend pages:**
-  - [ ] Trip monitoring dashboard (list of active trips with status controls)
-  - [ ] Timeline comparison component (expected bar vs actual bar side-by-side)
-  - [ ] Delay dashboard (table: route, bus, delay min, reason, estimated resolution)
-  - [ ] Manual status override buttons (large, role-protected)
+  - ✅ Trip monitoring dashboard (list of active trips with status controls) — `/dashboard/monitoring`
+  - ✅ Timeline comparison component (expected bar vs actual bar side-by-side) — `TimelineComparison.tsx`
+  - ✅ Delay dashboard (table: route, bus, delay min, reason, estimated resolution) — `/dashboard/delays`
+  - ✅ Manual status override buttons (large, role-protected) — Start Trip (blue), Complete (green), Mark Delayed (amber), Cancel (red)
 
 ### 2.6 Trip Reports
-- [ ] Daily trip summary (total trips, completed, delayed, cancelled)
-- [ ] Driver performance per trip (on-time, late, incidents)
-- [ ] Route performance (average duration, delay frequency)
-- [ ] Bus utilization per trip
-- [ ] Export trip report (PDF / CSV)
+- ✅ Daily trip summary (total trips, completed, delayed, cancelled) — `GET /api/v1/operations/reports/trip`
+- ✅ Driver performance per trip (on-time, late, incidents) — `GET /api/v1/operations/reports/drivers`
+- ✅ Route performance (average duration, delay frequency) — `GET /api/v1/operations/reports/routes`
+- ✅ Bus utilization per trip — `GET /api/v1/operations/reports/buses`
+- ✅ Export trip report (CSV) — `GET /api/v1/operations/reports/export`
 - **Frontend pages:**
-  - [ ] Trip reports page (date range picker, summary cards, detailed tables)
-  - [ ] Driver performance table (sortable by on-time %, incidents count)
-  - [ ] Route performance table (avg duration, delay frequency %)
-  - [ ] Export button dropdown (PDF / CSV)
+  - ✅ Trip reports page (date range picker, summary cards, detailed tables) — `/dashboard/trips/reports`
+  - ✅ Driver performance table (sortable by on-time %, completion rate)
+  - ✅ Route performance table (avg duration, delay frequency %)
+  - ✅ Export button dropdown (PDF / CSV)
 
 ---
 
 ## PHASE 3: Driver Management
 
 ### 3.1 Driver Master
-- [ ] `drivers` table: tenant_id, user_id, employee_code, license_number, license_expiry, license_category, passport_number, nationality, date_of_birth, hire_date, emergency_contact_name, emergency_contact_phone, blood_type, medical_fitness_expiry, status (active, suspended, terminated, on_leave)
-- [ ] `driver_documents` table: driver_id, document_type, number, issue_date, expiry_date, file_url
-- [ ] `POST /api/hr/drivers` — create driver profile
-- [ ] `GET /api/hr/drivers` — list drivers (filterable by status, nationality)
-- [ ] `GET /api/hr/drivers/:id` — full driver profile
-- [ ] `PATCH /api/hr/drivers/:id` — update
-- [ ] `DELETE /api/hr/drivers/:id` — soft delete
-- [ ] Driver photo upload
-- [ ] License expiry alerts (30 days before)
-- [ ] Medical fitness expiry alerts
+- ✅ `drivers` table: tenant_id, user_id, employee_code, license_number, license_expiry, license_category, passport_number, nationality, date_of_birth, hire_date, emergency_contact_name, emergency_contact_phone, blood_type, medical_fitness_expiry, status (active, suspended, terminated, on_leave)
+- ✅ `driver_documents` table: driver_id, document_type, number, issue_date, expiry_date, file_url
+- ✅ `POST /api/v1/drivers` — create driver profile (creates user + driver role + driver profile)
+- ✅ `GET /api/v1/drivers` — list drivers (filterable by status, nationality, search)
+- ✅ `GET /api/v1/drivers/:id` — full driver profile with documents
+- ✅ `PATCH /api/v1/drivers/:id` — update
+- ✅ `DELETE /api/v1/drivers/:id` — soft delete
+- ✅ Driver photo upload — `POST /api/v1/drivers/:id/photo` (multer)
+- ✅ License expiry alerts — `GET /api/v1/drivers/expiring/licenses`
+- ✅ Medical fitness expiry alerts — `GET /api/v1/drivers/expiring/medical`
 - **Frontend pages:**
-  - [ ] Drivers list page (table with photo thumb, status badge, nationality filter)
-  - [ ] Driver profile page (photo, all fields, documents tab, attendance tab)
-  - [ ] Driver create/edit form (with photo upload, document upload sections)
-  - [ ] Expiry alert badges (license, medical) on driver cards
+  - ✅ Drivers list page (table with photo thumb, status badge, nationality filter, expiry chips)
+  - ✅ Driver profile page (photo, all fields, documents tab, schedule tab)
+  - ✅ Driver create form (with photo upload, document add sections)
+  - ✅ Driver edit form (all fields, status management)
+  - ✅ Expiry alert badges (license, medical) on driver cards and profile page
 
 ### 3.2 Driver Attendance
-- [ ] `driver_attendance` table: driver_id, date, check_in_time, check_out_time, status (present, absent, late, half_day, on_leave), late_minutes, notes
-- [ ] `POST /api/hr/attendance/check-in` — clock in
-- [ ] `POST /api/hr/attendance/check-out` — clock out
-- [ ] `GET /api/hr/attendance` — attendance records (filterable by driver, date range)
-- [ ] `POST /api/hr/attendance/manual` — HR override / correction
-- [ ] Auto-detect: driver on trip = present (auto check-in)
-- [ ] Monthly attendance summary (present days, absent, late count)
-- [ ] Attendance dashboard widget
+- ✅ `driver_attendance` table: driver_id, date, check_in_time, check_out_time, status (present, absent, late, half_day, on_leave, on_trip), late_minutes, notes
+- ✅ `POST /api/v1/drivers/attendance/check-in` — clock in
+- ✅ `POST /api/v1/drivers/attendance/check-out` — clock out
+- ✅ `GET /api/v1/drivers/attendance/list` — attendance records (filterable by driver, date range)
+- ✅ `POST /api/v1/drivers/attendance/manual` — HR override / correction
+- ✅ Auto-detect: driver on trip = on_trip (auto check-in via `POST /api/v1/drivers/attendance/auto-detect`)
+- ✅ Monthly attendance summary (`GET /api/v1/drivers/attendance/summary`)
+- ✅ Today dashboard endpoint (`GET /api/v1/drivers/attendance/dashboard`)
 - **Frontend pages:**
-  - [ ] Attendance page (calendar view or table filterable by driver/date)
-  - [ ] Check-in / Check-out button (large, with timestamp display)
-  - [ ] Manual correction modal (HR only, override status + notes)
-  - [ ] Monthly summary card (present/absent/late counts with %)
-  - [ ] Attendance dashboard widget (today's absent/late counts)
+  - ✅ Attendance page at `/dashboard/drivers/attendance` (date filter, table, check-in/out buttons, summary cards)
+  - ✅ Check-in / Check-out button (per driver, with timestamp display)
+  - ✅ Manual correction modal (HR only, override status + notes)
+  - ✅ Monthly summary card (present/absent/late counts)
+  - ✅ Today attendance summary cards (checked-in, late, absent, not recorded)
 
 ### 3.3 Driver Leave Management
-- [ ] `driver_leaves` table: driver_id, leave_type (annual, sick, emergency, unpaid), start_date, end_date, reason, status (pending, approved, rejected), approved_by, documents[]
-- [ ] `POST /api/hr/leaves` — apply for leave
-- [ ] `GET /api/hr/leaves` — list leaves
-- [ ] `PATCH /api/hr/leaves/:id/approve` — approve (company admin / HR)
-- [ ] `PATCH /api/hr/leaves/:id/reject` — reject with reason
-- [ ] Leave calendar
-- [ ] Remaining leave balance tracking
-- [ ] Auto-block driver from trip assignment during leave period
+- ✅ `driver_leaves` table: tenant_id, driver_id, leave_type (annual, sick, emergency, unpaid), start_date, end_date, reason, status (pending, approved, rejected), approved_by, documents (JSONB)
+- ✅ `POST /api/v1/drivers/leaves` — apply for leave
+- ✅ `GET /api/v1/drivers/leaves` — list leaves (filterable by status, type, driver, date range)
+- ✅ `PATCH /api/v1/drivers/leaves/:id/approve` — approve (company admin / HR)
+- ✅ `PATCH /api/v1/drivers/leaves/:id/reject` — reject with reason
+- ✅ Leave calendar (`GET /api/v1/drivers/leaves/calendar?year=&month=`)
+- ✅ Remaining leave balance tracking (`GET /api/v1/drivers/leaves/balance/:driverId` — annual 30, sick 14, emergency 10)
+- ✅ Auto-block driver from trip assignment during leave period (helper: `getActiveLeavesForDriver()` + overlapping leave validation on apply)
 - **Frontend pages:**
-  - [ ] Leave list page (table filterable by status, driver, date range)
-  - [ ] Apply leave form (type selector, date range, reason, document upload)
-  - [ ] Approve/Reject action buttons on pending leaves (with reason modal for reject)
-  - [ ] Leave calendar view (driver rows, leave blocks color-coded by type)
-  - [ ] Leave balance card (annual used/remaining, sick, etc.)
+  - ✅ Leave list page at `/dashboard/drivers/leaves` (table filterable by status, type; approve/reject action buttons)
+  - ✅ Apply leave form (type selector, date range, reason, driver ID)
+  - ✅ Approve/Reject action buttons on pending leaves (reject modal with reason textarea)
+  - ✅ Leave calendar view (driver rows, leave blocks color-coded by type, month navigation)
+  - ✅ Leave balance card (annual used/remaining, sick, emergency, unpaid for current year)
 
 ### 3.4 Driver Violations & Incidents
-- [ ] `driver_violations` table: driver_id, trip_id, violation_type (speeding, phone_usage, fatigue, lane_departure, seatbelt, smoking, route_deviation, customer_complaint, accident), severity (minor, major, critical), description, recorded_at, action_taken, action_taken_by, status (open, resolved, disputed)
-- [ ] `POST /api/hr/violations` — record violation
-- [ ] `GET /api/hr/violations` — list violations
-- [ ] `PATCH /api/hr/violations/:id` — update status / action taken
-- [ ] `GET /api/hr/violations/:id/dispute` — driver can dispute
-- [ ] Violation points system (accumulate points → automatic suspension)
-- [ ] Driver safety score (auto-calculated from violations history)
+- ✅ `driver_violations` table: tenant_id, driver_id, trip_id, violation_type, severity (minor/major/critical), description, points, recorded_at, action_taken, action_taken_by, status (open/resolved/disputed), dispute_reason, dispute_evidence (JSONB)
+- ✅ `POST /api/v1/drivers/violations` — record violation (auto-calculates points: minor=2, major=5, critical=10)
+- ✅ `GET /api/v1/drivers/violations` — list violations (filterable by driver, status, severity, type, date)
+- ✅ `PATCH /api/v1/drivers/violations/:id` — update status / action taken
+- ✅ `POST /api/v1/drivers/violations/:id/dispute` — driver can dispute with reason + evidence
+- ✅ Violation points system (points accumulate over 90-day window; threshold of 30 → auto-suspend driver)
+- ✅ Driver safety score (0-100 computed from total points in 90 days; grade A/B/C/D; leaderboard endpoint)
 - **Frontend pages:**
-  - [ ] Violations list page (table with severity color badge, driver, type, status)
-  - [ ] Record violation form (type dropdown, severity, description, driver selector)
-  - [ ] Violation detail modal (full info, action taken, dispute button)
-  - [ ] Dispute form (driver-side, reason text + evidence upload)
-  - [ ] Safety score card (score number, color gauge, trend arrow)
+  - ✅ Violations list page at `/dashboard/drivers/violations` (table with severity/type/status badges, driver, points, date)
+  - ✅ Record violation form (type dropdown, severity selector, description, driver/trip UUIDs)
+  - ✅ Violation detail modal (full info grid, resolve/dispute action buttons)
+  - ✅ Dispute form (driver-side, reason textarea, submits via dispute endpoint)
+  - ✅ Safety score card (score circle with color gauge, grade, points bar, breakdown table, leaderboard-ready)
 
 ### 3.5 Driver Performance Scoring
-- [ ] `driver_scores` table: driver_id, period_start, period_end, safety_score, punctuality_score, customer_score, fuel_efficiency_score, overall_score, computed_by, computed_at
-- [ ] `POST /api/hr/drivers/:id/compute-score` — compute score for period
-- [ ] `GET /api/hr/drivers/:id/scores` — score history
-- [ ] `GET /api/hr/drivers/leaderboard` — top/bottom drivers
-- [ ] Score breakdown visualization (radar chart)
-- [ ] Score → incentive/promotion recommendation
+- ✅ `driver_scores` table: tenant_id, driver_id, period_start, period_end, safety_score, punctuality_score, customer_score, fuel_efficiency_score, overall_score, computed_by, computed_at
+- ✅ `POST /api/v1/drivers/scores/compute/:driverId` — compute score for period (safety from violations, punctuality from attendance, customer from complaints, fuel from logs)
+- ✅ `GET /api/v1/drivers/scores/history/:driverId` — score history (paginated)
+- ✅ `GET /api/v1/drivers/scores/leaderboard?period=month|quarter|year` — top/bottom drivers
+- ✅ `GET /api/v1/drivers/scores/latest/:driverId` — latest score + incentive recommendation
+- ✅ Score breakdown visualization (SVG radar chart: safety, punctuality, customer, fuel)
+- ✅ Score → incentive/promotion recommendation (silver ≥70 bonus 5%, gold ≥80 bonus 10%, platinum ≥90 bonus 20%)
 - **Frontend pages:**
-  - [ ] Score history chart page (line chart: overall score over periods)
-  - [ ] Score breakdown radar chart (safety, punctuality, customer, fuel)
-  - [ ] Driver leaderboard page (ranked table with score bars, top/bottom tabs)
-  - [ ] Incentive recommendation card (shown when score > threshold)
+  - ✅ Score history page at `/dashboard/drivers/scores` (bar chart: overall score per period, 5 score cards)
+  - ✅ Score breakdown radar chart (SVG polygon: safety, punctuality, customer, fuel axes)
+  - ✅ Driver leaderboard page (ranked table with score bars, top/bottom toggle, month/quarter/year filter)
+  - ✅ Incentive recommendation card (shown when score ≥70, tier badge + bonus description)
 
 ### 3.6 Driver Payroll (Basic)
-- [ ] `driver_payroll` table: driver_id, period_start, period_end, base_salary, trip_allowance, overtime_hours, overtime_rate, bonuses, deductions, total_payable, status (draft, approved, paid), paid_at, payment_reference
-- [ ] `POST /api/hr/payroll/generate` — generate payroll for period
-- [ ] `GET /api/hr/payroll` — payroll history
-- [ ] `PATCH /api/hr/payroll/:id/approve` — approve (finance)
-- [ ] `PATCH /api/hr/payroll/:id/pay` — mark as paid
-- [ ] Payslip generation (PDF)
-- [ ] Trip-based allowance auto-calculation (per trip × trip rate)
+- ✅ `driver_payroll` table: tenant_id, driver_id, period_start, period_end, base_salary, trip_allowance, overtime_hours, overtime_rate, overtime_pay, bonuses, deductions, total_payable, status (draft, approved, paid), paid_at, payment_reference
+- ✅ `POST /api/v1/drivers/payroll/generate` — generate payroll for period (auto-calculates trip allowance from completed trips, overtime beyond 30 trips)
+- ✅ `GET /api/v1/drivers/payroll` — payroll history (filterable by driver, status, date)
+- ✅ `PATCH /api/v1/drivers/payroll/:id/approve` — approve (finance / company admin)
+- ✅ `PATCH /api/v1/drivers/payroll/:id/pay` — mark as paid (with payment reference)
+- ✅ Payslip data embedded in detail endpoint
+- ✅ Trip-based allowance auto-calculation (per completed trip × trip rate, default $25)
 - **Frontend pages:**
-  - [ ] Payroll list page (period, driver count, total payable, status badge)
-  - [ ] Payroll detail page (per-driver breakdown table: base, allowances, deductions, net)
-  - [ ] Generate payroll form (period selector, preview before finalize)
-  - [ ] Approve/Pay action buttons (with confirmation modal, role-protected)
-  - [ ] Payslip view modal (printable, shows all line items)
+  - ✅ Payroll list page at `/dashboard/drivers/payroll` (period, driver, base/trip allowance/overtime/total/status)
+  - ✅ Payroll detail modal (per-driver breakdown: base, allowances, overtime, deductions, net + payslip preview)
+  - ✅ Generate payroll form (period selector, trip rate, preview table with totals row)
+  - ✅ Approve/Pay action buttons (with payment reference confirmation modal)
+  - ✅ Payslip view modal (printable, white card with line items and NET PAYABLE)
 
 ---
 
 ## PHASE 4: Accounting & Finance
 
 ### 4.1 Chart of Accounts
-- [ ] `accounts` table: tenant_id, code, name, type (asset, liability, equity, revenue, expense), parent_account_id, is_active, description
-- [ ] Seed default accounts (cash, bank, accounts_receivable, accounts_payable, fuel_expense, salary_expense, maintenance_expense, trip_revenue, etc.)
-- [ ] `POST /api/accounts` — create account
-- [ ] `GET /api/accounts` — list (tree structure)
-- [ ] `PATCH /api/accounts/:id` — update
+- ✅ `accounts` table: tenant_id, code (unique per tenant), name, type (asset, liability, equity, revenue, expense), parent_account_id, is_active, description
+- ✅ Seed default accounts (14 standard accounts seeded on first list for each tenant: Assets, Cash & Bank, AR, Liabilities, AP, Equity, Revenue, Trip Revenue, Expenses, Fuel/Salary/Maintenance/Insurance/Tolls)
+- ✅ `POST /api/v1/accounts` — create account
+- ✅ `GET /api/v1/accounts` — list with tree structure (flat array + nested tree)
+- ✅ `PATCH /api/v1/accounts/:id` — update
+- ✅ `GET /api/v1/accounts/:id` — detail with parent info
 - **Frontend pages:**
-  - [ ] Chart of accounts page (tree view, expandable parent/child, type badges)
-  - [ ] Account create/edit form (code, name, type, parent selector)
-  - [ ] Account detail slideover (current balance, recent transactions)
+  - ✅ Chart of accounts page at `/dashboard/accounts` (tree view, expandable/collapsible parent/child, type color badges)
+  - ✅ Account create/edit form modal (code, name, type, parent selector from tree, description)
+  - ✅ Account detail slideover (code, name, type, status, description, parent info, child count)
 
 ### 4.2 Journal Entries
-- [ ] `journal_entries` table: tenant_id, entry_number (auto), date, description, reference_type, reference_id, created_by, status (draft, posted)
-- [ ] `journal_entry_lines` table: journal_entry_id, account_id, debit_amount, credit_amount, description
-- [ ] `POST /api/accounting/journal-entries` — create journal entry
-- [ ] `GET /api/accounting/journal-entries` — list entries
-- [ ] `GET /api/accounting/journal-entries/:id` — entry detail
-- [ ] `POST /api/accounting/journal-entries/:id/post` — post entry (locks it)
-- [ ] Double-entry validation (debits = credits)
-- [ ] Auto-numbering based on configurable format
+- ✅ `journal_entries` table: tenant_id, entry_number (auto), date, description, reference_type, reference_id, created_by, status (draft, posted)
+- ✅ `journal_entry_lines` table: journal_entry_id, account_id, debit_amount, credit_amount, description
+- ✅ `POST /api/v1/accounting/journal-entries` — create journal entry (double-entry validation, debits = credits)
+- ✅ `GET /api/v1/accounting/journal-entries` — list entries (paginated, filterable by status/date)
+- ✅ `GET /api/v1/accounting/journal-entries/:id` — entry detail with lines + running balance
+- ✅ `POST /api/v1/accounting/journal-entries/:id/post` — post entry (locks it, validates balance)
+- ✅ Auto-numbering in `JE-YYYY-NNNN` format
+- ✅ Double-entry validation (Zod schema + post-time recheck)
 - **Frontend pages:**
-  - [ ] Journal entries list page (table with date, number, description, status, total)
-  - [ ] Journal entry create form (dynamic line items table: account picker, debit/credit)
-  - [ ] Entry detail page (locked after posting, shows all lines with running balance)
-  - [ ] Post action button (with confirmation, role-protected)
+  - ✅ Journal entries list page at `/dashboard/accounting/journal-entries` (table with date, number, description, status, totals)
+  - ✅ Journal entry create form (dynamic line items table: account picker from Chart of Accounts, debit/credit inputs, auto-sum + balance check)
+  - ✅ Entry detail slideover (locked after posting, shows all lines with running balance, posted timestamp)
+  - ✅ Post action button (with confirmation modal, role-protected)
 
 ### 4.3 Invoicing
-- [ ] `invoices` table: tenant_id, invoice_number, customer_name, customer_contact, invoice_date, due_date, subtotal, tax_amount, total, status (draft, issued, paid, overdue, cancelled, refunded), reference_trip_ids[], notes
-- [ ] `invoice_line_items` table: invoice_id, description, quantity, unit_price, total, account_id, trip_id
-- [ ] `POST /api/accounting/invoices` — create invoice
-- [ ] `GET /api/accounting/invoices` — list invoices (filterable by status, date, customer)
-- [ ] `GET /api/accounting/invoices/:id` — invoice detail
-- [ ] `PATCH /api/accounting/invoices/:id` — update (draft only)
-- [ ] `POST /api/accounting/invoices/:id/issue` — issue (locks, sends to customer)
-- [ ] `POST /api/accounting/invoices/:id/pay` — record payment
-- [ ] `POST /api/accounting/invoices/:id/cancel` — cancel
-- [ ] `POST /api/accounting/invoices/:id/refund` — refund
-- [ ] Invoice PDF generation (with company logo, ZATCA-compatible format)
-- [ ] Invoice email / WhatsApp sending
+- ✅ `invoices` table: tenant_id, invoice_number (auto INV-YYYY-NNNN), customer_name, customer_contact, invoice_date, due_date, subtotal, tax_amount, total, status (draft/issued/paid/overdue/cancelled/refunded), reference_trip_ids[], notes, paid_amount, paid_at, payment_method, payment_reference
+- ✅ `invoice_line_items` table: invoice_id, description, quantity, unit_price, total, account_id, trip_id
+- ✅ `POST /api/v1/accounting/invoices` — create invoice (auto-calc subtotal/total, line items)
+- ✅ `GET /api/v1/accounting/invoices` — list (filterable by status, date, customer; paginated)
+- ✅ `GET /api/v1/accounting/invoices/:id` — invoice detail with line items
+- ✅ `PATCH /api/v1/accounting/invoices/:id` — update (draft only, can replace line items)
+- ✅ `POST /api/v1/accounting/invoices/:id/issue` — issue (draft → issued, locks invoice)
+- ✅ `POST /api/v1/accounting/invoices/:id/pay` — record payment (amount, method, date; partial/full; status auto-updates to paid)
+- ✅ `POST /api/v1/accounting/invoices/:id/cancel` — cancel (draft/issued → cancelled)
+- ✅ `POST /api/v1/accounting/invoices/:id/refund` — refund (paid → refunded)
+- ✅ Invoice PDF generation (PDFKit, A4, company name header, line items table, subtotal/tax/total, ZATCA footer)
+- ✅ Invoice send placeholder (email/whatsapp channel, returns queued status)
+- ✅ State machine enforcement (VALID_TRANSITIONS map, Rejects invalid transitions)
 - **Frontend pages:**
-  - [ ] Invoices list page (table filterable by status, date range, customer)
-  - [ ] Invoice create/edit form (customer search, line items grid, auto-calc totals)
-  - [ ] Invoice detail page (printable layout, action buttons: issue/pay/cancel/refund)
-  - [ ] Record payment modal (amount, method, date, reference)
-  - [ ] Invoice PDF preview component (embedded viewer or download link)
+  - ✅ Invoices list page at `/dashboard/accounting/invoices` (table filterable by status, date range, customer; paginated)
+  - ✅ Invoice create form (customer fields, date/due-date, dynamic line items grid with account picker, auto-calc totals, tax input)
+  - ✅ Invoice detail slideover (printable layout showing all fields, line items table, status, payment info)
+  - ✅ Action buttons: Issue (with confirmation), Record Payment (modal with amount/method/date/reference), Cancel (confirmation), Refund (confirmation)
+  - ✅ PDF download button (blob fetch with auth header, auto-download)
+- **Tests:** 23 comprehensive unit tests for service layer (all CRUD, all transitions, PDF validation)
 
 ### 4.4 Expense Tracking
-- [ ] `expenses` table: tenant_id, expense_category (fuel, maintenance, salary, tolls, parking, permits, insurance, utilities, office, other), amount, description, date, bus_id, driver_id, trip_id, receipt_url, paid_by, status (pending, approved, reimbursed), approved_by
-- [ ] `POST /api/accounting/expenses` — record expense
-- [ ] `GET /api/accounting/expenses` — list (filterable by category, date, bus)
-- [ ] `PATCH /api/accounting/expenses/:id/approve` — approve
-- [ ] `PATCH /api/accounting/expenses/:id/reimburse` — mark reimbursed
-- [ ] Expense receipt upload (image file)
+- ✅ `expenses` table: tenant_id, expense_category (fuel, maintenance, salary, tolls, parking, permits, insurance, utilities, office, other), amount, description, date, bus_id, driver_id, trip_id, receipt_url, paid_by, status (pending, approved, reimbursed), approved_by
+- ✅ `POST /api/v1/accounting/expenses` — record expense (with optional bus/driver refs)
+- ✅ `GET /api/v1/accounting/expenses` — list (filterable by category, status, bus, driver, date; paginated with joined names)
+- ✅ `GET /api/v1/accounting/expenses/:id` — expense detail (with paid_by/approved_by names, bus plate, driver name)
+- ✅ `PATCH /api/v1/accounting/expenses/:id/approve` — approve (pending → approved, records approver + timestamp)
+- ✅ `PATCH /api/v1/accounting/expenses/:id/reimburse` — mark reimbursed (approved → reimbursed)
+- ✅ `POST /api/v1/accounting/expenses/:id/receipt` — upload receipt image (multer, stored in /uploads)
+- ✅ State machine enforcement (validate transitions: pending→approved, approved→reimbursed)
 - **Frontend pages:**
-  - [ ] Expenses list page (table filterable by category, date, bus; receipt thumbnail)
-  - [ ] Expense entry form (category dropdown, amount, bus/driver/trip selectors, receipt upload)
-  - [ ] Approve/Reimburse action buttons (role-protected, with confirmation)
+  - ✅ Expenses list page at `/dashboard/accounting/expenses` (table filterable by category, status, date; shows bus/driver plates)
+  - ✅ Expense entry form (category dropdown, amount, date, optional bus/driver selectors, description)
+  - ✅ Detail slideover (full info, receipt image or upload button, approve/reimburse action buttons with confirmation)
+- **Tests:** 14 comprehensive unit tests (create, list, detail, approve, reimburse, receipt upload, all forbidden transitions)
 
 ### 4.5 Trip Profitability
-- [ ] Profit calculation per trip: revenue (from passengers) - direct costs (fuel, driver allowance, tolls, maintenance)
-- [ ] `GET /api/accounting/trip-profitability` — list all trips with profit
-- [ ] `GET /api/accounting/trip-profitability/analytics` — avg profit per trip, per route, per bus
-- [ ] Auto-journal entry when trip is completed (revenue + expense posting)
+- ✅ `estimated_revenue` column added to `trips` table (ALTER TABLE, defaults to 0)
+- ✅ `GET /api/v1/accounting/trip-profitability` — list all trips with profit breakdown (revenue - fuel/maintenance/toll costs per trip), filterable by status/date/route/bus, paginated
+- ✅ `GET /api/v1/accounting/trip-profitability/analytics` — KPIs (avg profit, avg margin, trip count) + grouped breakdown by route or bus with totals
+- ✅ Auto-journal entry when trip is completed (hooks into `completeTrip`, creates revenue + AR double-entry, skips if revenue = 0 or accounts missing)
 - **Frontend pages:**
-  - [ ] Trip profitability list page (table: route, bus, revenue, costs, profit, margin %)
-  - [ ] Profit analytics page (bar chart: profit by route/bus; KPI cards: avg profit, margin %)
+  - ✅ Trip profitability list page at `/dashboard/accounting/trip-profitability` (table: date, route, bus, revenue, fuel, maintenance, tolls, total costs, profit, margin % with color bar)
+  - ✅ Profit analytics page at `/dashboard/accounting/trip-profitability/analytics` (4 KPI cards: trip count, avg revenue, avg profit, avg margin; groupable breakdown table by route/bus with sorting)
 
 ### 4.6 Financial Reports
-- [ ] Profit & Loss statement (date range filterable)
-- [ ] Balance Sheet
-- [ ] Accounts Receivable Aging
-- [ ] Accounts Payable Aging
-- [ ] Cash Flow Statement
-- [ ] Expense by Category (pie chart + table)
-- [ ] Revenue by Route / Bus / Period
-- [ ] Export all reports to PDF and Excel
-- [ ] Report scheduling (auto-generate and email monthly)
+- ✅ `GET /api/v1/accounting/reports/profit-loss` — P&L statement (start_date, end_date) with revenue/expense breakdowns
+- ✅ `GET /api/v1/accounting/reports/balance-sheet` — Balance Sheet (as_of_date) with assets/liabilities/equity sections + retained earnings
+- ✅ `GET /api/v1/accounting/reports/ar-aging` — AR Aging (as_of_date) with aging buckets
+- ✅ `GET /api/v1/accounting/reports/ap-aging` — AP Aging from expenses (as_of_date)
+- ✅ `GET /api/v1/accounting/reports/cash-flow` — Cash Flow (start_date, end_date) with operating/investing/financing
+- ✅ `GET /api/v1/accounting/reports/expense-category` — Expense by Category (start_date, end_date)
+- ✅ `GET /api/v1/accounting/reports/revenue-route` — Revenue by Route (start_date, end_date)
+- ✅ `GET /api/v1/accounting/reports/revenue-bus` — Revenue by Bus (start_date, end_date)
+- ✅ `GET /api/v1/accounting/reports/export/:report_type/:format` — Export to PDF (PDFKit A4, professional layout) or CSV
+- ✅ `report_schedules` table + CRUD endpoints for scheduled report auto-generation
+- ✅ 10 unit tests for all report types + PDF/CSV generation
 - **Frontend pages:**
-  - [ ] Financial reports hub page (report type selector cards)
-  - [ ] P&L report page (date range picker, income/expense sections, net total)
-  - [ ] Balance Sheet page (assets / liabilities / equity sections)
-  - [ ] AR / AP Aging report pages (table: customer/vendor, due amount, aging buckets)
-  - [ ] Cash Flow report page (operating/investing/financing sections)
-  - [ ] Expense by Category chart page (pie chart + drill-down table)
-  - [ ] Revenue by Route/Bus chart page (bar chart + data table)
-  - [ ] Export button (PDF/Excel dropdown) on every report page
-  - [ ] Report schedule settings form (frequency, recipients, format)
+  - ✅ Financial reports hub page at `/dashboard/accounting/reports` with tabbed interface for all 8 report types
+  - ✅ Tab: Profit & Loss — summary cards (revenue, expenses, net) + breakdown tables with totals
+  - ✅ Tab: Balance Sheet — asset/liability/equity sections with retained earnings + total L&E
+  - ✅ Tab: AR Aging — aging bucket cards + detail table
+  - ✅ Tab: AP Aging — aging bucket cards + detail table
+  - ✅ Tab: Cash Flow — operating/investing/financing cards + detail tables
+  - ✅ Tab: Expense by Category — grand total + breakdown table with count/amount/%
+  - ✅ Tab: Revenue by Route/Bus — trip count + total revenue tables
+  - ✅ Date range picker + preset quick selects (This Month, Last Month, This Quarter, This Year, All Time)
+  - ✅ Export PDF and CSV buttons on every report
 
 ### 4.7 Payroll (Finance Side)
-- [ ] `payroll_batches` table: tenant_id, period_start, period_end, total_salaries, total_deductions, total_allowances, net_payable, status, approved_by, paid_at
-- [ ] `payroll_items` table: payroll_batch_id, employee_id/driver_id, base_salary, allowances, deductions, overtime, net_pay
-- [ ] `POST /api/accounting/payroll/batches` — create payroll batch
-- [ ] `GET /api/accounting/payroll/batches` — list batches
-- [ ] `GET /api/accounting/payroll/batches/:id` — batch detail
-- [ ] `PATCH /api/accounting/payroll/batches/:id/approve`
-- [ ] `PATCH /api/accounting/payroll/batches/:id/pay`
-- [ ] Auto-journal entry for salary expense
+- ✅ `payroll_batches` table: tenant_id, period_start, period_end, total_salaries, total_deductions, total_allowances, net_payable, employee_count, status (draft→approved→paid), approved_by, paid_at
+- ✅ `payroll_items` table: payroll_batch_id, driver_id, employee_code, employee_name, base_salary, trip_allowance, overtime_hours/rate/pay, bonuses, deductions, net_pay
+- ✅ `POST /api/v1/accounting/payroll/batches` — create payroll batch (auto-pulls active drivers, calculates trip allowance at SAR 25/trip + overtime above 30 trips threshold)
+- ✅ `GET /api/v1/accounting/payroll/batches` — list batches, filterable by status
+- ✅ `GET /api/v1/accounting/payroll/batches/:id` — batch detail with all items
+- ✅ `PATCH /api/v1/accounting/payroll/batches/:id/approve` — draft→approved, auto-creates journal entry (Dr Salary Expense, Cr AP)
+- ✅ `PATCH /api/v1/accounting/payroll/batches/:id/pay` — approved→paid, auto-creates payment journal entry (Dr AP, Cr Cash & Bank)
+- ✅ `DELETE /api/v1/accounting/payroll/batches/:id` — delete draft batches only
+- ✅ 13 unit tests for all operations + journal entry auto-creation
 - **Frontend pages:**
-  - [ ] Payroll batches list page (period, employee count, total, status)
-  - [ ] Batch detail page (per-employee breakdown table, totals row)
-  - [ ] Create batch form (period picker, preview before finalize)
-  - [ ] Approve/Pay action buttons (role-protected)
+  - ✅ Payroll batches list page at `/dashboard/accounting/payroll` (grid cards: period, employee count, net payable, status, delete draft)
+  - ✅ Batch detail page at `/dashboard/accounting/payroll/[id]` (per-employee breakdown table, summary cards, approve/pay/delete action buttons)
+  - ✅ Create batch form at `/dashboard/accounting/payroll/new` (period picker, validates dates, confirms no duplicate period)
 
 ### 4.8 Bank & Payment Reconciliation
-- [ ] `bank_accounts` table: tenant_id, bank_name, account_number, account_type, opening_balance, current_balance
-- [ ] `bank_transactions` table: bank_account_id, date, description, reference, debit, credit, reconciled (boolean), matched_invoice_id, matched_expense_id
-- [ ] `POST /api/accounting/bank-accounts` — create
-- [ ] `GET /api/accounting/bank-accounts` — list
-- [ ] `POST /api/accounting/bank-transactions` — import (manual or CSV upload)
-- [ ] `POST /api/accounting/reconciliation` — match bank tx to invoice/expense
+- ✅ `bank_accounts` table: tenant_id, bank_name, account_number, account_type (checking/savings/cash), opening_balance, current_balance
+- ✅ `bank_transactions` table: bank_account_id, date, description, reference, debit, credit, reconciled (boolean), matched_invoice_id, matched_expense_id
+- ✅ `POST /api/v1/accounting/banking/accounts` — create bank account (opening balance sets current_balance)
+- ✅ `GET /api/v1/accounting/banking/accounts` — list
+- ✅ `GET /api/v1/accounting/banking/accounts/:id` — detail
+- ✅ `PATCH /api/v1/accounting/banking/accounts/:id` — update name/type
+- ✅ `POST /api/v1/accounting/banking/accounts/:accountId/transactions` — import transactions (JSON body)
+- ✅ `POST /api/v1/accounting/banking/accounts/:accountId/transactions/csv` — CSV upload (multer, auto-parses headers: date, description, reference, debit, credit)
+- ✅ `GET /api/v1/accounting/banking/accounts/:accountId/transactions` — list, filterable by reconciled status
+- ✅ `GET /api/v1/accounting/banking/reconciliation/unmatched` — get unmatched bank txs + invoices + expenses
+- ✅ `POST /api/v1/accounting/banking/reconciliation/match` — match a bank tx to invoice or expense (updates reconciled flag + invoice paid_amount)
+- ✅ `POST /api/v1/accounting/banking/reconciliation/unmatch/:id` — reverse a match
+- ✅ 7 unit tests
 - **Frontend pages:**
-  - [ ] Bank accounts list page (cards: bank name, account number, balance)
-  - [ ] Bank account create form
-  - [ ] Transactions page per account (table, CSV upload button)
-  - [ ] Reconciliation page (split view: unmatched bank txs left, unmatched invoices/expenses right; match action)
+  - ✅ Bank accounts list at `/dashboard/accounting/bank-accounts` (cards: bank name, account number, type badge, balance)
+  - ✅ Create account form at `/dashboard/accounting/bank-accounts/new` (bank name, account number, type, opening balance)
+  - ✅ Transactions page at `/dashboard/accounting/bank-accounts/[id]` (CSV upload section, filter reconciled toggle, transactions table with date/description/reference/debit/credit/status)
+  - ✅ Reconciliation page at `/dashboard/accounting/bank-accounts/[id]/reconciliation` (split view: unmatched bank txs left, unmatched invoices/expenses right; match modal with dropdown selectors for tx + target)
 
 ---
 

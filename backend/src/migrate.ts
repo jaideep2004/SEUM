@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
   max_depots INTEGER NOT NULL DEFAULT 1,
   features JSONB NOT NULL DEFAULT '{}',
   is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 INSERT INTO subscription_plans (name, description, price_monthly, price_yearly, max_users, max_vehicles, max_depots, features) VALUES
@@ -207,6 +208,8 @@ SELECT 'fleet_manager', id FROM permissions
 WHERE resource IN ('fleet')
    OR (resource = 'reports' AND action IN ('read', 'export'))
 ON CONFLICT DO NOTHING;
+
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
 `;
 
 async function run() {

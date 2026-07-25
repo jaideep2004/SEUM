@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid';
 import { query, queryOne } from '../db';
 import { NotFoundError, ConflictError } from '../utils/errors';
+import { createNotification } from './notificationService';
+import { createProfitJournalEntry } from './tripProfitabilityService';
 import type { CreateTripInput, UpdateTripInput, DelayTripInput, CancelTripInput, TripQuery, AddPassengerInput } from '../validators/operations';
 
 interface TripRow {
@@ -69,7 +71,7 @@ async function getTripExtras(tenantId: string, tripId: string): Promise<{ stops:
 export async function createTrip(tenantId: string, userId: string, input: CreateTripInput) {
   const [route, bus] = await Promise.all([
     queryOne('SELECT id FROM routes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.routeId, tenantId]),
-    queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.busId, tenantId]),
+    queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]),
   ]);
   if (!route) throw new NotFoundError('Route not found');
   if (!bus) throw new NotFoundError('Bus not found');
@@ -249,6 +251,10 @@ export async function completeTrip(tenantId: string, tripId: string) {
     `UPDATE trips SET status = 'completed', actual_end_time = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2`,
     [tripId, tenantId]
   );
+
+  // Auto-create journal entry for trip revenue
+  createProfitJournalEntry(tenantId, tripId).catch(() => {});
+
   return getTripById(tenantId, tripId);
 }
 
@@ -346,6 +352,17 @@ export async function assignDriver(tenantId: string, tripId: string, driverId: s
     `UPDATE trips SET driver_id = $1, driver_confirmation_status = 'pending', updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
     [driverId, tripId, tenantId]
   );
+
+  createNotification({
+    tenantId,
+    userId: driverId,
+    type: 'trip_assigned',
+    title: 'New Trip Assigned',
+    message: `You have been assigned to a new trip. Please confirm your availability.`,
+    resource: 'trip',
+    resourceId: tripId,
+  }).catch(() => {});
+
   return getTripById(tenantId, tripId);
 }
 

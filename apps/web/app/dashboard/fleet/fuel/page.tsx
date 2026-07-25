@@ -13,9 +13,8 @@ import {
   Download,
   AlertTriangle,
 } from "lucide-react";
+import { API_URL } from "@/services/api";
 import styles from "./page.module.css";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 const FUEL_TYPES = ["diesel", "petrol", "electric", "hybrid", "cng"];
 
@@ -46,18 +45,15 @@ export default function FuelLogsPage() {
   const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("seum_access_token");
       const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
       if (busFilter) params.set("busId", busFilter);
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
-      const res = await fetch(`${API}/fleet/fuel?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) {
-        setLogs(data.data);
-        setTotal(data.meta?.total || 0);
+      const res = await fetch(`${API_URL}/fleet/fuel?${params}`);
+      const json = await res.json();
+      if (json.success) {
+        setLogs(json.data || []);
+        setTotal(json.meta?.total || 0);
       }
     } catch {} finally {
       setLoading(false);
@@ -72,7 +68,6 @@ export default function FuelLogsPage() {
     e.preventDefault();
     setError("");
     try {
-      const token = localStorage.getItem("seum_access_token");
       const body = {
         busId: form.busId,
         liters: parseFloat(form.liters),
@@ -84,9 +79,9 @@ export default function FuelLogsPage() {
         fuelType: form.fuelType,
         receiptUrl: form.receiptUrl || undefined,
       };
-      const res = await fetch(`${API}/fleet/fuel`, {
+      const res = await fetch(`${API_URL}/fleet/fuel`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const data = await res.json();

@@ -29,9 +29,10 @@ export async function createTenant(req: Request, res: Response, next: NextFuncti
   }
 }
 
-export async function listTenants(_req: Request, res: Response, next: NextFunction) {
+export async function listTenants(req: Request, res: Response, next: NextFunction) {
   try {
-    const tenants = await authService.listTenants();
+    const isActive = req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined;
+    const tenants = await authService.listTenants(isActive);
     return sendSuccess(res, tenants, 'Tenants retrieved');
   } catch (err) {
     next(err);
@@ -70,6 +71,18 @@ export async function deleteTenant(req: Request, res: Response, next: NextFuncti
       return next(new NotFoundError('Tenant not found'));
     }
     return sendSuccess(res, tenant, 'Tenant deactivated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function hardDeleteTenant(req: Request, res: Response, next: NextFunction) {
+  try {
+    const deleted = await authService.hardDeleteTenant(req.params.id);
+    if (!deleted) {
+      return next(new NotFoundError('Tenant not found'));
+    }
+    return sendSuccess(res, null, 'Tenant permanently deleted');
   } catch (err) {
     next(err);
   }

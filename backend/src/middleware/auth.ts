@@ -22,12 +22,21 @@ declare global {
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
+  let token: string | undefined;
 
-  if (!header || !header.startsWith('Bearer ')) {
-    return next(new UnauthorizedError('Missing or invalid authorization header'));
+  if (header && header.startsWith('Bearer ')) {
+    const bearerToken = header.split(' ')[1];
+    if (bearerToken && bearerToken !== 'null' && bearerToken !== 'undefined') {
+      token = bearerToken;
+    }
+  }
+  if (!token && req.cookies?.access_token) {
+    token = req.cookies.access_token;
   }
 
-  const token = header.split(' ')[1];
+  if (!token) {
+    return next(new UnauthorizedError('Missing or invalid authorization header'));
+  }
 
   try {
     const payload = jwt.verify(token, config.jwt.accessSecret) as JwtPayload;

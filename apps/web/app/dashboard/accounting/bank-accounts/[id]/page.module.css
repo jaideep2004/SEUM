@@ -1,0 +1,34 @@
+.page { padding: 24px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.title { font-size: 22px; font-weight: 700; color: #f1f5f9; margin: 0 0 4px; }
+.acctNum { font-size: 13px; color: #64748b; font-family: monospace; margin: 0; }
+.headerRight { text-align: right; }
+.balance { font-size: 16px; font-weight: 700; color: #6366f1; }
+
+.uploadSection { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.sectionTitle { font-size: 14px; font-weight: 600; color: #f1f5f9; margin: 0 0 10px; }
+.uploadRow { display: flex; gap: 10px; align-items: center; }
+.fileInput { font-size: 13px; color: #e2e8f0; }
+.uploadBtn { padding: 6px 16px; border-radius: 6px; border: none; background: #6366f1; color: #fff; font-size: 13px; cursor: pointer; }
+.uploadBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint { font-size: 11px; color: #64748b; margin: 6px 0 0; }
+
+.navRow { display: flex; gap: 10px; margin-bottom: 14px; }
+.toggleBtn { padding: 6px 14px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 13px; cursor: pointer; }
+.toggleBtn:hover { border-color: #6366f1; color: #f1f5f9; }
+.reconBtn { padding: 6px 14px; border-radius: 6px; border: none; background: #059669; color: #fff; font-size: 13px; cursor: pointer; }
+.reconBtn:hover { background: #047857; }
+
+.tableWrap { overflow-x: auto; background: #1e293b; border-radius: 10px; border: 1px solid #334155; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { text-align: left; padding: 10px 12px; color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #334155; }
+.table td { padding: 8px 12px; color: #e2e8f0; border-bottom: 1px solid #1e293b; }
+.cellCode { font-family: monospace; color: #64748b; }
+.cellAmount { text-align: right; font-family: monospace; }
+.reconciledRow { opacity: 0.6; }
+.statusBadge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.reconciled { background: #065f4640; color: #34d399; }
+.unreconciled { background: #713f1240; color: #fbbf24; }
+.emptyRow { text-align: center; color: #64748b; padding: 30px; }
+.loading { color: #94a3b8; text-align: center; padding: 60px; }
+.error { color: #f87171; padding: 16px; background: #7f1d1d40; border-radius: 6px; margin: 24px; }

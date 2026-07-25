@@ -489,7 +489,7 @@ export async function getReadiness(tenantId: string, statusFilter?: string) {
     SELECT r.*, b.plate_number, b.make, b.model, b.year, b.status AS bus_status
     FROM bus_readiness r
     RIGHT JOIN buses b ON b.id = r.bus_id AND b.tenant_id = r.tenant_id
-    WHERE b.tenant_id = $1 AND b.deleted_at IS NULL
+    WHERE b.tenant_id = $1 AND b.is_active = true
   `;
   const params: any[] = [tenantId];
 
@@ -520,7 +520,7 @@ export async function getReadinessByBusId(busId: string, tenantId: string) {
 }
 
 export async function updateReadiness(busId: string, tenantId: string, userId: string, input: UpdateReadinessInput) {
-  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [busId, tenantId]);
+  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [busId, tenantId]);
   if (!bus) throw new NotFoundError('Bus not found');
 
   const existing = await queryOne<ReadinessRow>(
@@ -598,7 +598,7 @@ function mapFuelLog(row: FuelLogRow) {
 }
 
 export async function createFuelLog(tenantId: string, input: CreateFuelLogInput) {
-  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.busId, tenantId]);
+  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]);
   if (!bus) throw new NotFoundError('Bus not found');
 
   const id = uuid();
@@ -824,7 +824,7 @@ function mapAssignment(row: AssignmentRow) {
 }
 
 export async function createAssignment(tenantId: string, userId: string, input: CreateAssignmentInput) {
-  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.busId, tenantId]);
+  const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]);
   if (!bus) throw new NotFoundError('Bus not found');
 
   const id = uuid();
@@ -893,6 +893,20 @@ export async function listAssignments(tenantId: string, queryParams: AssignmentQ
     })),
     meta: { total, page: queryParams.page, pageSize: queryParams.pageSize },
   };
+}
+
+export async function deleteAssignment(tenantId: string, assignmentId: string) {
+  const existing = await queryOne<AssignmentRow>(
+    'SELECT * FROM assignments WHERE id = $1 AND tenant_id = $2',
+    [assignmentId, tenantId]
+  );
+  if (!existing) throw new NotFoundError('Assignment not found');
+
+  const row = await queryOne<AssignmentRow>(
+    'DELETE FROM assignments WHERE id = $1 AND tenant_id = $2 RETURNING *',
+    [assignmentId, tenantId]
+  );
+  return mapAssignment(row!);
 }
 
 export async function updateAssignment(tenantId: string, assignmentId: string, input: UpdateAssignmentInput) {

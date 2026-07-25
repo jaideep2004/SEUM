@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { apiEvents } from "@/lib/apiEvents";
 
 type ToastType = "success" | "error" | "warning" | "info";
 
@@ -39,12 +40,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((type: ToastType, message: string) => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, type, message }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
   }, []);
+
+  useEffect(() => {
+    return apiEvents.onError(({ message }) => {
+      addToast("error", message);
+    });
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={{ toast: addToast }}>

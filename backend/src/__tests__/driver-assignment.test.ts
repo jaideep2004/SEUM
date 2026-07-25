@@ -32,6 +32,7 @@ describe('assignDriver', () => {
         origin: 'A', destination: 'B',
       });
     mockQuery.mockResolvedValueOnce(undefined); // UPDATE
+    mockQuery.mockResolvedValueOnce(undefined); // createNotification
     mockQuery.mockResolvedValueOnce([]); // stops
     mockQuery.mockResolvedValueOnce([]); // passengers
 

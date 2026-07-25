@@ -3,8 +3,8 @@ import { query, queryOne } from '../db';
 export async function getFleetAnalytics(tenantId: string) {
   // 1. Buses by status
   const busesByStatus = await query<any>(
-    `SELECT status, COUNT(*)::int AS count
-     FROM buses WHERE tenant_id = $1 AND deleted_at IS NULL
+     `SELECT status, COUNT(*)::int AS count
+     FROM buses WHERE tenant_id = $1 AND is_active = true
      GROUP BY status`,
     [tenantId]
   );
@@ -19,7 +19,7 @@ export async function getFleetAnalytics(tenantId: string) {
   // 2. Average bus age
   const avgAgeResult = await queryOne<any>(
     `SELECT ROUND(AVG(EXTRACT(YEAR FROM AGE(NOW(), CONCAT(year::text, '-01-01')::date))))::int AS avg_age
-     FROM buses WHERE tenant_id = $1 AND deleted_at IS NULL`,
+     FROM buses WHERE tenant_id = $1 AND is_active = true`,
     [tenantId]
   );
   const avgBusAge = avgAgeResult?.avg_age || 0;
@@ -102,7 +102,7 @@ export async function getFleetAnalytics(tenantId: string) {
     `SELECT COALESCE(r.status, 'unchecked') AS status, COUNT(*)::int AS count
      FROM buses b
      LEFT JOIN bus_readiness r ON r.bus_id = b.id AND r.tenant_id = b.tenant_id
-     WHERE b.tenant_id = $1 AND b.deleted_at IS NULL
+      WHERE b.tenant_id = $1 AND b.is_active = true
      GROUP BY COALESCE(r.status, 'unchecked')`,
     [tenantId]
   );
@@ -139,10 +139,54 @@ export async function getFleetAnalytics(tenantId: string) {
   };
 }
 
+export async function exportFleetReportPDF(tenantId: string): Promise<Buffer> {
+  const analytics = await getFleetAnalytics(tenantId);
+
+  const PDFDocument = require('pdfkit');
+  const doc = new PDFDocument({ margin: 50 });
+  const buffers: Buffer[] = [];
+  doc.on('data', (chunk: Buffer) => buffers.push(chunk));
+
+  doc.fontSize(20).text('Fleet Report', { align: 'center' });
+  doc.fontSize(10).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
+  doc.moveDown(1.5);
+
+  // Total Buses
+  doc.fontSize(14).text('Bus Summary', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(11).text(`Total Buses: ${analytics.summary.totalBuses}`);
+  doc.text(`Active: ${analytics.summary.activeBuses}`);
+  doc.text(`Maintenance: ${analytics.summary.maintenanceBuses}`);
+  doc.text(`Retired: ${analytics.summary.retiredBuses}`);
+  doc.text(`Sold: ${analytics.summary.soldBuses}`);
+  doc.moveDown(1);
+
+  // Fuel Summary
+  doc.fontSize(14).text('Fuel Summary', { underline: true });
+  doc.moveDown(0.5);
+  if (analytics.fuelEfficiency.avgKmPerLiter !== null) {
+    doc.fontSize(11).text(`Average km/L: ${analytics.fuelEfficiency.avgKmPerLiter}`);
+  }
+  doc.moveDown(1);
+
+  // Readiness
+  doc.fontSize(14).text('Readiness Summary', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(11).text(`Utilization Rate: ${analytics.utilizationRate}%`);
+  for (const [status, count] of Object.entries(analytics.readinessDistribution)) {
+    doc.text(`${status}: ${count}`);
+  }
+
+  doc.end();
+  return new Promise((resolve) => {
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+  });
+}
+
 export async function exportFleetReportCSV(tenantId: string): Promise<string> {
   const buses = await query<any>(
     `SELECT id, plate_number, make, model, year, status, assigned_depot
-     FROM buses WHERE tenant_id = $1 AND deleted_at IS NULL
+     FROM buses WHERE tenant_id = $1 AND is_active = true
      ORDER BY plate_number`,
     [tenantId]
   );

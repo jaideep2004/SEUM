@@ -1,0 +1,33 @@
+.page { padding: 24px; max-width: 1280px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); }
+.headerLinks { display: flex; gap: 12px; align-items: center; }
+.actionBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+.primaryBtn { background: var(--color-primary); color: #fff; }
+.primaryBtn:hover { opacity: 0.9; }
+.secondaryBtn { background: var(--color-surface-secondary); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.loading { text-align: center; padding: 48px; color: var(--color-text-tertiary); }
+.filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filters input, .filters select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.8125rem; background: var(--color-bg); color: var(--color-text-primary); outline: none; }
+.filters input:focus, .filters select:focus { border-color: var(--color-primary); }
+.filterBtn { padding: 6px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface-secondary); color: var(--color-text-secondary); }
+.tableWrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface-primary); }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; padding: 10px 14px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); background: var(--color-surface-secondary); border-bottom: 1px solid var(--color-border); }
+.table td { padding: 10px 14px; font-size: 0.8125rem; color: var(--color-text-primary); border-bottom: 1px solid var(--color-border); }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover { background: var(--color-surface-secondary); }
+.positive { color: #059669; font-weight: 600; }
+.negative { color: #dc2626; font-weight: 600; }
+.marginBar { display: inline-block; height: 6px; border-radius: 3px; margin-right: 6px; min-width: 20px; }
+
+.analytics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpiCard { background: var(--color-surface-primary); border: 1px solid var(--color-border); border-radius: 8px; padding: 20px; }
+.kpiLabel { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-text-tertiary); margin-bottom: 6px; }
+.kpiValue { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); }
+.kpiSub { font-size: 0.75rem; color: var(--color-text-secondary); margin-top: 2px; }
+.breakdownTable { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.breakdownTable th { text-align: left; padding: 8px 12px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border); background: var(--color-surface-secondary); }
+.breakdownTable td { padding: 8px 12px; font-size: 0.8125rem; border-bottom: 1px solid var(--color-border); color: var(--color-text-primary); }
+
+@media (max-width: 768px) { .analytics { grid-template-columns: repeat(2, 1fr); } }

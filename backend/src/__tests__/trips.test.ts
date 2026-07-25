@@ -165,6 +165,7 @@ describe("completeTrip", () => {
   it("completes an en_route trip", async () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: TRIP_ID, status: "en_route" })
+      .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, estimated_revenue: '0' }) // createProfitJournalEntry
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID, trip_type: "regular", scheduled_date: "2026-07-20", scheduled_start_time: "08:00:00", status: "completed", route_name: "Test", origin: "A", destination: "B", plate_number: "ABC", driver_name: null });
     mockQuery.mockResolvedValueOnce(undefined);
     mockQuery.mockResolvedValueOnce([]);

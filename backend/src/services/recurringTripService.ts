@@ -39,7 +39,7 @@ export async function createPattern(tenantId: string, userId: string, input: Cre
   if (!route) throw new NotFoundError('Route not found');
 
   if (input.busId) {
-    const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.busId, tenantId]);
+    const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]);
     if (!bus) throw new NotFoundError('Bus not found');
   }
 

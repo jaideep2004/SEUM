@@ -332,12 +332,41 @@ export async function createTenant(name: string, contactEmail: string, contactPh
   return { id, name, contactEmail, contactPhone, isActive: true };
 }
 
-export async function listTenants() {
-  return query<TenantRow>('SELECT id, name, domain, contact_email, contact_phone, subscription_tier, is_active, created_at, updated_at FROM tenants ORDER BY created_at DESC');
+function mapTenant(row: TenantRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    domain: row.domain,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    subscriptionTier: row.subscription_tier,
+    planId: row.plan_id,
+    billingCycle: row.billing_cycle,
+    billingEmail: row.billing_email,
+    subscriptionStartedAt: row.subscription_started_at,
+    subscriptionRenewalDate: row.subscription_renewal_date,
+    isActive: row.is_active,
+    featureFlags: row.feature_flags,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function listTenants(isActive?: boolean) {
+  let sql = 'SELECT id, name, domain, contact_email, contact_phone, subscription_tier, is_active, created_at, updated_at, feature_flags, plan_id, billing_cycle, billing_email, subscription_started_at, subscription_renewal_date FROM tenants';
+  const params: unknown[] = [];
+  if (isActive !== undefined) {
+    sql += ' WHERE is_active = $1';
+    params.push(isActive);
+  }
+  sql += ' ORDER BY created_at DESC';
+  const rows = await query<TenantRow>(sql, params);
+  return rows.map(mapTenant);
 }
 
 export async function getTenantById(id: string) {
-  return queryOne<TenantRow>('SELECT * FROM tenants WHERE id = $1', [id]);
+  const row = await queryOne<TenantRow>('SELECT * FROM tenants WHERE id = $1', [id]);
+  return row ? mapTenant(row) : null;
 }
 
 interface TenantUpdate {
@@ -385,18 +414,27 @@ export async function updateTenant(id: string, updates: TenantUpdate) {
   fields.push('updated_at = NOW()');
   values.push(id);
 
-  const result = await queryOne<TenantRow>(
+  const row = await queryOne<TenantRow>(
     `UPDATE tenants SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
     values
   );
 
-  return result;
+  return row ? mapTenant(row) : null;
 }
 
 export async function softDeleteTenant(id: string) {
-  const result = await queryOne<TenantRow>(
+  const row = await queryOne<TenantRow>(
     `UPDATE tenants SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING *`,
     [id]
   );
-  return result;
+
+  return row ? mapTenant(row) : null;
+}
+
+export async function hardDeleteTenant(id: string) {
+  const row = await queryOne<{ id: string }>(
+    'DELETE FROM tenants WHERE id = $1 RETURNING id',
+    [id]
+  );
+  return !!row;
 }

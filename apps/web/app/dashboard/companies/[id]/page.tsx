@@ -7,6 +7,7 @@ import {
   Building2,
   ArrowLeft,
   Edit3,
+  Trash2,
   CreditCard,
   Users,
   Calendar,
@@ -52,6 +53,8 @@ export default function CompanyDetailPage() {
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchTenant = useCallback(async () => {
     try {
@@ -63,6 +66,19 @@ export default function CompanyDetailPage() {
       setLoading(false);
     }
   }, [tenantId]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/tenants/${tenantId}`);
+      router.push("/dashboard/companies");
+    } catch (err: any) {
+      setError(err.message || "Failed to delete company");
+      setShowDeleteModal(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => { fetchTenant(); }, [fetchTenant]);
 
@@ -109,10 +125,16 @@ export default function CompanyDetailPage() {
             )}
           </div>
         </div>
-        <button className={styles.editBtn}>
-          <Edit3 size={15} />
-          Edit
-        </button>
+        <div className={styles.headerActions}>
+          <button className={styles.editBtn} onClick={() => router.push(`/dashboard/companies/${tenant.id}/edit`)}>
+            <Edit3 size={15} />
+            Edit
+          </button>
+          <button className={styles.deleteBtn} onClick={() => setShowDeleteModal(true)}>
+            <Trash2 size={15} />
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className={styles.infoGrid}>
@@ -179,6 +201,28 @@ export default function CompanyDetailPage() {
           </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowDeleteModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIcon}>
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className={styles.modalTitle}>Delete Company</h3>
+            <p className={styles.modalText}>
+              Are you sure you want to delete <strong>{tenant.name}</strong>? This will soft-delete the company and all its associated data will be deactivated.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setShowDeleteModal(false)}>
+                Cancel
+              </button>
+              <button className={styles.modalConfirm} onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting..." : "Delete Company"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

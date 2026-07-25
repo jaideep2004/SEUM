@@ -2,6 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/authService';
 import { sendSuccess } from '../utils/response';
+import { config } from '../config';
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: config.nodeEnv === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+};
+
+const COOKIE_ACCESS_MAX_AGE = 15 * 60 * 1000; // 15 min
+const COOKIE_REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -35,7 +46,11 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     const ipAddress = req.ip || undefined;
     const userAgent = req.headers['user-agent'] || undefined;
     const result = await authService.loginUser(email, password, ipAddress, userAgent);
-    return sendSuccess(res, result, 'Login successful');
+
+    res.cookie('access_token', result.tokens.accessToken, { ...COOKIE_OPTIONS, maxAge: COOKIE_ACCESS_MAX_AGE });
+    res.cookie('refresh_token', result.tokens.refreshToken, { ...COOKIE_OPTIONS, maxAge: COOKIE_REFRESH_MAX_AGE });
+
+    return sendSuccess(res, { user: result.user }, 'Login successful');
   } catch (err) {
     next(err);
   }
@@ -59,9 +74,14 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 
 export async function refresh(req: Request, res: Response, next: NextFunction) {
   try {
-    const { refreshToken } = refreshSchema.parse(req.body);
+    const refreshToken = req.cookies?.refresh_token || refreshSchema.parse(req.body).refreshToken;
+    if (!refreshToken) throw new Error('Refresh token required');
     const result = await authService.refreshAccessToken(refreshToken);
-    return sendSuccess(res, result, 'Token refreshed');
+
+    res.cookie('access_token', result.tokens.accessToken, { ...COOKIE_OPTIONS, maxAge: COOKIE_ACCESS_MAX_AGE });
+    res.cookie('refresh_token', result.tokens.refreshToken, { ...COOKIE_OPTIONS, maxAge: COOKIE_REFRESH_MAX_AGE });
+
+    return sendSuccess(res, { tokens: result.tokens }, 'Token refreshed');
   } catch (err) {
     next(err);
   }
@@ -69,8 +89,12 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
 
 export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
-    const { refreshToken } = refreshSchema.parse(req.body);
-    await authService.logoutUser(req.user!.userId, refreshToken);
+    const refreshToken = req.cookies?.refresh_token;
+    if (refreshToken) {
+      await authService.logoutUser(req.user!.userId, refreshToken);
+    }
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
     return sendSuccess(res, null, 'Logged out successfully');
   } catch (err) {
     next(err);

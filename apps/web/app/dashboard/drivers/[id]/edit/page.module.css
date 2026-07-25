@@ -1,0 +1,22 @@
+.page { max-width: 800px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.loading { text-align: center; padding: 48px; font-size: 12px; color: var(--color-text-tertiary); }
+.backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 12px; }
+.backLink:hover { color: var(--color-text); }
+.pageTitle { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); color: var(--color-text-primary); margin-bottom: 20px; }
+.form { display: flex; flex-direction: column; gap: 20px; }
+.error { padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-md); color: #991b1b; font-size: 12px; }
+.section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 20px; }
+.sectionTitle { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 0 0 14px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field:has(textarea) { grid-column: 1 / -1; }
+.field label { font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.field input, .field select { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 12px; outline: none; }
+.field input:focus, .field select:focus { border-color: var(--color-primary); }
+.actions { display: flex; gap: 10px; justify-content: flex-end; }
+.cancelBtn { padding: 10px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.cancelBtn:hover { background: var(--color-hover); }
+.saveBtn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: var(--radius-md); background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+.saveBtn:hover { filter: brightness(1.1); }
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }

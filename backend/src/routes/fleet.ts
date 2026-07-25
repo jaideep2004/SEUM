@@ -1,7 +1,10 @@
 import { Router } from 'express';
+import multer from 'multer';
 import * as fleetController from '../controllers/fleetController';
 import * as analyticsController from '../controllers/analyticsController';
 import { authenticate, requireRole } from '../middleware/auth';
+
+const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -32,6 +35,8 @@ router.post('/assignments', authenticate, requireRole('super_admin', 'company_ad
 router.get('/assignments', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.listAssignments);
 router.get('/assignments/calendar', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.getCalendarData);
 router.patch('/assignments/:id', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.updateAssignment);
+router.delete('/assignments/:id', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.deleteAssignment);
+router.post('/buses/:id/documents/upload', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), upload.single('file'), fleetController.uploadDocument);
 router.post('/buses/:id/documents', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.createDocument);
 router.get('/buses/:id/documents', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.listDocuments);
 router.get('/buses/:id/documents/:docId', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager'), fleetController.getDocument);
