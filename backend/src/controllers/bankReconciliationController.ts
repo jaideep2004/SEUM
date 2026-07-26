@@ -12,21 +12,21 @@ export async function createAccount(req: Request, res: Response) {
     if (!bank_name || !account_number) {
       return res.status(400).json({ success: false, error: 'bank_name and account_number are required' });
     }
-    const data = await bankService.createAccount(req.tenantId, { bank_name, account_number, account_type, opening_balance: opening_balance ? parseFloat(opening_balance) : undefined }, req.userId);
+    const data = await bankService.createAccount(req.user!.tenantId, { bank_name, account_number, account_type, opening_balance: opening_balance ? parseFloat(opening_balance) : undefined }, req.user!.userId);
     res.status(201).json({ success: true, data });
   } catch (err: any) { res.status(400).json({ success: false, error: err.message }); }
 }
 
 export async function listAccounts(req: Request, res: Response) {
   try {
-    const data = await bankService.listAccounts(req.tenantId);
+    const data = await bankService.listAccounts(req.user!.tenantId);
     res.json({ success: true, data });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
 }
 
 export async function getAccount(req: Request, res: Response) {
   try {
-    const data = await bankService.getAccount(req.tenantId, req.params.id);
+    const data = await bankService.getAccount(req.user!.tenantId, req.params.id);
     res.json({ success: true, data });
   } catch (err: any) { res.status(404).json({ success: false, error: err.message }); }
 }
@@ -34,7 +34,7 @@ export async function getAccount(req: Request, res: Response) {
 export async function updateAccount(req: Request, res: Response) {
   try {
     const { bank_name, account_type } = req.body;
-    const data = await bankService.updateAccount(req.tenantId, req.params.id, { bank_name, account_type });
+    const data = await bankService.updateAccount(req.user!.tenantId, req.params.id, { bank_name, account_type });
     res.json({ success: true, data });
   } catch (err: any) { res.status(400).json({ success: false, error: err.message }); }
 }
@@ -68,7 +68,7 @@ export async function importTransactions(req: Request, res: Response) {
     if (!accountId) return res.status(400).json({ success: false, error: 'accountId required' });
     if (txs.length === 0) return res.status(400).json({ success: false, error: 'No transactions to import' });
 
-    const data = await bankService.importTransactions(req.tenantId, accountId, txs);
+    const data = await bankService.importTransactions(req.user!.tenantId, accountId, txs);
     res.status(201).json({ success: true, data, count: data.length });
   } catch (err: any) { res.status(400).json({ success: false, error: err.message }); }
 }
@@ -77,7 +77,7 @@ export async function listTransactions(req: Request, res: Response) {
   try {
     const { reconciled } = req.query;
     const data = await bankService.listTransactions(
-      req.tenantId, req.params.accountId,
+      req.user!.tenantId, req.params.accountId,
       reconciled !== undefined ? reconciled === 'true' : undefined,
     );
     res.json({ success: true, data });
@@ -86,7 +86,7 @@ export async function listTransactions(req: Request, res: Response) {
 
 export async function getUnmatched(req: Request, res: Response) {
   try {
-    const data = await bankService.getUnmatchedSources(req.tenantId);
+    const data = await bankService.getUnmatchedSources(req.user!.tenantId);
     res.json({ success: true, data });
   } catch (err: any) { res.status(500).json({ success: false, error: err.message }); }
 }
@@ -97,14 +97,14 @@ export async function matchTransaction(req: Request, res: Response) {
     if (!transaction_id || !match_type || !match_id) {
       return res.status(400).json({ success: false, error: 'transaction_id, match_type, and match_id required' });
     }
-    const data = await bankService.matchTransaction(req.tenantId, transaction_id, match_type, match_id);
+    const data = await bankService.matchTransaction(req.user!.tenantId, transaction_id, match_type, match_id);
     res.json({ success: true, data });
   } catch (err: any) { res.status(400).json({ success: false, error: err.message }); }
 }
 
 export async function unmatchTransaction(req: Request, res: Response) {
   try {
-    const data = await bankService.unmatchTransaction(req.tenantId, req.params.id);
+    const data = await bankService.unmatchTransaction(req.user!.tenantId, req.params.id);
     res.json({ success: true, data });
   } catch (err: any) { res.status(400).json({ success: false, error: err.message }); }
 }

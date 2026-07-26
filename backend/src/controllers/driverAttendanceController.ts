@@ -5,7 +5,7 @@ import { sendSuccess, sendPaginated } from '../utils/response';
 
 export async function checkIn(req: Request, res: Response, next: NextFunction) {
   try {
-    const { driverId } = createAttendanceSchema.parse(req.body);
+    const { driver_id: driverId } = createAttendanceSchema.parse(req.body);
     const result = await attendanceService.checkIn(req.user!.tenantId, driverId);
     sendSuccess(res, result, 'Check-in successful', undefined, 201);
   } catch (err) { next(err); }
@@ -13,7 +13,7 @@ export async function checkIn(req: Request, res: Response, next: NextFunction) {
 
 export async function checkOut(req: Request, res: Response, next: NextFunction) {
   try {
-    const { driverId } = createAttendanceSchema.parse(req.body);
+    const { driver_id: driverId } = createAttendanceSchema.parse(req.body);
     const result = await attendanceService.checkOut(req.user!.tenantId, driverId);
     sendSuccess(res, result, 'Check-out successful');
   } catch (err) { next(err); }
