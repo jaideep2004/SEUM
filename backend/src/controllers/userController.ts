@@ -127,8 +127,8 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       const { tenantId, roles, userId } = req.user!;
       const isSuperAdmin = roles.includes('super_admin');
 
-      const target = await queryOne<{ id: string; tenant_id: string; roles: string[] }>(
-        `SELECT u.id, u.tenant_id, ${ROLE_QUERY}
+      const target = await queryOne<{ id: string; tenant_id: string; email: string; roles: string[] }>(
+        `SELECT u.id, u.tenant_id, u.email, ${ROLE_QUERY}
          FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL`,
         [req.params.id]
       );

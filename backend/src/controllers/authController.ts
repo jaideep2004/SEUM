@@ -70,7 +70,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         return next(new ForbiddenError('No tenant context for user creation'));
       }
       if (isSuperAdmin && !data.tenantId) {
-        return next(new ValidationError('tenantId is required'));
+        return next(new ValidationError([{ field: 'tenantId', message: 'tenantId is required' }]));
       }
 
       const user = await authService.registerUser(
