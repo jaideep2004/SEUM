@@ -4,9 +4,9 @@ import * as accountController from '../controllers/accountController';
 
 const router = Router();
 
-router.post('/', authenticate, requireRole('super_admin', 'company_admin', 'finance'), accountController.create);
-router.get('/', authenticate, requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), accountController.list);
-router.patch('/:id', authenticate, requireRole('super_admin', 'company_admin', 'finance'), accountController.update);
-router.get('/:id', authenticate, requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), accountController.detail);
+router.post('/', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant'), accountController.create);
+router.get('/', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), accountController.list);
+router.patch('/:id', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant'), accountController.update);
+router.get('/:id', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), accountController.detail);
 
 export default router;

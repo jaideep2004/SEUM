@@ -36,7 +36,7 @@ export async function getDriverPerformance(tenantId: string, startDate: string, 
   const rows = await query<any>(
     `SELECT
        u.id AS driver_id,
-       CONCAT(u.first_name, ' ', u.last_name) AS driver_name,
+       u.name AS driver_name,
        COUNT(*)::int AS total_trips,
        COUNT(*) FILTER (WHERE t.status = 'completed')::int AS completed_trips,
        COUNT(*) FILTER (WHERE t.status = 'delayed')::int AS delayed_trips,
@@ -60,7 +60,7 @@ export async function getDriverPerformance(tenantId: string, startDate: string, 
      WHERE t.tenant_id = $1 AND t.deleted_at IS NULL
        AND t.driver_id IS NOT NULL
        AND t.scheduled_date >= $2 AND t.scheduled_date <= $3
-     GROUP BY u.id, u.first_name, u.last_name
+     GROUP BY u.id, u.name
      ORDER BY on_time_pct DESC`,
     [tenantId, startDate, endDate]
   );
@@ -181,7 +181,7 @@ export async function exportTripReportCSV(tenantId: string, startDate: string, e
             t.status, t.delay_minutes, t.delay_reason, t.trip_type,
             r.name AS route_name, r.origin, r.destination,
             b.plate_number,
-            CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            u.name AS driver_name
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id

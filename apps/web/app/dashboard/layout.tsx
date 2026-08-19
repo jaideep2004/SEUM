@@ -80,7 +80,9 @@ const superAdminNav: NavItem[] = [
 
 const companyAdminNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard/company", icon: LayoutDashboard },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   { label: "Operations", href: "/dashboard/operations", icon: Route },
+  { label: "Users", href: "/dashboard/users", icon: Users },
   { label: "Fleet", href: "/dashboard/fleet", icon: Truck },
   { label: "Readiness", href: "/dashboard/fleet/readiness", icon: Gauge },
   { label: "Fuel Logs", href: "/dashboard/fleet/fuel", icon: Fuel },
@@ -88,7 +90,10 @@ const companyAdminNav: NavItem[] = [
   { label: "Assignments", href: "/dashboard/fleet/assignments", icon: CalendarDays },
   { label: "Calendar", href: "/dashboard/fleet/assignments/calendar", icon: Calendar },
   { label: "Analytics", href: "/dashboard/fleet/analytics", icon: BarChart3 },
-  { label: "HR", href: "/dashboard/hr", icon: Briefcase },
+  { label: "Employees", href: "/dashboard/hr/employees", icon: Briefcase },
+  { label: "Attendance", href: "/dashboard/hr/attendance", icon: Clock },
+  { label: "Payroll", href: "/dashboard/hr/payroll", icon: DollarSign },
+  { label: "Leaves", href: "/dashboard/hr/leaves", icon: CalendarDays },
   { label: "Finance", href: "/dashboard/finance", icon: Wallet },
   { label: "Chart of Accounts", href: "/dashboard/accounts", icon: BookOpen },
   { label: "Journal Entries", href: "/dashboard/accounting/journal-entries", icon: FileText },
@@ -99,6 +104,10 @@ const companyAdminNav: NavItem[] = [
   { label: "Payroll", href: "/dashboard/accounting/payroll", icon: DollarSign },
   { label: "Bank Accounts", href: "/dashboard/accounting/bank-accounts", icon: Wallet },
   { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
+  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
+  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
+  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
+  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
   { label: "Monitoring", href: "/dashboard/monitoring", icon: Radio },
   { label: "Reports", href: "/dashboard/company/reports", icon: BarChart3 },
   { label: "Settings", href: "/dashboard/company/settings", icon: Settings },
@@ -107,6 +116,7 @@ const companyAdminNav: NavItem[] = [
 const operationsNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard/operations", icon: LayoutDashboard },
   { label: "Bookings", href: "/dashboard/bookings", icon: ClipboardList },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Pilgrim Groups", href: "/dashboard/pilgrim-groups", icon: Users },
   { label: "Trip Planning", href: "/dashboard/trip-planning", icon: CalendarDays },
@@ -119,9 +129,9 @@ const operationsNav: NavItem[] = [
   { label: "Violations", href: "/dashboard/drivers/violations", icon: AlertTriangle },
   { label: "Scores", href: "/dashboard/drivers/scores", icon: BarChart3 },
   { label: "Payroll", href: "/dashboard/drivers/payroll", icon: DollarSign },
-  { label: "Vehicles", href: "/dashboard/fleet", icon: Bus },
+  { label: "Vehicles", href: "/dashboard/fleet/vehicles", icon: Bus },
   { label: "Routes", href: "/dashboard/routes", icon: Map },
-  { label: "Work Orders", href: "/dashboard/work-orders", icon: FileText },
+  { label: "Work Orders", href: "/dashboard/maintenance/workshops", icon: FileText },
   { label: "Live Trips", href: "/dashboard/live-trips", icon: Navigation },
   { label: "Reports", href: "/dashboard/ops-reports", icon: BarChart3 },
 ];
@@ -140,7 +150,11 @@ const fleetNav: NavItem[] = [
   { label: "Fuel", href: "/dashboard/fleet/fuel", icon: Fuel },
   { label: "GPS & Tracking", href: "/dashboard/fleet/gps", icon: MapPin },
   { label: "Mileage", href: "/dashboard/fleet/mileage", icon: Milestone },
-  { label: "Maintenance", href: "/dashboard/fleet/maintenance", icon: Wrench },
+  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
+  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
+  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
+  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
+  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
   { label: "Reports", href: "/dashboard/fleet/reports", icon: BarChart3 },
 ];
 
@@ -150,8 +164,54 @@ const monitoringNav: NavItem[] = [
   { label: "Alerts", href: "/dashboard/alerts", icon: AlertTriangle },
   { label: "Geofencing", href: "/dashboard/geofencing", icon: MapPin },
   { label: "Speed Monitor", href: "/dashboard/speed", icon: Gauge },
-  { label: "Reports", href: "/dashboard/monitoring/reports", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/monitoring/settings", icon: Settings },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+];
+
+const hrNav: NavItem[] = [
+  { label: "Employees", href: "/dashboard/hr/employees", icon: Briefcase },
+  { label: "Attendance", href: "/dashboard/hr/attendance", icon: Clock },
+  { label: "Payroll", href: "/dashboard/hr/payroll", icon: DollarSign },
+  { label: "Leaves", href: "/dashboard/hr/leaves", icon: CalendarDays },
+  { label: "Driver Leaves", href: "/dashboard/drivers/leaves", icon: CalendarDays },
+  { label: "Driver Violations", href: "/dashboard/drivers/violations", icon: AlertTriangle },
+  { label: "Driver Scores", href: "/dashboard/drivers/scores", icon: BarChart3 },
+  { label: "Driver Payroll", href: "/dashboard/drivers/payroll", icon: DollarSign },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+];
+
+const financeNav: NavItem[] = [
+  { label: "Chart of Accounts", href: "/dashboard/accounts", icon: BookOpen },
+  { label: "Journal Entries", href: "/dashboard/accounting/journal-entries", icon: FileText },
+  { label: "Invoices", href: "/dashboard/accounting/invoices", icon: Receipt },
+  { label: "Expenses", href: "/dashboard/accounting/expenses", icon: Wallet },
+  { label: "Trip Profitability", href: "/dashboard/accounting/trip-profitability", icon: BarChart3 },
+  { label: "Financial Reports", href: "/dashboard/accounting/reports", icon: BarChart3 },
+  { label: "Payroll", href: "/dashboard/accounting/payroll", icon: DollarSign },
+  { label: "Bank Accounts", href: "/dashboard/accounting/bank-accounts", icon: Wallet },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+];
+
+const csNav: NavItem[] = [
+  { label: "Booking Dashboard", href: "/dashboard/bookings/dashboard", icon: LayoutDashboard },
+  { label: "Bookings", href: "/dashboard/bookings", icon: ClipboardList },
+  { label: "New Booking", href: "/dashboard/bookings/new", icon: ClipboardList },
+  { label: "Customers", href: "/dashboard/customers", icon: Users },
+  { label: "Waitlist", href: "/dashboard/bookings/waitlist", icon: CalendarDays },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+];
+
+const maintenanceNav: NavItem[] = [
+  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
+  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
+  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
+  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
+  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+];
+
+const driverNav: NavItem[] = [
+  { label: "My Schedule", href: "/dashboard/schedules", icon: Calendar },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
 ];
 
 function getRoleFromUser(): string {
@@ -167,6 +227,12 @@ function getRoleFromUser(): string {
       operations_manager: "operations",
       fleet_manager: "fleet",
       monitoring_control: "monitoring",
+      hr_manager: "hr",
+      finance_accountant: "finance",
+      customer_service: "cs",
+      maintenance_workshop: "maintenance",
+      driver: "driver",
+      executive: "company",
     };
     return roleMap[role] || "company";
   } catch {
@@ -180,6 +246,11 @@ function getNavItems(role: string): NavItem[] {
     case "operations": return operationsNav;
     case "fleet": return fleetNav;
     case "monitoring": return monitoringNav;
+    case "hr": return hrNav;
+    case "finance": return financeNav;
+    case "cs": return csNav;
+    case "maintenance": return maintenanceNav;
+    case "driver": return driverNav;
     default: return companyAdminNav;
   }
 }
@@ -190,6 +261,69 @@ const roleLabels: Record<string, string> = {
   operations: "Operations Manager",
   fleet: "Fleet Manager",
   monitoring: "Monitoring",
+  hr: "HR Manager",
+  finance: "Finance Accountant",
+  cs: "Customer Service",
+  maintenance: "Maintenance",
+  driver: "Driver",
+};
+
+const roleHome: Record<string, string> = {
+  superadmin: "/dashboard",
+  company: "/dashboard/company",
+  operations: "/dashboard/operations",
+  fleet: "/dashboard/fleet",
+  monitoring: "/dashboard/monitoring",
+  hr: "/dashboard/hr/employees",
+  finance: "/dashboard/accounts",
+  cs: "/dashboard/bookings",
+  maintenance: "/dashboard/maintenance",
+  driver: "/dashboard/schedules",
+};
+
+const roleAllowed: Record<string, string[]> = {
+  superadmin: [
+    "/dashboard",
+    "/dashboard/companies", "/dashboard/subscriptions", "/dashboard/plans", "/dashboard/modules",
+    "/dashboard/users", "/dashboard/support", "/dashboard/health", "/dashboard/integrations",
+    "/dashboard/audit-logs", "/dashboard/archived", "/dashboard/reports", "/dashboard/settings",
+    "/dashboard/notifications",
+  ],
+  company: [
+    "/dashboard/company", "/dashboard/notifications", "/dashboard/operations", "/dashboard/users",
+    "/dashboard/fleet", "/dashboard/hr", "/dashboard/finance", "/dashboard/delays",
+    "/dashboard/accounts", "/dashboard/accounting", "/dashboard/maintenance", "/dashboard/monitoring",
+  ],
+  operations: [
+    "/dashboard/operations", "/dashboard/notifications", "/dashboard/bookings", "/dashboard/customers",
+    "/dashboard/pilgrim-groups", "/dashboard/trip-planning", "/dashboard/trips",
+    "/dashboard/recurring-trips", "/dashboard/schedules", "/dashboard/drivers",
+    "/dashboard/fleet/vehicles", "/dashboard/routes", "/dashboard/maintenance/workshops",
+    "/dashboard/live-trips", "/dashboard/ops-reports", "/dashboard/delays",
+  ],
+  fleet: [
+    "/dashboard/fleet", "/dashboard/notifications", "/dashboard/maintenance",
+  ],
+  monitoring: [
+    "/dashboard/monitoring", "/dashboard/notifications", "/dashboard/live-trips",
+    "/dashboard/alerts", "/dashboard/geofencing", "/dashboard/speed",
+  ],
+  hr: [
+    "/dashboard/hr", "/dashboard/notifications", "/dashboard/drivers/leaves",
+    "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
+  ],
+  finance: [
+    "/dashboard/accounts", "/dashboard/accounting", "/dashboard/notifications",
+  ],
+  cs: [
+    "/dashboard/bookings", "/dashboard/customers", "/dashboard/notifications",
+  ],
+  maintenance: [
+    "/dashboard/maintenance", "/dashboard/notifications",
+  ],
+  driver: [
+    "/dashboard/schedules", "/dashboard/notifications",
+  ],
 };
 
 function getUserFromStorage() {
@@ -288,16 +422,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const roleLabel = roleLabels[role] || "User";
   const { theme, toggleTheme } = useTheme();
 
+  useEffect(() => {
+    if (role === "superadmin") return;
+    const prefixes = roleAllowed[role] || [];
+    const allowed = prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+    if (!allowed) router.replace(roleHome[role] || "/dashboard");
+  }, [pathname, role, router]);
+
   const isActive = (href: string) => pathname === href || pathname === href + "/";
 
   const completedPages = new Set([
-    "/dashboard/companies", "/dashboard/plans", "/dashboard/audit-logs",
+    "/dashboard", "/dashboard/companies", "/dashboard/subscriptions", "/dashboard/plans",
+    "/dashboard/users", "/dashboard/audit-logs", "/dashboard/archived",
+    "/dashboard/company", "/dashboard/notifications", "/dashboard/operations",
     "/dashboard/fleet", "/dashboard/fleet/vehicles", "/dashboard/fleet/documents",
     "/dashboard/fleet/readiness", "/dashboard/fleet/fuel",
     "/dashboard/fleet/fuel/analytics", "/dashboard/fleet/assignments",
     "/dashboard/fleet/assignments/calendar", "/dashboard/fleet/analytics",
     "/dashboard/routes", "/dashboard/trips", "/dashboard/recurring-trips",
-    "/dashboard/users", "/dashboard/drivers", "/dashboard/drivers/attendance", "/dashboard/drivers/leaves", "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
+    "/dashboard/schedules", "/dashboard/bookings", "/dashboard/customers",
+    "/dashboard/drivers", "/dashboard/drivers/attendance", "/dashboard/drivers/leaves",
+    "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
+    "/dashboard/hr/employees", "/dashboard/hr/attendance", "/dashboard/hr/payroll",
+    "/dashboard/hr/leaves",
     "/dashboard/accounts",
     "/dashboard/accounting/journal-entries",
     "/dashboard/accounting/invoices",
@@ -306,7 +453,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     "/dashboard/accounting/reports",
     "/dashboard/accounting/payroll",
     "/dashboard/accounting/bank-accounts",
-    "/dashboard/monitoring", "/dashboard/delays", "/dashboard/archived",
+    "/dashboard/maintenance", "/dashboard/maintenance/breakdowns",
+    "/dashboard/maintenance/parts", "/dashboard/maintenance/workshops",
+    "/dashboard/maintenance/costs",
+    "/dashboard/monitoring", "/dashboard/delays",
   ]);
 
   return (
@@ -453,6 +603,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </div>
                     ))
                   )}
+                  <Link href="/dashboard/notifications" className={styles.notifViewAll} onClick={() => setNotifOpen(false)}>
+                    Open notification center
+                  </Link>
                 </div>
               )}
             </div>

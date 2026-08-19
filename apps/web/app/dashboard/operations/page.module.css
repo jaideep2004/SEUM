@@ -26,6 +26,15 @@
 }
 
 /* KPI */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
 .kpiGrid6 {
   display: grid;
   grid-template-columns: repeat(6, 1fr);

@@ -21,30 +21,30 @@ declare global {
 }
 
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  let token: string | undefined;
+  const tokens: string[] = [];
 
+  const header = req.headers.authorization;
   if (header && header.startsWith('Bearer ')) {
     const bearerToken = header.split(' ')[1];
     if (bearerToken && bearerToken !== 'null' && bearerToken !== 'undefined') {
-      token = bearerToken;
+      tokens.push(bearerToken);
     }
   }
-  if (!token && req.cookies?.access_token) {
-    token = req.cookies.access_token;
+  if (req.cookies?.access_token) {
+    tokens.push(req.cookies.access_token);
   }
 
-  if (!token) {
-    return next(new UnauthorizedError('Missing or invalid authorization header'));
+  for (const token of tokens) {
+    try {
+      const payload = jwt.verify(token, config.jwt.accessSecret) as JwtPayload;
+      req.user = payload;
+      return next();
+    } catch {
+      // Try the next credential source before rejecting
+    }
   }
 
-  try {
-    const payload = jwt.verify(token, config.jwt.accessSecret) as JwtPayload;
-    req.user = payload;
-    next();
-  } catch {
-    return next(new UnauthorizedError('Invalid or expired token'));
-  }
+  return next(new UnauthorizedError('Invalid or expired token'));
 }
 
 export function requireRole(...roles: string[]) {

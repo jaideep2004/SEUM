@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
   reconciled BOOLEAN NOT NULL DEFAULT false,
   matched_invoice_id UUID REFERENCES invoices(id) ON DELETE SET NULL,
   matched_expense_id UUID REFERENCES expenses(id) ON DELETE SET NULL,
+  deleted_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 

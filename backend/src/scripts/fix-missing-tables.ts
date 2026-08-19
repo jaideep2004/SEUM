@@ -138,18 +138,41 @@ async function fix() {
           type VARCHAR(50) NOT NULL,
           title VARCHAR(255) NOT NULL,
           message TEXT,
+          data JSONB,
           resource VARCHAR(100),
           resource_id VARCHAR(255),
           is_read BOOLEAN NOT NULL DEFAULT false,
+          is_seen BOOLEAN NOT NULL DEFAULT false,
+          read_at TIMESTAMP WITH TIME ZONE,
           created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
         );
         CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read);
         CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications(tenant_id);
         CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at);
+        CREATE TABLE IF NOT EXISTS notification_preferences (
+          tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          event_type VARCHAR(50) NOT NULL,
+          in_app BOOLEAN NOT NULL DEFAULT true,
+          email BOOLEAN NOT NULL DEFAULT true,
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (tenant_id, user_id, event_type)
+        );
+        CREATE INDEX IF NOT EXISTS idx_notif_prefs_user ON notification_preferences(user_id);
       `);
       console.log('  notifications table created');
     } else {
       console.log('  notifications table already exists');
+      const cols = await query("SELECT column_name FROM information_schema.columns WHERE table_name = 'notifications'");
+      const names = new Set(cols.map((c: any) => c.column_name));
+      const alt = [];
+      if (!names.has('data')) alt.push('ADD COLUMN IF NOT EXISTS data JSONB');
+      if (!names.has('is_seen')) alt.push('ADD COLUMN IF NOT EXISTS is_seen BOOLEAN NOT NULL DEFAULT false');
+      if (!names.has('read_at')) alt.push('ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE');
+      if (alt.length > 0) {
+        await query(`ALTER TABLE notifications ${alt.join(', ')}`);
+        console.log('  notifications table columns added');
+      }
     }
 
     console.log('Fix completed successfully.');

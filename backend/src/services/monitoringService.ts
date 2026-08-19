@@ -32,7 +32,7 @@ export async function getMonitoringDashboard(tenantId: string, date?: string) {
 async function getActiveTrips(tenantId: string, date: string) {
   const rows = await query<any>(
     `SELECT t.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
@@ -59,7 +59,7 @@ async function getActiveTrips(tenantId: string, date: string) {
 async function getDelayedTripsList(tenantId: string, date: string) {
   const rows = await query<any>(
     `SELECT t.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
@@ -123,7 +123,7 @@ export async function getDelayedTrips(tenantId: string, queryParams: { page: num
   params.push(queryParams.pageSize, offset);
   const rows = await query<any>(
     `SELECT t.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
@@ -204,7 +204,7 @@ export async function manualStatusOverride(
 async function getTripAfterOverride(tenantId: string, tripId: string) {
   const row = await queryOne<any>(
     `SELECT t.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
@@ -368,7 +368,7 @@ export async function getTripStatusLogs(tenantId: string, tripId: string) {
   if (!trip) throw new NotFoundError('Trip not found');
 
   const rows = await query<any>(
-    `SELECT l.*, CONCAT(u.first_name, ' ', u.last_name) AS changed_by_name
+    `SELECT l.*, u.name AS changed_by_name
      FROM trip_status_logs l
      LEFT JOIN users u ON u.id = l.changed_by
      WHERE l.trip_id = $1

@@ -2,20 +2,20 @@ import { z } from 'zod';
 
 export const createBusSchema = z.object({
   plateNumber: z.string().min(1, 'Plate number is required').max(50),
-  chassisNumber: z.string().max(100).optional(),
+  chassisNumber: z.string().max(100).nullable().optional(),
   make: z.string().min(1, 'Make is required').max(100),
   model: z.string().min(1, 'Model is required').max(100),
   year: z.number().int().min(1990, 'Year must be 1990 or later').max(2030),
   capacitySeated: z.number().int().positive('Seated capacity must be positive'),
   capacityStanding: z.number().int().min(0).default(0),
-  color: z.string().max(50).optional(),
-  vin: z.string().max(100).optional(),
-  engineNumber: z.string().max(100).optional(),
+  color: z.string().max(50).nullable().optional(),
+  vin: z.string().max(100).nullable().optional(),
+  engineNumber: z.string().max(100).nullable().optional(),
   fuelType: z.enum(['diesel', 'petrol', 'electric', 'hybrid', 'cng']).default('diesel'),
   status: z.enum(['active', 'maintenance', 'retired', 'sold']).default('active'),
-  purchaseDate: z.string().optional(),
-  purchasePrice: z.number().positive().optional(),
-  assignedDepot: z.string().max(255).optional(),
+  purchaseDate: z.string().nullable().optional(),
+  purchasePrice: z.number().positive().nullable().optional(),
+  assignedDepot: z.string().max(255).nullable().optional(),
 });
 
 export const updateBusSchema = createBusSchema.partial();

@@ -7,6 +7,10 @@ jest.mock('../db', () => ({
 
 jest.mock('uuid', () => ({ v4: () => 'mock-uuid' }));
 
+jest.mock('../services/customerCommunicationService', () => ({
+  sendTripDelayAlerts: () => Promise.resolve(undefined),
+}));
+
 import { assignDriver, getAvailableDrivers, driverConfirmTrip, getDriverSchedule } from '../services/tripService';
 
 const TID = 'tenant-1';
@@ -23,6 +27,8 @@ describe('assignDriver', () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: TRIP_ID, status: 'scheduled' }) // trip exists
       .mockResolvedValueOnce({ id: DRIVER_ID }) // driver exists
+      .mockResolvedValueOnce(null) // tripForEmail (email lookup)
+      .mockResolvedValueOnce(null) // notification pref lookup
       .mockResolvedValueOnce({ // getTripById result
         id: TRIP_ID, tenant_id: TID, route_id: 'r1', bus_id: 'b1',
         driver_id: DRIVER_ID, trip_type: 'regular', status: 'scheduled',
@@ -35,6 +41,7 @@ describe('assignDriver', () => {
     mockQuery.mockResolvedValueOnce(undefined); // createNotification
     mockQuery.mockResolvedValueOnce([]); // stops
     mockQuery.mockResolvedValueOnce([]); // passengers
+    mockQuery.mockResolvedValueOnce([]); // legs
 
     const result = await assignDriver(TID, TRIP_ID, DRIVER_ID);
     expect(result.driverId).toBe(DRIVER_ID);
@@ -86,6 +93,7 @@ describe('driverConfirmTrip', () => {
     mockQuery.mockResolvedValueOnce(undefined); // UPDATE
     mockQuery.mockResolvedValueOnce([]); // stops
     mockQuery.mockResolvedValueOnce([]); // passengers
+    mockQuery.mockResolvedValueOnce([]); // legs
 
     const result = await driverConfirmTrip(TID, TRIP_ID, 'accepted');
     expect(result.driverConfirmationStatus).toBe('accepted');

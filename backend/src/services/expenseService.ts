@@ -64,12 +64,13 @@ export async function listExpenses(tenantId: string, params: {
             u.name AS paid_by_name,
             approver.name AS approved_by_name,
             b.plate_number AS bus_plate,
-            d.name AS driver_name
+            duser.name AS duser_name
      FROM expenses e
      LEFT JOIN users u ON u.id = e.paid_by
      LEFT JOIN users approver ON approver.id = e.approved_by
      LEFT JOIN buses b ON b.id = e.bus_id
      LEFT JOIN drivers d ON d.id = e.driver_id
+     LEFT JOIN users duser ON duser.id = d.user_id
      WHERE ${where}
      ORDER BY e.date DESC, e.created_at DESC
      LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -82,7 +83,7 @@ export async function listExpenses(tenantId: string, params: {
       paidByName: r.paid_by_name,
       approvedByName: r.approved_by_name,
       busPlate: r.bus_plate,
-      driverName: r.driver_name,
+      driverName: r.duser_name,
     })),
     meta: { total, page: params.page, pageSize: params.pageSize },
   };
@@ -94,12 +95,13 @@ export async function getExpenseDetail(tenantId: string, id: string) {
             u.name AS paid_by_name,
             approver.name AS approved_by_name,
             b.plate_number AS bus_plate,
-            d.name AS driver_name
+            duser.name AS duser_name
      FROM expenses e
      LEFT JOIN users u ON u.id = e.paid_by
      LEFT JOIN users approver ON approver.id = e.approved_by
      LEFT JOIN buses b ON b.id = e.bus_id
      LEFT JOIN drivers d ON d.id = e.driver_id
+     LEFT JOIN users duser ON duser.id = d.user_id
      WHERE e.id = $1 AND e.tenant_id = $2 AND e.deleted_at IS NULL`,
     [id, tenantId],
   );
@@ -109,7 +111,7 @@ export async function getExpenseDetail(tenantId: string, id: string) {
     paidByName: row.paid_by_name,
     approvedByName: row.approved_by_name,
     busPlate: row.bus_plate,
-    driverName: row.driver_name,
+    driverName: row.duser_name,
   };
 }
 

@@ -1,6 +1,7 @@
 :root {
   /* ─── Typography ─── */
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono', Consolas, monospace;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -64,11 +65,20 @@
 :root {
   --color-bg: #f5f6f8;
   --color-bg-subtle: #f0f1f3;
+  --color-bg-canvas: #f5f6f8;
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-subtle: #f0f1f3;
+  --color-bg-primary: #ffffff;
   --color-surface: #ffffff;
   --color-surface-hover: #f8f9fa;
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8f9fa;
+  --color-surface-alt: #f8fafc;
+  --color-hover: #f8f9fa;
   --color-border: #e8eaed;
   --color-border-hover: #d1d5db;
 
+  --color-text: #0f172a;
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-tertiary: #94a3b8;
@@ -78,6 +88,8 @@
   --color-primary-hover: #1d4ed8;
   --color-primary-light: #eff6ff;
   --color-primary-subtle: #dbeafe;
+  --color-primary-alpha: rgba(37, 99, 235, 0.25);
+  --color-accent: #2563eb;
 
   --color-success: #10b981;
   --color-success-light: #ecfdf5;
@@ -111,17 +123,27 @@
 
   /* ─── Shadows ─── */
   --shadow-primary: 0 2px 8px rgba(37, 99, 235, 0.20);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* ─── Dark Mode ─── */
 [data-theme="dark"] {
   --color-bg: #0f1117;
   --color-bg-subtle: #151820;
+  --color-bg-canvas: #0f1117;
+  --color-bg-surface: #1a1d28;
+  --color-bg-surface-subtle: #151820;
+  --color-bg-primary: #1a1d28;
   --color-surface: #1a1d28;
   --color-surface-hover: #222639;
+  --color-surface-primary: #1a1d28;
+  --color-surface-secondary: #222639;
+  --color-surface-alt: #151820;
+  --color-hover: #222639;
   --color-border: #2a2e3d;
   --color-border-hover: #3a3f52;
 
+  --color-text: #f1f5f9;
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
   --color-text-tertiary: #64748b;
@@ -129,10 +151,13 @@
 
   --color-primary-light: rgba(37, 99, 235, 0.12);
   --color-primary-subtle: rgba(37, 99, 235, 0.20);
+  --color-primary-alpha: rgba(37, 99, 235, 0.35);
+  --color-accent: #3b82f6;
   --color-success-light: rgba(16, 185, 129, 0.10);
   --color-warning-light: rgba(245, 158, 11, 0.10);
   --color-danger-light: rgba(239, 68, 68, 0.10);
   --color-info-light: rgba(99, 102, 241, 0.10);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.20), 0 1px 2px rgba(0, 0, 0, 0.10);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.30);
 }

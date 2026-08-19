@@ -44,19 +44,22 @@ export async function createBatch(tenantId: string, periodStart: string, periodE
 
   if (drivers.length === 0) throw new Error('No active drivers found to include in payroll');
 
+  const tripCounts = await query<{ driver_id: string; count: string }>(
+    `SELECT driver_id, COUNT(*)::text AS count FROM trips
+     WHERE tenant_id = $1 AND status = 'completed'
+       AND scheduled_date >= $2 AND scheduled_date <= $3 AND deleted_at IS NULL
+       AND driver_id = ANY($4::uuid[])
+     GROUP BY driver_id`,
+    [tenantId, periodStart, periodEnd, drivers.map((d) => d.id)],
+  );
+  const tripCountByDriver = new Map(tripCounts.map((r) => [r.driver_id, parseInt(r.count, 10)]));
+
   // For each driver, calculate trip allowance and overtime
   const items: any[] = [];
   for (const driver of drivers) {
     const baseSalary = parseFloat(driver.base_salary || '3000');
 
-    // Count completed trips in period
-    const tripCountRow = await queryOne<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM trips
-       WHERE tenant_id = $1 AND driver_id = $2 AND status = 'completed'
-       AND scheduled_date >= $3 AND scheduled_date <= $4 AND deleted_at IS NULL`,
-      [tenantId, driver.id, periodStart, periodEnd],
-    );
-    const tripCount = parseInt(tripCountRow?.count || '0', 10);
+    const tripCount = tripCountByDriver.get(driver.id) ?? 0;
     const tripAllowance = tripCount * 25; // SAR 25 per trip
 
     // Overtime: trips above 30 threshold

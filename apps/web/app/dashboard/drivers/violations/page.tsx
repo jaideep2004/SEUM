@@ -58,6 +58,18 @@ export default function DriverViolationsPage() {
     driver_id: "", trip_id: "", violation_type: "speeding", severity: "minor", description: "", action_taken: "",
   });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [drivers, setDrivers] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const token = getToken();
+      try {
+        const res = await fetch(`${API}/drivers?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) setDrivers(data.data || []);
+      } catch {}
+    })();
+  }, []);
 
   async function fetchViolations() {
     setLoading(true);
@@ -247,8 +259,11 @@ export default function DriverViolationsPage() {
       {activeTab === "record" && (
         <form className={styles.form} onSubmit={handleRecord}>
           <div className={styles.field}>
-            <label>Driver ID *</label>
-            <input value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })} placeholder="Driver UUID" required />
+            <label>Driver *</label>
+            <select value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })} required>
+              <option value="">Select driver...</option>
+              {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
+            </select>
           </div>
           <div className={styles.formRow}>
             <div className={styles.field}>
@@ -288,10 +303,12 @@ export default function DriverViolationsPage() {
       {activeTab === "score" && (
         <div>
           <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-            <input
+            <select
               style={{ padding: "8px 12px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: "var(--text-sm)", flex: 1 }}
-              value={driverId} onChange={e => setDriverId(e.target.value)} placeholder="Enter Driver UUID"
-            />
+              value={driverId} onChange={e => { setDriverId(e.target.value); if (e.target.value) fetchScore(); }}>
+              <option value="">Select a driver...</option>
+              {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
+            </select>
             <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={fetchScore}>
               <Shield size={14} /> Get Score
             </button>

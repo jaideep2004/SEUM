@@ -29,6 +29,8 @@ export default function ExpensesPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ type: string; expense: any } | null>(null);
   const [filters, setFilters] = useState({ expense_category: "", status: "", start_date: "", end_date: "" });
+  const [buses, setBuses] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     expense_category: "fuel", amount: 0, description: "", date: new Date().toISOString().split("T")[0],
@@ -54,6 +56,21 @@ export default function ExpensesPage() {
   }
 
   useEffect(() => { fetchExpenses(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      try {
+        const [b, d] = await Promise.all([
+          fetch(`${API}/fleet/buses?page=1&pageSize=100`, { headers }).then(r => r.json()),
+          fetch(`${API}/drivers?page=1&pageSize=100`, { headers }).then(r => r.json()),
+        ]);
+        if (b.success) setBuses((b.data || []).sort((x: any, y: any) => x.plateNumber.localeCompare(y.plateNumber)));
+        if (d.success) setDrivers(d.data || []);
+      } catch {}
+    })();
+  }, []);
 
   function openCreate() {
     setForm({
@@ -228,12 +245,18 @@ export default function ExpensesPage() {
               </div>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Bus ID</label>
-                  <input value={form.bus_id} onChange={e => setForm({ ...form, bus_id: e.target.value })} placeholder="UUID" />
+                  <label>Bus</label>
+                  <select value={form.bus_id} onChange={e => setForm({ ...form, bus_id: e.target.value })}>
+                    <option value="">None</option>
+                    {buses.map(b => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
+                  </select>
                 </div>
                 <div className={styles.field}>
-                  <label>Driver ID</label>
-                  <input value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })} placeholder="UUID" />
+                  <label>Driver</label>
+                  <select value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })}>
+                    <option value="">None</option>
+                    {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
+                  </select>
                 </div>
               </div>
               <div className={styles.modalActions}>

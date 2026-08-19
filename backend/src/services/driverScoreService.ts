@@ -83,14 +83,10 @@ export async function computeScore(tenantId: string, driverId: string, periodSta
   // Fuel efficiency (placeholder - from fuel_logs when integrated)
   const fuel = await queryOne<{ avg_km_per_liter: string }>(
     `SELECT
-       CASE WHEN SUM(fl.liters) > 0 THEN (SUM(fl.odometer_reading - prev.odometer) / SUM(fl.liters))::text ELSE '0' END AS avg_km_per_liter
+       CASE WHEN SUM(fl.liters) > 0 THEN ((MAX(fl.odometer_reading) - MIN(fl.odometer_reading)) / SUM(fl.liters))::text ELSE '0' END AS avg_km_per_liter
      FROM fuel_logs fl
-     LEFT JOIN LATERAL (
-       SELECT COALESCE(MAX(f2.odometer_reading), fl.odometer_reading - 1) AS odometer
-       FROM fuel_logs f2
-       WHERE f2.bus_id = fl.bus_id AND f2.date < fl.date AND f2.tenant_id = fl.tenant_id
-     ) prev ON true
-     WHERE fl.driver_id = $1 AND fl.tenant_id = $2 AND fl.date >= $3 AND fl.date <= $4`,
+     JOIN assignments a ON a.bus_id = fl.bus_id AND a.driver_id = $1 AND a.tenant_id = $2
+     WHERE fl.tenant_id = $2 AND fl.date >= $3 AND fl.date <= $4`,
     [driverId, tenantId, periodStart, periodEnd]
   );
 

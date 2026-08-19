@@ -146,7 +146,7 @@
 .emptyState { text-align: center; padding: 60px 20px; color: var(--color-text-tertiary); }
 
 /* Form */
-.form { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 24px; max-width: 600px; }
+.form { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 24px; max-width: 1200px; }
 .formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field { margin-bottom: 14px; }
 .field label { display: block; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); margin-bottom: 4px; }

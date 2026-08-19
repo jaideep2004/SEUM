@@ -32,11 +32,23 @@ describe('createPattern', () => {
         scheduled_end_time: null, start_date: '2026-08-01', end_date: null,
         specific_dates: null, notes: null, is_active: true,
         last_generated_at: null, created_by: UID, created_at: '2026-07-15T00:00:00Z', updated_at: '2026-07-15T00:00:00Z',
+      })
+      // getPatternById: pattern row + legs
+      .mockResolvedValueOnce({
+        id: PATTERN_ID, tenant_id: TID, route_id: ROUTE_ID, bus_id: BUS_ID,
+        driver_id: null, trip_type: 'regular', frequency: 'daily',
+        days_of_week: null, scheduled_start_time: '08:00:00',
+        scheduled_end_time: null, start_date: '2026-08-01', end_date: null,
+        specific_dates: null, notes: null, is_active: true,
+        last_generated_at: null, created_by: UID, created_at: '2026-07-15T00:00:00Z', updated_at: '2026-07-15T00:00:00Z',
+        route_name: null, origin: null, destination: null,
+        plate_number: null, driver_name: null,
       });
+    mockQuery.mockResolvedValueOnce([]); // pattern legs
 
     const result = await createPattern(TID, UID, {
       routeId: ROUTE_ID, busId: BUS_ID, frequency: 'daily',
-      tripType: 'regular', isActive: true,
+      tripType: 'single', isActive: true,
       scheduledStartTime: '08:00:00', startDate: '2026-08-01',
     });
     expect(result.routeId).toBe(ROUTE_ID);
@@ -46,7 +58,7 @@ describe('createPattern', () => {
   it('throws NotFoundError when route missing', async () => {
     mockQueryOne.mockResolvedValueOnce(null);
     await expect(createPattern(TID, UID, {
-      routeId: 'bad', frequency: 'daily', tripType: 'regular', isActive: true,
+      routeId: 'bad', frequency: 'daily', tripType: 'single', isActive: true,
       scheduledStartTime: '08:00:00', startDate: '2026-08-01',
     })).rejects.toThrow('Route not found');
   });
@@ -56,7 +68,7 @@ describe('createPattern', () => {
       .mockResolvedValueOnce({ id: ROUTE_ID })
       .mockResolvedValueOnce(null);
     await expect(createPattern(TID, UID, {
-      routeId: ROUTE_ID, busId: 'bad', frequency: 'daily', tripType: 'regular', isActive: true,
+      routeId: ROUTE_ID, busId: 'bad', frequency: 'daily', tripType: 'single', isActive: true,
       scheduledStartTime: '08:00:00', startDate: '2026-08-01',
     })).rejects.toThrow('Bus not found');
   });
@@ -98,6 +110,7 @@ describe('getPatternById', () => {
       route_name: 'Test Route', origin: 'A', destination: 'B',
       plate_number: 'ABC 123', driver_name: 'John Doe',
     });
+    mockQuery.mockResolvedValueOnce([]); // pattern legs
 
     const result = await getPatternById(TID, PATTERN_ID);
     expect(result.frequency).toBe('weekdays');
@@ -116,6 +129,8 @@ describe('updatePattern', () => {
     mockQueryOne.mockImplementationOnce(() => Promise.resolve({ id: PATTERN_ID })); // exists
     // update query - no return needed
     mockQuery.mockImplementationOnce(() => Promise.resolve(undefined));
+    // getPatternById: pattern legs query
+    mockQuery.mockResolvedValueOnce([]);
     // getPatternById query
     mockQueryOne.mockImplementationOnce(() => Promise.resolve({
       id: PATTERN_ID, tenant_id: TID, route_id: ROUTE_ID, bus_id: null,
@@ -158,12 +173,45 @@ describe('generateTrips', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null);
-    // INSERT trips + UPDATE pattern
+    // Pattern legs lookup (no legs) + INSERT trips + UPDATE pattern
+    mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValue(undefined);
 
     const result = await generateTrips(TID, UID, PATTERN_ID, { startDate: '2026-08-01', endDate: '2026-08-03' });
     expect(result.generatedCount).toBe(3);
     expect(result.tripIds).toHaveLength(3);
+  });
+
+  it('generates round trips with legs from a leg template', async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({  // pattern lookup (round, no route)
+        id: PATTERN_ID, tenant_id: TID, route_id: null, bus_id: BUS_ID,
+        driver_id: null, trip_type: 'round', frequency: 'daily',
+        days_of_week: null, scheduled_start_time: '08:00:00',
+        scheduled_end_time: null, start_date: '2026-08-01', end_date: '2026-08-01',
+        specific_dates: null, notes: null, is_active: true,
+        last_generated_at: null, created_by: UID,
+        trip_title: 'Hajj Group 12', vehicle_type: 'Bus', group_leader: 'Ahmed',
+        group_leader_no: null, nationality: null, agent: null, group_no: 'G-12',
+        no_of_pax: 45, nusuk_info: null, flights: null, hotels: null,
+      })
+      // Trip existence check (no route_id → type/date/time check)
+      .mockResolvedValueOnce(null);
+    // Pattern legs: 2 legs
+    mockQuery.mockResolvedValueOnce([
+      { id: 'pl-1', pattern_id: PATTERN_ID, leg_no: 1, origin: 'Jeddah', destination: 'Madinah', day_offset: 0, departure_time: '08:00', arrival_time: null, overnight_flag: false, notes: null },
+      { id: 'pl-2', pattern_id: PATTERN_ID, leg_no: 2, origin: 'Madinah', destination: 'Makkah', day_offset: 2, departure_time: '09:00', arrival_time: null, overnight_flag: true, notes: null },
+    ]);
+    // INSERT trip + INSERT legs x2 + UPDATE pattern
+    mockQuery.mockResolvedValue(undefined);
+
+    const result = await generateTrips(TID, UID, PATTERN_ID, { startDate: '2026-08-01', endDate: '2026-08-01' });
+    expect(result.generatedCount).toBe(1);
+
+    const insertCalls = mockQuery.mock.calls.filter((c: any[]) => String(c[0]).includes('INSERT INTO trip_legs'));
+    expect(insertCalls).toHaveLength(2);
+    expect(insertCalls[0][1]).toContain('2026-08-01'); // leg 1 on trip date (offset 0)
+    expect(insertCalls[1][1]).toContain('2026-08-03'); // leg 2 on date + 2 days
   });
 
   it('throws when pattern is inactive', async () => {

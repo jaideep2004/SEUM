@@ -6,6 +6,11 @@ import { config } from '../config';
 import { query, queryOne } from '../db';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { sendEmailAsync } from './emailService';
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 interface UserRow {
   id: string;
@@ -226,11 +231,22 @@ export async function forgotPassword(email: string) {
     [resetTokenHash, expiresAt.toISOString(), user.id]
   );
 
-  const resetUrl = `${config.cors.origin}/reset-password?token=${resetToken}`;
+  const resetUrl = `${config.appUrl}/reset-password?token=${resetToken}`;
   logger.info(
     { email, resetUrl },
     'Password reset link generated (no email provider configured — link is logged)'
   );
+
+  sendEmailAsync({
+    to: user.email,
+    subject: 'Reset your SEUM password',
+    preheader: 'Secure link to reset your SEUM password. Valid for 60 minutes.',
+    heading: 'Reset your SEUM password',
+    bodyHtml: `<p>Hi ${escapeHtml(user.name)}, we received a request to reset the password for your SEUM account.</p>
+      <p>Use the button below to choose a new password. This link is <strong>valid for 60 minutes</strong> and can only be used once.</p>`,
+    action: { label: 'Reset password', url: resetUrl },
+    note: 'If you did not request this, you can safely ignore this email — your password will not be changed.',
+  });
 }
 
 export async function resetPassword(token: string, newPassword: string) {

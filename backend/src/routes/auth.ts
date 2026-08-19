@@ -6,7 +6,7 @@ import { strictAuthRateLimit } from '../middleware/rateLimiter';
 const router = Router();
 
 router.post('/login', strictAuthRateLimit(), authController.login);
-router.post('/register', authenticate, requireRole('super_admin'), strictAuthRateLimit(), authController.register);
+router.post('/register', authenticate, requireRole('super_admin', 'company_admin'), strictAuthRateLimit(), authController.register);
 router.post('/refresh', strictAuthRateLimit(), authController.refresh);
 router.post('/logout', authenticate, authController.logout);
 router.post('/forgot-password', strictAuthRateLimit(), authController.forgotPassword);

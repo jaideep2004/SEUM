@@ -271,6 +271,43 @@
   border-color: #ef4444;
 }
 
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.editBtn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #3b82f6;
+}
+
+.statusToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.statusToggle input {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
 .emptyState {
   text-align: center;
   padding: 60px;

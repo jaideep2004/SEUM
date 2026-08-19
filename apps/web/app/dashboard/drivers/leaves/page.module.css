@@ -202,7 +202,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: 24px;
-  max-width: 600px;
+  max-width: 1200px;
 }
 .formRow {
   display: grid;

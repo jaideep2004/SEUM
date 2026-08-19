@@ -31,18 +31,71 @@ export const routeQuerySchema = z.object({
 });
 
 // ─── Trips ───
-export const createTripSchema = z.object({
-  routeId: z.string().min(1, 'Route is required'),
-  busId: z.string().min(1, 'Bus is required'),
+export const TRIP_TYPES = ['single', 'round'] as const;
+export const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+export const TIME_REGEX = /^\d{2}:\d{2}(:\d{2})?$/;
+
+export const tripLegSchema = z.object({
+  origin: z.string().min(1, 'Leg origin is required').max(255),
+  destination: z.string().min(1, 'Leg destination is required').max(255),
+  legDate: z.string().regex(DATE_REGEX, 'Leg date must be YYYY-MM-DD'),
+  departureTime: z.string().regex(TIME_REGEX, 'Invalid departure time').optional(),
+  arrivalTime: z.string().regex(TIME_REGEX, 'Invalid arrival time').optional(),
+  overnightFlag: z.boolean().optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export const flightSchema = z.object({
+  flightNo: z.string().max(50).optional(),
+  airline: z.string().max(100).optional(),
+  from: z.string().max(255).optional(),
+  to: z.string().max(255).optional(),
+  date: z.string().regex(DATE_REGEX).optional(),
+  time: z.string().regex(TIME_REGEX).optional(),
+});
+
+export const hotelSchema = z.object({
+  city: z.string().max(255).optional(),
+  hotel: z.string().max(255).optional(),
+  from: z.string().regex(DATE_REGEX).optional(),
+  to: z.string().regex(DATE_REGEX).optional(),
+});
+
+export const manifestSchema = z.object({
+  tripTitle: z.string().max(255).optional(),
+  vehicleType: z.string().max(100).optional(),
+  groupLeader: z.string().max(255).optional(),
+  groupLeaderNo: z.string().max(50).optional(),
+  nationality: z.string().max(100).optional(),
+  agent: z.string().max(255).optional(),
+  groupNo: z.string().max(50).optional(),
+  noOfPax: z.number().int().min(0).optional(),
+  nusukInfo: z.record(z.unknown()).optional(),
+  flights: z.array(flightSchema).optional(),
+  hotels: z.array(hotelSchema).optional(),
+});
+
+export const createTripSchemaBase = manifestSchema.extend({
+  routeId: z.string().min(1, 'Route is required').optional(),
+  busId: z.string().min(1, 'Bus is required').optional(),
   driverId: z.string().optional(),
-  tripType: z.enum(['regular', 'hajj', 'umrah', 'charter', 'shuttle']).default('regular'),
+  tripType: z.enum(TRIP_TYPES).default('single'),
   scheduledDate: z.string().min(1, 'Scheduled date is required'),
   scheduledStartTime: z.string().min(1, 'Start time is required'),
   scheduledEndTime: z.string().optional(),
+  legs: z.array(tripLegSchema).optional(),
   notes: z.string().max(1000).optional(),
 });
 
-export const updateTripSchema = createTripSchema.partial().omit({ routeId: true, busId: true });
+export const createTripSchema = createTripSchemaBase.refine(v => v.tripType !== 'round' || (v.legs && v.legs.length >= 2), {
+  message: 'Round trips require at least 2 legs (stops with dates)',
+  path: ['legs'],
+});
+
+export const updateTripSchema = createTripSchemaBase.partial().omit({ routeId: true, busId: true }).refine(
+  v => v.tripType !== 'round' || (v.legs !== undefined && v.legs.length >= 2),
+  { message: 'Round trips require at least 2 legs (stops with dates)', path: ['legs'] }
+);
 
 export const delayTripSchema = z.object({
   delayMinutes: z.number().int().positive('Delay must be positive'),
@@ -58,7 +111,7 @@ export const tripQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
   status: z.enum(['scheduled', 'en_route', 'completed', 'cancelled', 'delayed']).optional(),
-  tripType: z.enum(['regular', 'hajj', 'umrah', 'charter', 'shuttle']).optional(),
+  tripType: z.enum(TRIP_TYPES).optional(),
   busId: z.string().optional(),
   routeId: z.string().optional(),
   driverId: z.string().optional(),
@@ -109,11 +162,21 @@ export type ConfirmTripInput = z.infer<typeof confirmTripSchema>;
 export type DriverScheduleQuery = z.infer<typeof driverScheduleQuerySchema>;
 
 // ─── Recurring Trip Patterns ───
-export const createRecurringTripPatternSchema = z.object({
-  routeId: z.string().min(1, 'Route is required'),
+export const patternLegSchema = z.object({
+  origin: z.string().min(1, 'Leg origin is required').max(255),
+  destination: z.string().min(1, 'Leg destination is required').max(255),
+  dayOffset: z.number().int().min(0).default(0),
+  departureTime: z.string().regex(TIME_REGEX, 'Invalid departure time').optional(),
+  arrivalTime: z.string().regex(TIME_REGEX, 'Invalid arrival time').optional(),
+  overnightFlag: z.boolean().optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export const createRecurringTripPatternSchemaBase = manifestSchema.extend({
+  routeId: z.string().min(1, 'Route is required').optional(),
   busId: z.string().optional(),
   driverId: z.string().optional(),
-  tripType: z.enum(['regular', 'hajj', 'umrah', 'charter', 'shuttle']).default('regular'),
+  tripType: z.enum(TRIP_TYPES).default('single'),
   frequency: z.enum(['daily', 'weekdays', 'weekends', 'custom_days']),
   daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
   scheduledStartTime: z.string().min(1, 'Start time is required'),
@@ -121,11 +184,17 @@ export const createRecurringTripPatternSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
   specificDates: z.array(z.string()).optional(),
+  legs: z.array(patternLegSchema).optional(),
   notes: z.string().max(1000).optional(),
   isActive: z.boolean().default(true),
 });
 
-export const updateRecurringTripPatternSchema = createRecurringTripPatternSchema.partial();
+export const createRecurringTripPatternSchema = createRecurringTripPatternSchemaBase.refine(v => v.tripType !== 'round' || (v.legs && v.legs.length >= 2), {
+  message: 'Round trip patterns require at least 2 legs',
+  path: ['legs'],
+});
+
+export const updateRecurringTripPatternSchema = createRecurringTripPatternSchemaBase.partial();
 
 export const recurringTripPatternQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),

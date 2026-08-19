@@ -4,9 +4,9 @@ import * as scoreController from '../controllers/driverScoreController';
 
 const router = Router();
 
-router.post('/compute/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'hr'), scoreController.compute);
-router.get('/history/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr', 'driver'), scoreController.history);
-router.get('/leaderboard', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr'), scoreController.leaderboard);
-router.get('/latest/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr', 'driver'), scoreController.latest);
+router.post('/compute/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'hr_manager'), scoreController.compute);
+router.get('/history/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr_manager', 'driver'), scoreController.history);
+router.get('/leaderboard', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr_manager'), scoreController.leaderboard);
+router.get('/latest/:driverId', authenticate, requireRole('super_admin', 'company_admin', 'fleet_manager', 'hr_manager', 'driver'), scoreController.latest);
 
 export default router;

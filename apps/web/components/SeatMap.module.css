@@ -1,0 +1,90 @@
+.seatMap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legendAvailable {
+  background: var(--color-surface-hover, rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--color-border);
+}
+
+.legendSelected {
+  background: var(--color-primary, #1d4ed8);
+}
+
+.legendOccupied {
+  background: var(--color-text-tertiary, #9ca3af);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(28px, 1fr));
+  gap: 8px;
+}
+
+.seat {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+}
+
+.seat.available:hover:not(:disabled) {
+  border-color: var(--color-primary, #1d4ed8);
+  background: var(--color-primary-light, #dbeafe);
+}
+
+.seat.selected {
+  background: var(--color-primary, #1d4ed8);
+  border-color: var(--color-primary, #1d4ed8);
+  color: #fff;
+}
+
+.seat.occupied {
+  background: var(--color-text-tertiary, #9ca3af);
+  border-color: var(--color-text-tertiary, #9ca3af);
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.seat:disabled {
+  cursor: not-allowed;
+}
+
+.count {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

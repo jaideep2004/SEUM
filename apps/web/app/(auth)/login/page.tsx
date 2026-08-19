@@ -43,8 +43,14 @@ export default function LoginPage() {
         operations_manager: "/dashboard/operations",
         fleet_manager: "/dashboard/fleet",
         monitoring_control: "/dashboard/monitoring",
+        hr_manager: "/dashboard/hr/employees",
+        finance_accountant: "/dashboard/accounts",
+        customer_service: "/dashboard/bookings",
+        maintenance_workshop: "/dashboard/maintenance",
+        driver: "/dashboard/schedules",
+        executive: "/dashboard/company",
       };
-      window.location.href = dashboardMap[role] || "/dashboard";
+      window.location.href = dashboardMap[role] || "/dashboard/company";
     } catch {
       setError("Unable to connect to server. Please try again.");
     } finally {

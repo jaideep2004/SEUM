@@ -80,6 +80,8 @@ CREATE INDEX IF NOT EXISTS idx_trips_driver ON trips(driver_id);
 CREATE INDEX IF NOT EXISTS idx_trips_date ON trips(scheduled_date);
 CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(status);
 CREATE INDEX IF NOT EXISTS idx_trips_deleted ON trips(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_trips_tenant_date ON trips(tenant_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_trips_driver_completed ON trips(driver_id, scheduled_date) WHERE status = 'completed';
 
 -- ============================================================
 -- TRIP PASSENGERS

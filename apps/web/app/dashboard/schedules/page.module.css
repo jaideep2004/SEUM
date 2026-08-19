@@ -1,0 +1,30 @@
+.page { padding: 24px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.headerIcon { color: var(--color-primary); }
+.headerTitle { margin: 0; font-size: 20px; font-weight: 700; color: var(--color-text-primary); }
+.headerSub { margin: 2px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+
+.error {
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px; margin-bottom: 14px;
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-md); color: #991b1b; font-size: 12px;
+}
+
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 48px; color: var(--color-text-secondary); font-size: 13px; text-align: center;
+}
+
+.scheduleBox {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl); padding: 20px; display: flex; flex-direction: column; gap: 18px;
+}
+
+.selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.selectorLabel { font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.selectorSelect {
+  min-width: 280px; padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-bg); color: var(--color-text); font-size: 13px; outline: none;
+}
+.selectorSelect:focus { border-color: var(--color-primary); }

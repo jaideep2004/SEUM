@@ -94,12 +94,13 @@ export default function RecurringTripDetailPage() {
             <Repeat size={18} /> {FREQ_LABELS[pattern.frequency] || pattern.frequency} Trip
             <span className={styles.patternId}>#{pattern.id?.slice(0, 8)}</span>
           </h1>
-          <p className={styles.pageDesc}>{pattern.routeName || pattern.routeId}</p>
+          <p className={styles.pageDesc}>{pattern.routeName || pattern.routeId || "—"}</p>
         </div>
         <div className={styles.headerActions}>
           <span className={`${styles.statusBadge} ${pattern.isActive ? styles.activeBadge : styles.inactiveBadge}`}>
             {pattern.isActive ? "Active" : "Inactive"}
           </span>
+          <span className={styles.typeTag}>{pattern.tripType === "round" ? "Round Trip" : "Single Trip"}</span>
           <button className={styles.actionBtn} onClick={() => { setShowGenerate(true); setGenResult(null); }}>
             <RotateCcw size={13} /> Generate Trips
           </button>
@@ -160,6 +161,69 @@ export default function RecurringTripDetailPage() {
             </div>
           )}
         </div>
+
+        {pattern.tripType === "round" && (
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>Leg Template</h3>
+            <div className={styles.legsTimeline}>
+              {pattern.legs?.map((leg: any, idx: number) => (
+                <div key={idx} className={styles.legItem}>
+                  <div className={styles.legMarker}>
+                    <span>{idx + 1}</span>
+                    {idx < pattern.legs.length - 1 && <div className={styles.legLine} />}
+                  </div>
+                  <div className={styles.legContent}>
+                    <div className={styles.legPath}>{leg.origin} → {leg.destination}</div>
+                    <div className={styles.legMeta}>
+                      Day {leg.dayOffset} · {leg.departureTime ? `Dep ${leg.departureTime.slice(0, 5)}` : ""}{leg.arrivalTime ? ` · Arr ${leg.arrivalTime.slice(0, 5)}` : ""}
+                      {leg.overnightFlag && <span className={styles.overnightBadge}>Overnight</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(!pattern.legs || pattern.legs.length === 0) && <p className={styles.muted}>No legs defined.</p>}
+            </div>
+          </div>
+        )}
+
+        {pattern.tripTitle && (
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>Manifest Info</h3>
+            <div className={styles.detailRow}>
+              <FileText size={14} className={styles.detailIcon} />
+              <div><span className={styles.detailLabel}>Trip Title</span><span>{pattern.tripTitle}</span></div>
+            </div>
+            {pattern.vehicleType && (
+              <div className={styles.detailRow}>
+                <Bus size={14} className={styles.detailIcon} />
+                <div><span className={styles.detailLabel}>Vehicle Type</span><span>{pattern.vehicleType}</span></div>
+              </div>
+            )}
+            <div className={styles.detailRow}>
+              <User size={14} className={styles.detailIcon} />
+              <div>
+                <span className={styles.detailLabel}>Group Leader</span>
+                <span>{pattern.groupLeader || "—"}{pattern.groupLeaderNo ? ` · ${pattern.groupLeaderNo}` : ""}</span>
+              </div>
+            </div>
+            {pattern.nationality && (
+              <div className={styles.detailRow}>
+                <User size={14} className={styles.detailIcon} />
+                <div><span className={styles.detailLabel}>Nationality</span><span>{pattern.nationality}</span></div>
+              </div>
+            )}
+            <div className={styles.detailRow}>
+              <User size={14} className={styles.detailIcon} />
+              <div><span className={styles.detailLabel}>Agent / Group</span><span>{pattern.agent || "—"}{pattern.groupNo ? ` · Group ${pattern.groupNo}` : ""}</span></div>
+            </div>
+            {pattern.noOfPax != null && (
+              <div className={styles.detailRow}>
+                <User size={14} className={styles.detailIcon} />
+                <div><span className={styles.detailLabel}>No of Pax</span><span>{pattern.noOfPax}</span></div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Generate Modal */}

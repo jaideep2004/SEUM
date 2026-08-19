@@ -550,6 +550,21 @@
   margin-bottom: 2px;
 }
 
+.notifViewAll {
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12.5px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.notifViewAll:hover {
+  background: var(--color-surface-hover);
+}
+
 .notifItemMsg {
   font-size: 12px;
   color: var(--color-text-secondary);

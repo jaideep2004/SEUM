@@ -1,4 +1,4 @@
-.page { padding: 24px; max-width: 700px; margin: 0 auto; }
+.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
 .backBtn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: 11px; cursor: pointer; margin-bottom: 16px; }
 .backBtn:hover { background: var(--color-hover); }
 .pageTitle { font-size: 22px; font-weight: 700; margin: 0 0 20px; color: var(--color-text); }

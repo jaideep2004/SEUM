@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Bus, User, Clock, FileText, UserPlus, Trash2, Play, CheckCircle, XCircle, AlertTriangle, UserCheck } from "lucide-react";
+import { ArrowLeft, MapPin, Bus, User, Clock, FileText, UserPlus, Trash2, Play, CheckCircle, XCircle, AlertTriangle, UserCheck, Route, Users, Plane, Hotel, Printer, X } from "lucide-react";
 import TripTimeline from "@/components/TripTimeline";
 import DriverAssignModal from "@/components/DriverAssignModal";
 import styles from "./page.module.css";
+import "./print.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
@@ -25,6 +26,7 @@ export default function TripDetailPage() {
   const [showCancel, setShowCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showDriverAssign, setShowDriverAssign] = useState(false);
+  const [showManifest, setShowManifest] = useState(false);
 
   async function fetchTrip() {
     setLoading(true);
@@ -102,11 +104,19 @@ export default function TripDetailPage() {
 
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>
-          {trip.routeName || "Trip"} <span className={styles.tripId}>#{trip.id?.slice(0, 8)}</span>
+          {trip.tripTitle || trip.routeName || "Trip"} <span className={styles.tripId}>#{trip.id?.slice(0, 8)}</span>
         </h1>
-        <span className={`${styles.statusBadge} ${styles[`status_${trip.status}`]}`}>
-          {trip.status.replace("_", " ")}
-        </span>
+        <div className={styles.headerRight}>
+          <span className={styles.typeTag}>{trip.tripType === "round" ? "Round Trip" : "Single Trip"}</span>
+          {trip.tripType === "round" && (
+            <button className={styles.manifestBtn} onClick={() => setShowManifest(true)}>
+              <Printer size={13} /> Print Manifest
+            </button>
+          )}
+          <span className={`${styles.statusBadge} ${styles[`status_${trip.status}`]}`}>
+            {trip.status.replace("_", " ")}
+          </span>
+        </div>
       </div>
 
       <div className={styles.contentGrid}>
@@ -163,7 +173,75 @@ export default function TripDetailPage() {
                 <div><span className={styles.detailLabel}>Notes</span><span>{trip.notes}</span></div>
               </div>
             )}
+            {trip.tripType === "round" && (
+              <div className={styles.detailRow}>
+                <Route size={14} className={styles.detailIcon} />
+                <div><span className={styles.detailLabel}>Legs</span><span>{trip.legCount ?? trip.legs?.length ?? 0} stops across {trip.legs?.length ? new Set(trip.legs.map((l: any) => l.legDate)).size : 1} date(s)</span></div>
+              </div>
+            )}
           </div>
+
+          {trip.tripType === "round" && trip.legs && trip.legs.length > 0 && (
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}><Route size={14} /> Trip Legs</h3>
+              <div className={styles.legsTimeline}>
+                {trip.legs.map((leg: any, idx: number) => (
+                  <div key={leg.id || idx} className={styles.legItem}>
+                    <div className={styles.legMarker}>
+                      <span>{idx + 1}</span>
+                      {idx < trip.legs.length - 1 && <div className={styles.legLine} />}
+                    </div>
+                    <div className={styles.legContent}>
+                      <div className={styles.legPath}>{leg.origin} → {leg.destination}</div>
+                      <div className={styles.legMeta}>
+                        {new Date(leg.legDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                        {leg.departureTime && <> · dep {leg.departureTime.slice(0, 5)}</>}
+                        {leg.arrivalTime && <> · arr {leg.arrivalTime.slice(0, 5)}</>}
+                        {leg.overnightFlag && <span className={styles.overnightBadge}>Overnight</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(trip.groupLeader || trip.groupNo || trip.noOfPax != null || trip.agent) && (
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}><Users size={14} /> Manifest</h3>
+              {trip.tripTitle && <div className={styles.detailRow}><span className={styles.detailLabel}>Title</span><span>{trip.tripTitle}</span></div>}
+              {trip.groupLeader && <div className={styles.detailRow}><span className={styles.detailLabel}>Group Leader</span><span>{trip.groupLeader}{trip.groupLeaderNo ? ` (${trip.groupLeaderNo})` : ""}</span></div>}
+              {trip.nationality && <div className={styles.detailRow}><span className={styles.detailLabel}>Nationality</span><span>{trip.nationality}</span></div>}
+              {trip.agent && <div className={styles.detailRow}><span className={styles.detailLabel}>Agent</span><span>{trip.agent}</span></div>}
+              {trip.groupNo && <div className={styles.detailRow}><span className={styles.detailLabel}>Group No</span><span>{trip.groupNo}</span></div>}
+              {trip.noOfPax != null && <div className={styles.detailRow}><span className={styles.detailLabel}>No of Pax</span><span>{trip.noOfPax}</span></div>}
+              {trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>Vehicle Type</span><span>{trip.vehicleType}</span></div>}
+              {trip.flights?.length > 0 && (
+                <div className={styles.detailRow}>
+                  <Plane size={13} className={styles.detailIcon} />
+                  <div className={styles.subList}>
+                    {trip.flights.map((f: any, i: number) => (
+                      <span key={i} className={styles.subItem}>
+                        {f.flightNo || "Flight"}{f.airline ? ` · ${f.airline}` : ""}{f.from ? ` · ${f.from} → ${f.to || "?"}` : ""}{f.date ? ` · ${f.date}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {trip.hotels?.length > 0 && (
+                <div className={styles.detailRow}>
+                  <Hotel size={13} className={styles.detailIcon} />
+                  <div className={styles.subList}>
+                    {trip.hotels.map((h: any, i: number) => (
+                      <span key={i} className={styles.subItem}>
+                        {h.hotel || "Hotel"}{h.city ? ` · ${h.city}` : ""}{h.from ? ` · ${h.from}${h.to ? ` → ${h.to}` : ""}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {(canModify || isDelayed) && (
             <div className={styles.card}>
@@ -266,6 +344,91 @@ export default function TripDetailPage() {
           </div>
         </div>
       </div>
+
+      {showManifest && (
+        <div className={styles.overlay} onClick={() => setShowManifest(false)}>
+          <div className={styles.manifestModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.manifestToolbar}>
+              <h2>Trip Manifest</h2>
+              <button className={styles.manifestClose} onClick={() => setShowManifest(false)}><X size={15} /></button>
+            </div>
+            <div id="manifest-print" className={styles.manifestSheet}>
+              <h2 className={styles.manifestBrand}>{trip.tripTitle || "TRIP MANIFEST"}</h2>
+              <p className={styles.manifestSub}>Trip Type: {trip.tripType === "round" ? "Round Trip" : "Single Trip"} · Bus: {trip.busPlate || "—"} · Driver: {trip.driverName || "—"}</p>
+
+              <h3 className={styles.manifestSection}>Trip Info</h3>
+              <table className={styles.manifestTable}>
+                <tbody>
+                  {[["Trip Title", trip.tripTitle], ["Type of Vehicle", trip.vehicleType], ["Group Leader", trip.groupLeader], ["Group Leader No", trip.groupLeaderNo], ["Nationality", trip.nationality], ["Agent", trip.agent], ["Group No", trip.groupNo], ["No Of Pax", trip.noOfPax != null ? String(trip.noOfPax) : "—"], ["Route", trip.routeName || "—"]]
+                    .filter(([k, v]) => v)
+                    .map(([k, v], i) => (
+                      <tr key={i}><td>{k}</td><td>{v}</td></tr>
+                    ))}
+                </tbody>
+              </table>
+
+              {trip.legs?.length > 0 && (
+                <>
+                  <h3 className={styles.manifestSection}>Transportation / Route</h3>
+                  <table className={styles.manifestTable}>
+                    <thead>
+                      <tr><th>#</th><th>From</th><th>To</th><th>Date</th><th>Time</th></tr>
+                    </thead>
+                    <tbody>
+                      {trip.legs.map((leg: any, idx: number) => (
+                        <tr key={leg.id || idx}>
+                          <td>{idx + 1}</td>
+                          <td>{leg.origin}</td>
+                          <td>{leg.destination}</td>
+                          <td>{leg.legDate}</td>
+                          <td>{leg.departureTime?.slice(0, 5) || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {trip.flights?.length > 0 && (
+                <>
+                  <h3 className={styles.manifestSection}>Flights</h3>
+                  <table className={styles.manifestTable}>
+                    <thead>
+                      <tr><th>Flight No</th><th>Airline</th><th>From</th><th>To</th><th>Date</th><th>Time</th></tr>
+                    </thead>
+                    <tbody>
+                      {trip.flights.map((f: any, i: number) => (
+                        <tr key={i}><td>{f.flightNo || "—"}</td><td>{f.airline || "—"}</td><td>{f.from || "—"}</td><td>{f.to || "—"}</td><td>{f.date || "—"}</td><td>{f.time?.slice(0, 5) || "—"}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {trip.hotels?.length > 0 && (
+                <>
+                  <h3 className={styles.manifestSection}>Hotels</h3>
+                  <table className={styles.manifestTable}>
+                    <thead>
+                      <tr><th>City</th><th>Hotel</th><th>Check-in</th><th>Check-out</th></tr>
+                    </thead>
+                    <tbody>
+                      {trip.hotels.map((h: any, i: number) => (
+                        <tr key={i}><td>{h.city || "—"}</td><td>{h.hotel || "—"}</td><td>{h.from || "—"}</td><td>{h.to || "—"}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </div>
+            <div className={styles.manifestActions}>
+              <button className={styles.manifestPrintBtn} onClick={() => window.print()}>
+                <Printer size={14} /> Print
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDriverAssign && (
         <DriverAssignModal

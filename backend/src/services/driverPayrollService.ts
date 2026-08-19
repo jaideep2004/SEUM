@@ -62,19 +62,23 @@ export async function generatePayroll(tenantId: string, input: {
     input.driverIds ? [tenantId, input.driverIds] : [tenantId]
   );
 
+  const tripCounts = await query<{ driver_id: string; count: string }>(
+    `SELECT driver_id, COUNT(*)::text AS count
+     FROM trips
+     WHERE tenant_id = $1 AND deleted_at IS NULL
+       AND status = 'completed' AND scheduled_date >= $2 AND scheduled_date <= $3
+       AND driver_id = ANY($4::uuid[])
+     GROUP BY driver_id`,
+    [tenantId, input.periodStart, input.periodEnd, drivers.map((d) => d.id)]
+  );
+  const tripCountByDriver = new Map(tripCounts.map((r) => [r.driver_id, parseInt(r.count, 10)]));
+
   const results: any[] = [];
 
   for (const driver of drivers) {
     const baseSalary = input.baseSalaries?.[driver.id] || parseFloat(driver.base_salary) || 3000;
 
-    const trips = await query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count
-       FROM trips
-       WHERE tenant_id = $1 AND driver_id = $2 AND deleted_at IS NULL
-         AND status = 'completed' AND scheduled_date >= $3 AND scheduled_date <= $4`,
-      [tenantId, driver.id, input.periodStart, input.periodEnd]
-    );
-    const tripCount = parseInt(trips[0]?.count || '0', 10);
+    const tripCount = tripCountByDriver.get(driver.id) ?? 0;
     const tripAllowance = tripCount * input.tripRate;
 
     const overtimeHours = tripCount > 30 ? (tripCount - 30) * 0.5 : 0;

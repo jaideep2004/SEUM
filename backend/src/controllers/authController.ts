@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as authService from '../services/authService';
 import { sendSuccess } from '../utils/response';
+import { ForbiddenError, ValidationError } from '../utils/errors';
 import { config } from '../config';
 
 const COOKIE_OPTIONS = {
@@ -20,7 +21,7 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-  tenantId: z.string().uuid(),
+  tenantId: z.string().uuid().optional(),
   email: z.string().email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().min(1, 'Name is required'),
@@ -57,20 +58,33 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function register(req: Request, res: Response, next: NextFunction) {
-  try {
-    const data = registerSchema.parse(req.body);
-    const user = await authService.registerUser(
-      data.tenantId,
-      data.email,
-      data.password,
-      data.name,
-      data.roles
-    );
-    return sendSuccess(res, user, 'User registered successfully', undefined, 201);
-  } catch (err) {
-    next(err);
+    try {
+      const data = registerSchema.parse(req.body);
+      const { roles, tenantId } = req.user!;
+      const isSuperAdmin = roles.includes('super_admin');
+
+      if (!isSuperAdmin && data.roles.includes('super_admin')) {
+        return next(new ForbiddenError('Cannot assign the super_admin role'));
+      }
+      if (!isSuperAdmin && !tenantId) {
+        return next(new ForbiddenError('No tenant context for user creation'));
+      }
+      if (isSuperAdmin && !data.tenantId) {
+        return next(new ValidationError('tenantId is required'));
+      }
+
+      const user = await authService.registerUser(
+        (isSuperAdmin ? data.tenantId : tenantId) as string,
+        data.email,
+        data.password,
+        data.name,
+        data.roles
+      );
+      return sendSuccess(res, user, 'User registered successfully', undefined, 201);
+    } catch (err) {
+      next(err);
+    }
   }
-}
 
 export async function refresh(req: Request, res: Response, next: NextFunction) {
   try {

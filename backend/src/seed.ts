@@ -117,13 +117,14 @@ async function seed() {
     }
 
     // ─── Seed Documents ───
+    const daysFromNow = (n: number) => new Date(Date.now() + n * 86400000).toISOString().split('T')[0];
     const docs = [
-      { plate: 'ABC 1234', type: 'Registration', number: 'REG-2024-001', issue: '2024-01-15', expiry: '2025-01-15' },
-      { plate: 'ABC 1234', type: 'Insurance', number: 'INS-2024-8823', issue: '2024-03-01', expiry: '2025-03-01' },
-      { plate: 'XYZ 5678', type: 'Registration', number: 'REG-2024-002', issue: '2024-02-01', expiry: '2026-02-01' },
-      { plate: 'XYZ 5678', type: 'Insurance', number: 'INS-2024-4491', issue: '2024-02-01', expiry: '2025-02-01' },
-      { plate: 'GHI 3456', type: 'Registration', number: 'REG-2023-018', issue: '2023-11-10', expiry: '2024-11-10' },
-      { plate: 'JKL 7890', type: 'Insurance', number: 'INS-2024-7712', issue: '2024-06-15', expiry: new Date(Date.now() + 20 * 86400000).toISOString().split('T')[0] },
+      { plate: 'ABC 1234', type: 'Registration', number: 'REG-2026-001', issue: daysFromNow(-290), expiry: daysFromNow(45) },
+      { plate: 'ABC 1234', type: 'Insurance', number: 'INS-2026-8823', issue: daysFromNow(-240), expiry: daysFromNow(120) },
+      { plate: 'XYZ 5678', type: 'Registration', number: 'REG-2026-002', issue: daysFromNow(-345), expiry: daysFromNow(20) },
+      { plate: 'XYZ 5678', type: 'Insurance', number: 'INS-2026-4491', issue: daysFromNow(-65), expiry: daysFromNow(300) },
+      { plate: 'GHI 3456', type: 'Registration', number: 'REG-2026-018', issue: daysFromNow(-305), expiry: daysFromNow(60) },
+      { plate: 'JKL 7890', type: 'Insurance', number: 'INS-2026-7712', issue: daysFromNow(-160), expiry: daysFromNow(200) },
     ];
 
     for (const d of docs) {
@@ -184,7 +185,7 @@ async function seed() {
            ON CONFLICT DO NOTHING`,
           [
             uuid(), DEMO_TENANT_ID, routeIds[t.routeIdx], busIds[t.busIdx],
-            t.driverId, 'regular', t.date, t.time,
+            t.driverId, 'single', t.date, t.time,
             `${String(parseInt(t.time.split(':')[0]) + (t.routeIdx === 0 ? 9 : t.routeIdx === 1 ? 2 : 5)).padStart(2, '0')}:${t.time.split(':')[1]}`,
             t.status, t.confirm,
           ]

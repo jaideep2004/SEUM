@@ -26,6 +26,15 @@
   color: var(--color-text-secondary);
 }
 
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
 /* ─── KPI Grid ─── */
 .kpiGrid4 {
   display: grid;

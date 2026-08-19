@@ -16,6 +16,10 @@ const updateTenantSchema = z.object({
   contactPhone: z.string().optional(),
   domain: z.string().optional(),
   subscriptionTier: z.string().optional(),
+  planId: z.string().uuid().optional(),
+  billingCycle: z.enum(['monthly', 'yearly']).optional(),
+  billingEmail: z.string().email().optional(),
+  subscriptionRenewalDate: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 

@@ -4,13 +4,27 @@ import { NotFoundError, ConflictError } from '../utils/errors';
 import type { CreateRecurringTripPatternInput, UpdateRecurringTripPatternInput, RecurringTripPatternQuery, GenerateTripsInput } from '../validators/operations';
 
 interface PatternRow {
-  id: string; tenant_id: string; route_id: string; bus_id: string | null;
+  id: string; tenant_id: string; route_id: string | null; bus_id: string | null;
   driver_id: string | null; trip_type: string; frequency: string;
   days_of_week: number[] | null; scheduled_start_time: string;
   scheduled_end_time: string | null; start_date: string; end_date: string | null;
   specific_dates: string[] | null; notes: string | null; is_active: boolean;
   last_generated_at: string | null; created_by: string | null;
+  trip_title: string | null; vehicle_type: string | null;
+  group_leader: string | null; group_leader_no: string | null;
+  nationality: string | null; agent: string | null; group_no: string | null;
+  no_of_pax: number | null; nusuk_info: any; flights: any; hotels: any;
   created_at: string; updated_at: string;
+}
+
+function mapManifest(row: PatternRow) {
+  return {
+    tripTitle: row.trip_title, vehicleType: row.vehicle_type,
+    groupLeader: row.group_leader, groupLeaderNo: row.group_leader_no,
+    nationality: row.nationality, agent: row.agent, groupNo: row.group_no,
+    noOfPax: row.no_of_pax, nusukInfo: row.nusuk_info,
+    flights: row.flights, hotels: row.hotels,
+  };
 }
 
 function mapPattern(row: PatternRow, extra?: {
@@ -29,14 +43,17 @@ function mapPattern(row: PatternRow, extra?: {
     notes: row.notes, isActive: row.is_active,
     lastGeneratedAt: row.last_generated_at,
     createdBy: row.created_by,
+    ...mapManifest(row),
     createdAt: row.created_at, updatedAt: row.updated_at,
     ...extra,
   };
 }
 
 export async function createPattern(tenantId: string, userId: string, input: CreateRecurringTripPatternInput) {
-  const route = await queryOne('SELECT id FROM routes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.routeId, tenantId]);
-  if (!route) throw new NotFoundError('Route not found');
+  if (input.routeId) {
+    const route = await queryOne('SELECT id FROM routes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [input.routeId, tenantId]);
+    if (!route) throw new NotFoundError('Route not found');
+  }
 
   if (input.busId) {
     const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]);
@@ -48,17 +65,40 @@ export async function createPattern(tenantId: string, userId: string, input: Cre
     `INSERT INTO recurring_trip_patterns
      (id, tenant_id, route_id, bus_id, driver_id, trip_type, frequency,
       days_of_week, scheduled_start_time, scheduled_end_time,
-      start_date, end_date, specific_dates, notes, is_active, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      start_date, end_date, specific_dates, notes, is_active, created_by,
+      trip_title, vehicle_type, group_leader, group_leader_no, nationality,
+      agent, group_no, no_of_pax, nusuk_info, flights, hotels)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+             $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
      RETURNING *`,
-    [id, tenantId, input.routeId, input.busId || null, input.driverId || null,
+    [id, tenantId, input.routeId || null, input.busId || null, input.driverId || null,
      input.tripType, input.frequency, input.daysOfWeek || null,
      input.scheduledStartTime, input.scheduledEndTime || null,
      input.startDate, input.endDate || null, input.specificDates || null,
-     input.notes || null, input.isActive, userId]
+     input.notes || null, input.isActive, userId,
+     input.tripTitle || null, input.vehicleType || null, input.groupLeader || null,
+     input.groupLeaderNo || null, input.nationality || null, input.agent || null,
+     input.groupNo || null, input.noOfPax ?? null, input.nusukInfo || null,
+     input.flights ? JSON.stringify(input.flights) : null,
+     input.hotels ? JSON.stringify(input.hotels) : null]
   );
   if (!row) throw new Error('Failed to create pattern');
-  return mapPattern(row);
+
+  if (input.legs && input.legs.length > 0) {
+    for (let i = 0; i < input.legs.length; i++) {
+      const leg = input.legs[i];
+      await query(
+        `INSERT INTO recurring_pattern_legs (id, tenant_id, pattern_id, leg_no, origin, destination,
+          day_offset, departure_time, arrival_time, overnight_flag, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [uuid(), tenantId, id, i + 1, leg.origin, leg.destination,
+         leg.dayOffset ?? 0, leg.departureTime || null, leg.arrivalTime || null,
+         leg.overnightFlag ?? false, leg.notes || null]
+      );
+    }
+  }
+
+  return getPatternById(tenantId, id);
 }
 
 export async function listPatterns(tenantId: string, queryParams: RecurringTripPatternQuery) {
@@ -91,7 +131,7 @@ export async function listPatterns(tenantId: string, queryParams: RecurringTripP
   params.push(queryParams.pageSize, offset);
   const rows = await query<any>(
     `SELECT p.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM recurring_trip_patterns p
      LEFT JOIN routes r ON r.id = p.route_id
      LEFT JOIN buses b ON b.id = p.bus_id
@@ -123,7 +163,7 @@ export async function listPatterns(tenantId: string, queryParams: RecurringTripP
 export async function getPatternById(tenantId: string, patternId: string) {
   const row = await queryOne<any>(
     `SELECT p.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            b.plate_number, u.name AS driver_name
      FROM recurring_trip_patterns p
      LEFT JOIN routes r ON r.id = p.route_id
      LEFT JOIN buses b ON b.id = p.bus_id
@@ -132,6 +172,7 @@ export async function getPatternById(tenantId: string, patternId: string) {
     [patternId, tenantId]
   );
   if (!row) throw new NotFoundError('Recurring trip pattern not found');
+  const legs = await query<any>('SELECT * FROM recurring_pattern_legs WHERE pattern_id = $1 ORDER BY leg_no', [patternId]);
   return {
     id: row.id, tenantId: row.tenant_id, routeId: row.route_id,
     busId: row.bus_id, driverId: row.driver_id,
@@ -146,6 +187,12 @@ export async function getPatternById(tenantId: string, patternId: string) {
     createdAt: row.created_at, updatedAt: row.updated_at,
     routeName: row.route_name, origin: row.origin, destination: row.destination,
     busPlate: row.plate_number, driverName: row.driver_name,
+    ...mapManifest(row),
+    legs: legs.map((l: any) => ({
+      id: l.id, legNo: l.leg_no, origin: l.origin, destination: l.destination,
+      dayOffset: l.day_offset, departureTime: l.departure_time,
+      arrivalTime: l.arrival_time, overnightFlag: l.overnight_flag, notes: l.notes,
+    })),
   };
 }
 
@@ -167,6 +214,10 @@ export async function updatePattern(tenantId: string, patternId: string, input: 
     scheduledEndTime: 'scheduled_end_time', startDate: 'start_date',
     endDate: 'end_date', specificDates: 'specific_dates',
     notes: 'notes', isActive: 'is_active',
+    tripTitle: 'trip_title', vehicleType: 'vehicle_type',
+    groupLeader: 'group_leader', groupLeaderNo: 'group_leader_no',
+    nationality: 'nationality', agent: 'agent', groupNo: 'group_no',
+    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info',
   };
   const fields: string[] = [];
   const params: any[] = [];
@@ -174,14 +225,41 @@ export async function updatePattern(tenantId: string, patternId: string, input: 
   for (const [key, col] of Object.entries(fieldMap)) {
     if ((input as any)[key] !== undefined) {
       fields.push(`${col} = $${idx++}`);
-      params.push((input as any)[key]);
+      const val = (input as any)[key];
+      if (col === 'nusuk_info') params.push(val ? JSON.stringify(val) : null);
+      else params.push(val);
     }
   }
-  if (fields.length === 0) return getPatternById(tenantId, patternId);
+  if (input.flights !== undefined) {
+    fields.push(`flights = $${idx++}`);
+    params.push(input.flights ? JSON.stringify(input.flights) : null);
+  }
+  if (input.hotels !== undefined) {
+    fields.push(`hotels = $${idx++}`);
+    params.push(input.hotels ? JSON.stringify(input.hotels) : null);
+  }
+  if (fields.length === 0 && input.legs === undefined) return getPatternById(tenantId, patternId);
 
-  fields.push('updated_at = NOW()');
-  params.push(patternId, tenantId);
-  await query(`UPDATE recurring_trip_patterns SET ${fields.join(', ')} WHERE id = $${idx} AND tenant_id = $${idx + 1}`, params);
+  if (input.legs !== undefined) {
+    await query('DELETE FROM recurring_pattern_legs WHERE pattern_id = $1', [patternId]);
+    for (let i = 0; i < input.legs.length; i++) {
+      const leg = input.legs[i];
+      await query(
+        `INSERT INTO recurring_pattern_legs (id, tenant_id, pattern_id, leg_no, origin, destination,
+          day_offset, departure_time, arrival_time, overnight_flag, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [uuid(), tenantId, patternId, i + 1, leg.origin, leg.destination,
+         leg.dayOffset ?? 0, leg.departureTime || null, leg.arrivalTime || null,
+         leg.overnightFlag ?? false, leg.notes || null]
+      );
+    }
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = NOW()');
+    params.push(patternId, tenantId);
+    await query(`UPDATE recurring_trip_patterns SET ${fields.join(', ')} WHERE id = $${idx} AND tenant_id = $${idx + 1}`, params);
+  }
   return getPatternById(tenantId, patternId);
 }
 
@@ -201,10 +279,19 @@ function getDaysForFrequency(frequency: string, daysOfWeek: number[]): number[] 
   return daysOfWeek;
 }
 
+function addDays(dateStr: string, offset: number): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + offset);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export async function generateTrips(tenantId: string, userId: string, patternId: string, input: GenerateTripsInput) {
   const pattern = await queryOne<any>(
     `SELECT p.*, r.name AS route_name, b.plate_number,
-            CONCAT(u.first_name, ' ', u.last_name) AS driver_name
+            u.name AS driver_name
      FROM recurring_trip_patterns p
      LEFT JOIN routes r ON r.id = p.route_id
      LEFT JOIN buses b ON b.id = p.bus_id
@@ -214,6 +301,10 @@ export async function generateTrips(tenantId: string, userId: string, patternId:
   );
   if (!pattern) throw new NotFoundError('Recurring trip pattern not found');
   if (!pattern.is_active) throw new ConflictError('Cannot generate trips from an inactive pattern');
+
+  const patternLegs = await query<any>(
+    'SELECT * FROM recurring_pattern_legs WHERE pattern_id = $1 ORDER BY leg_no', [patternId]
+  );
 
   const startDate = new Date(input.startDate);
   const endDate = new Date(input.endDate);
@@ -241,22 +332,53 @@ export async function generateTrips(tenantId: string, userId: string, patternId:
     if (!matchesPattern) { current.setDate(current.getDate() + 1); continue; }
 
     // Check trip doesn't already exist
-    const existing = await queryOne(
-      `SELECT id FROM trips WHERE tenant_id = $1 AND route_id = $2
-       AND scheduled_date = $3 AND scheduled_start_time = $4 AND deleted_at IS NULL`,
-      [tenantId, pattern.route_id, dateStr, pattern.scheduled_start_time]
-    );
+    let existing;
+    if (pattern.route_id) {
+      existing = await queryOne(
+        `SELECT id FROM trips WHERE tenant_id = $1 AND route_id = $2
+         AND scheduled_date = $3 AND scheduled_start_time = $4 AND deleted_at IS NULL`,
+        [tenantId, pattern.route_id, dateStr, pattern.scheduled_start_time]
+      );
+    } else {
+      existing = await queryOne(
+        `SELECT id FROM trips WHERE tenant_id = $1 AND trip_type = $2
+         AND scheduled_date = $3 AND scheduled_start_time = $4 AND deleted_at IS NULL`,
+        [tenantId, pattern.trip_type, dateStr, pattern.scheduled_start_time]
+      );
+    }
     if (existing) { current.setDate(current.getDate() + 1); continue; }
 
     const tripId = uuid();
     await query(
       `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type,
-        scheduled_date, scheduled_start_time, scheduled_end_time, notes, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        scheduled_date, scheduled_start_time, scheduled_end_time, notes, created_by,
+        trip_title, vehicle_type, group_leader, group_leader_no, nationality,
+        agent, group_no, no_of_pax, nusuk_info, flights, hotels)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
       [tripId, tenantId, pattern.route_id, pattern.bus_id, pattern.driver_id,
        pattern.trip_type, dateStr, pattern.scheduled_start_time,
-       pattern.scheduled_end_time, `Auto-generated from pattern ${patternId}`, userId]
+       pattern.scheduled_end_time, `Auto-generated from pattern ${patternId}`, userId,
+       pattern.trip_title, pattern.vehicle_type, pattern.group_leader,
+       pattern.group_leader_no, pattern.nationality, pattern.agent,
+       pattern.group_no, pattern.no_of_pax, pattern.nusuk_info,
+       pattern.flights, pattern.hotels]
     );
+
+    if (patternLegs.length > 0) {
+      for (let i = 0; i < patternLegs.length; i++) {
+        const leg = patternLegs[i];
+        await query(
+          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
+            leg_date, departure_time, arrival_time, overnight_flag, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
+           addDays(dateStr, leg.day_offset), leg.departure_time, leg.arrival_time,
+           leg.overnight_flag, leg.notes]
+        );
+      }
+    }
+
     createdIds.push(tripId);
     current.setDate(current.getDate() + 1);
   }

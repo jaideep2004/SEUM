@@ -59,6 +59,7 @@ export default function DriverScoresPage() {
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [latestScore, setLatestScore] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   // Leaderboard state
   const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
@@ -97,6 +98,17 @@ export default function DriverScoresPage() {
 
   useEffect(() => { if (activeTab === "leaderboard") fetchLeaderboard(); }, [activeTab, lbPeriod]);
 
+  useEffect(() => {
+    (async () => {
+      const token = getToken();
+      try {
+        const res = await fetch(`${API}/drivers?page=1&pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) setDrivers(data.data || []);
+      } catch {}
+    })();
+  }, []);
+
   const renderStars = (score: number) => {
     const s = scoreColor(score);
     return <span style={{ color: s, fontWeight: 700 }}>{score}</span>;
@@ -124,7 +136,10 @@ export default function DriverScoresPage() {
       {activeTab === "history" && (
         <div>
           <div className={styles.searchRow}>
-            <input className={styles.searchInput} value={driverId} onChange={e => setDriverId(e.target.value)} placeholder="Enter Driver UUID to view scores" />
+            <select className={styles.searchInput} value={driverId} onChange={(e) => { setDriverId(e.target.value); if (e.target.value) fetchHistory(); }}>
+              <option value="">Select a driver...</option>
+              {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
+            </select>
             <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={fetchHistory}>
               <BarChart3 size={14} /> Load
             </button>

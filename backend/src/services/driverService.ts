@@ -61,7 +61,7 @@ export async function createDriver(tenantId: string, createdBy: string, input: C
   const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
 
   await query(
-    `INSERT INTO users (id, tenant_id, email, password, name, created_at, updated_at)
+    `INSERT INTO users (id, tenant_id, email, password_hash, name, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $6)`,
     [userId, tenantId, input.email, hashedPassword, input.name, now]
   );

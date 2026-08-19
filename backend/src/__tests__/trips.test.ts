@@ -6,6 +6,11 @@ const mockQueryOne = jest.fn();
 jest.mock("../db", () => ({
   query: (...args: any[]) => mockQuery(...args),
   queryOne: (...args: any[]) => mockQueryOne(...args),
+  transaction: (fn: any) => fn({ query: mockQuery, queryOne: mockQueryOne }),
+}));
+
+jest.mock("../services/customerCommunicationService", () => ({
+  sendTripDelayAlerts: () => Promise.resolve(undefined),
 }));
 
 import {
@@ -51,21 +56,56 @@ beforeEach(() => { jest.resetAllMocks(); });
 describe("createTrip", () => {
   it("creates a trip successfully", async () => {
     mockQueryOne
-      .mockResolvedValueOnce({ id: RID })
-      .mockResolvedValueOnce({ id: BID })
-      .mockResolvedValueOnce(makeTripRow());
+      .mockResolvedValueOnce({ id: RID })      // route exists
+      .mockResolvedValueOnce({ id: BID })      // bus exists
+      .mockResolvedValueOnce(makeTripRow());   // getTripById row
+    mockQuery
+      .mockResolvedValueOnce([makeTripRow()])  // INSERT RETURNING (inside transaction)
+      .mockResolvedValueOnce([])               // stops
+      .mockResolvedValueOnce([])               // passengers
+      .mockResolvedValueOnce([]);              // legs
 
     const result = await createTrip(TID, UID, {
-      routeId: RID, busId: BID, tripType: "regular",
+      routeId: RID, busId: BID, tripType: "single",
       scheduledDate: "2026-07-20", scheduledStartTime: "08:00",
     });
     expect(result.status).toBe("scheduled");
     expect(mockQueryOne).toHaveBeenCalledTimes(3);
   });
 
+  it("creates a round trip with legs", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ id: RID })
+      .mockResolvedValueOnce({ id: BID })
+      .mockResolvedValueOnce(makeTripRow({ trip_type: "round", trip_title: "Hajj Group 12" }));
+    mockQuery
+      .mockResolvedValueOnce([makeTripRow({ trip_type: "round" })]) // INSERT trip
+      .mockResolvedValueOnce(undefined)                             // INSERT leg 1
+      .mockResolvedValueOnce(undefined)                             // INSERT leg 2
+      .mockResolvedValueOnce([])                                    // stops
+      .mockResolvedValueOnce([])                                    // passengers
+      .mockResolvedValueOnce([
+        { id: "leg-1", trip_id: TRIP_ID, leg_no: 1, origin: "Jeddah", destination: "Madinah", leg_date: "2026-08-01", departure_time: "08:00", arrival_time: null, overnight_flag: false, notes: null },
+        { id: "leg-2", trip_id: TRIP_ID, leg_no: 2, origin: "Madinah", destination: "Makkah", leg_date: "2026-08-03", departure_time: "09:00", arrival_time: null, overnight_flag: true, notes: null },
+      ]);
+
+    const result = await createTrip(TID, UID, {
+      routeId: RID, busId: BID, tripType: "round",
+      scheduledDate: "2026-08-01", scheduledStartTime: "08:00",
+      tripTitle: "Hajj Group 12",
+      legs: [
+        { origin: "Jeddah", destination: "Madinah", legDate: "2026-08-01", departureTime: "08:00" },
+        { origin: "Madinah", destination: "Makkah", legDate: "2026-08-03", departureTime: "09:00", overnightFlag: true },
+      ],
+    });
+    expect(result.tripType).toBe("round");
+    expect(result.tripTitle).toBe("Hajj Group 12");
+    expect(result.legCount).toBe(2);
+  });
+
   it("throws NotFoundError when route missing", async () => {
     mockQueryOne.mockResolvedValueOnce(null);
-    await expect(createTrip(TID, UID, { routeId: RID, busId: BID, tripType: "regular", scheduledDate: "2026-07-20", scheduledStartTime: "08:00" }))
+    await expect(createTrip(TID, UID, { routeId: RID, busId: BID, tripType: "single", scheduledDate: "2026-07-20", scheduledStartTime: "08:00" }))
       .rejects.toThrow(NotFoundError);
   });
 });
@@ -102,10 +142,41 @@ describe("getTripById", () => {
     });
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([makePassRow()]);
+    mockQuery.mockResolvedValueOnce([]);
 
     const result = await getTripById(TID, TRIP_ID);
     expect(result.routeName).toBe("Test Route");
     expect(result.passengers).toHaveLength(1);
+  });
+
+  it("returns round trip with legs and manifest", async () => {
+    mockQueryOne.mockResolvedValueOnce({
+      id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID,
+      trip_type: "round", scheduled_date: "2026-08-01",
+      scheduled_start_time: "08:00:00", status: "scheduled",
+      route_name: "Test Route", origin: "A", destination: "B",
+      plate_number: "ABC", driver_name: "John",
+      trip_title: "Hajj Group 12", vehicle_type: "Bus 50-seater",
+      group_leader: "Ahmed Ali", group_leader_no: "GL-001",
+      nationality: "Pakistani", agent: "Al-Rihla", group_no: "G-12",
+      no_of_pax: 45, nusuk_info: null, flights: [{ flightNo: "SV101", airline: "Saudia" }],
+      hotels: [{ city: "Madinah", hotel: "Anwar Madinah" }],
+    });
+    mockQuery.mockResolvedValueOnce([]);
+    mockQuery.mockResolvedValueOnce([]);
+    mockQuery.mockResolvedValueOnce([
+      { id: "leg-1", trip_id: TRIP_ID, leg_no: 1, origin: "Jeddah", destination: "Madinah", leg_date: "2026-08-01", departure_time: "08:00", arrival_time: null, overnight_flag: false, notes: null },
+      { id: "leg-2", trip_id: TRIP_ID, leg_no: 2, origin: "Madinah", destination: "Makkah", leg_date: "2026-08-03", departure_time: "09:00", arrival_time: null, overnight_flag: true, notes: null },
+    ]);
+
+    const result = await getTripById(TID, TRIP_ID);
+    expect(result.tripType).toBe("round");
+    expect(result.legs).toHaveLength(2);
+    expect(result.legs[0].origin).toBe("Jeddah");
+    expect(result.legs[1].overnightFlag).toBe(true);
+    expect(result.groupLeader).toBe("Ahmed Ali");
+    expect(result.noOfPax).toBe(45);
+    expect(result.flights).toHaveLength(1);
   });
 
   it("throws NotFoundError when missing", async () => {
@@ -122,6 +193,7 @@ describe("updateTrip", () => {
     mockQuery.mockResolvedValueOnce(undefined);
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
+    mockQuery.mockResolvedValueOnce([]);
 
     const result = await updateTrip(TID, TRIP_ID, { notes: "Updated" });
     expect(result.status).toBe("scheduled");
@@ -134,6 +206,7 @@ describe("cancelTrip", () => {
       .mockResolvedValueOnce({ id: TRIP_ID, status: "scheduled" })
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID, trip_type: "regular", scheduled_date: "2026-07-20", scheduled_start_time: "08:00:00", status: "cancelled", rejection_reason: "No driver", route_name: "Test", origin: "A", destination: "B", plate_number: "ABC", driver_name: null });
     mockQuery.mockResolvedValueOnce(undefined);
+    mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
 
@@ -155,6 +228,7 @@ describe("startTrip", () => {
     mockQuery.mockResolvedValueOnce(undefined);
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
+    mockQuery.mockResolvedValueOnce([]);
 
     const result = await startTrip(TID, TRIP_ID);
     expect(result.status).toBe("en_route");
@@ -168,6 +242,7 @@ describe("completeTrip", () => {
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, estimated_revenue: '0' }) // createProfitJournalEntry
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID, trip_type: "regular", scheduled_date: "2026-07-20", scheduled_start_time: "08:00:00", status: "completed", route_name: "Test", origin: "A", destination: "B", plate_number: "ABC", driver_name: null });
     mockQuery.mockResolvedValueOnce(undefined);
+    mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
 
@@ -187,6 +262,7 @@ describe("delayTrip", () => {
       .mockResolvedValueOnce({ id: TRIP_ID, status: "scheduled" })
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID, trip_type: "regular", scheduled_date: "2026-07-20", scheduled_start_time: "08:00:00", status: "delayed", delay_minutes: 30, delay_reason: "Traffic", route_name: "Test", origin: "A", destination: "B", plate_number: "ABC", driver_name: null });
     mockQuery.mockResolvedValueOnce(undefined);
+    mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
     mockQuery.mockResolvedValueOnce([]);
 
@@ -224,5 +300,61 @@ describe("getTripCalendar", () => {
 
     const result = await getTripCalendar(TID, "2026-07-01", "2026-07-31");
     expect(result).toHaveLength(1);
+  });
+});
+
+describe("trip validators (2.7 trip types)", () => {
+  const { createTripSchema, updateTripSchema, tripQuerySchema } = require("../validators/operations");
+
+  it("accepts a round trip with 2+ legs", () => {
+    const parsed = createTripSchema.parse({
+      tripType: "round",
+      scheduledDate: "2026-08-01", scheduledStartTime: "08:00",
+      routeId: RID, busId: BID,
+      legs: [
+        { origin: "Jeddah", destination: "Madinah", legDate: "2026-08-01" },
+        { origin: "Madinah", destination: "Makkah", legDate: "2026-08-03" },
+      ],
+    });
+    expect(parsed.tripType).toBe("round");
+    expect(parsed.legs).toHaveLength(2);
+  });
+
+  it("rejects a round trip without legs", () => {
+    expect(() => createTripSchema.parse({ tripType: "round", scheduledDate: "2026-08-01", scheduledStartTime: "08:00", routeId: RID, busId: BID }))
+      .toThrow("Round trips require at least 2 legs");
+  });
+
+  it("rejects a round trip with a single leg", () => {
+    expect(() => createTripSchema.parse({
+      tripType: "round", scheduledDate: "2026-08-01", scheduledStartTime: "08:00",
+      legs: [{ origin: "A", destination: "B", legDate: "2026-08-01" }],
+    })).toThrow("Round trips require at least 2 legs");
+  });
+
+  it("defaults tripType to single", () => {
+    const parsed = createTripSchema.parse({ routeId: RID, busId: BID, scheduledDate: "2026-08-01", scheduledStartTime: "08:00" });
+    expect(parsed.tripType).toBe("single");
+  });
+
+  it("rejects unknown trip types", () => {
+    expect(() => createTripSchema.parse({ tripType: "hajj", scheduledDate: "2026-08-01", scheduledStartTime: "08:00" }))
+      .toThrow();
+  });
+
+  it("allows updating legs on a round trip", () => {
+    const parsed = updateTripSchema.parse({
+      tripType: "round",
+      legs: [
+        { origin: "Jeddah", destination: "Madinah", legDate: "2026-08-01" },
+        { origin: "Makkah", destination: "Jeddah", legDate: "2026-08-10" },
+      ],
+    });
+    expect(parsed.legs).toHaveLength(2);
+  });
+
+  it("filters trips by single/round type", () => {
+    expect(tripQuerySchema.parse({ tripType: "round" }).tripType).toBe("round");
+    expect(() => tripQuerySchema.parse({ tripType: "charter" })).toThrow();
   });
 });

@@ -8,11 +8,11 @@ const router = Router();
 
 router.use(authenticate);
 
-router.post('/', requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), expenseController.create);
-router.get('/', requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), expenseController.list);
-router.get('/:id', requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), expenseController.detail);
-router.patch('/:id/approve', requireRole('super_admin', 'company_admin', 'finance'), expenseController.approve);
-router.patch('/:id/reimburse', requireRole('super_admin', 'company_admin', 'finance'), expenseController.reimburse);
-router.post('/:id/receipt', requireRole('super_admin', 'company_admin', 'finance', 'operations_manager'), upload.single('receipt'), expenseController.uploadReceipt);
+router.post('/', requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), expenseController.create);
+router.get('/', requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), expenseController.list);
+router.get('/:id', requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), expenseController.detail);
+router.patch('/:id/approve', requireRole('super_admin', 'company_admin', 'finance_accountant'), expenseController.approve);
+router.patch('/:id/reimburse', requireRole('super_admin', 'company_admin', 'finance_accountant'), expenseController.reimburse);
+router.post('/:id/receipt', requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), upload.single('receipt'), expenseController.uploadReceipt);
 
 export default router;

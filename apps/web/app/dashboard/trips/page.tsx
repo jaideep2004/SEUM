@@ -83,11 +83,8 @@ export default function TripsPage() {
         <div className={styles.filterSelect}>
           <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}>
             <option value="">All Types</option>
-            <option value="regular">Regular</option>
-            <option value="hajj">Hajj</option>
-            <option value="umrah">Umrah</option>
-            <option value="charter">Charter</option>
-            <option value="shuttle">Shuttle</option>
+            <option value="single">Single Trip</option>
+            <option value="round">Round Trip</option>
           </select>
         </div>
       </div>
@@ -115,7 +112,7 @@ export default function TripsPage() {
               <tr key={t.id} className={styles.clickableRow} onClick={() => router.push(`/dashboard/trips/${t.id}`)}>
                 <td className={styles.routeCell}>
                   <MapPin size={12} />
-                  {t.routeName || <span className={styles.muted}>—</span>}
+                  {t.tripTitle || t.routeName || <span className={styles.muted}>—</span>}
                 </td>
                 <td>{t.busPlate || <span className={styles.muted}>—</span>}</td>
                 <td>
@@ -133,7 +130,9 @@ export default function TripsPage() {
                   <Clock size={11} />
                   {t.scheduledStartTime?.slice(0, 5) || "—"}
                 </td>
-                <td><span className={styles.typeTag}>{t.tripType}</span></td>
+                <td>
+                  <span className={styles.typeTag}>{t.tripType === "round" ? `Round${t.legCount ? ` · ${t.legCount} legs` : ""}` : "Single"}</span>
+                </td>
                 <td>
                   <span className={styles.statusDot} style={{ background: STATUS_COLORS[t.status] || "#6b7280" }} />
                   <span className={styles.statusLabel}>{t.status.replace("_", " ")}</span>

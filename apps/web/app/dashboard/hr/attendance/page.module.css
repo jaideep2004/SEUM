@@ -1,0 +1,51 @@
+.page { max-width: 1200px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.pageTitle { font-size: var(--text-3xl); font-weight: var(--weight-bold); letter-spacing: var(--tracking-tight); color: var(--color-text-primary); line-height: 1.2; margin-bottom: 4px; }
+.pageDesc { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+.sectionCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: 20px; margin-bottom: 20px; }
+.sectionHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.sectionTitle { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--color-text); margin: 0; }
+
+.summaryCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.summaryCard { background: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 14px; text-align: center; }
+.summaryValue { font-size: 26px; font-weight: var(--weight-bold); color: var(--color-text); }
+.summaryLabel { font-size: 10px; color: var(--color-text-tertiary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.filterItem { display: flex; flex-direction: column; gap: 4px; }
+.filterItem label { font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.filterItem select, .filterItem input { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; outline: none; min-width: 140px; }
+.filterItem select:focus, .filterItem input:focus { border-color: var(--color-primary); }
+
+.tableWrap { border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; padding: 12px 14px; font-size: 10px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; background: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); }
+.table td { padding: 10px 14px; font-size: 13px; color: var(--color-text); border-bottom: 1px solid var(--color-border); }
+.table tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: var(--color-surface-hover); }
+
+.personCell { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; overflow: hidden; }
+.personInfo { display: flex; flex-direction: column; }
+.personName { font-weight: 600; color: var(--color-text); font-size: 13px; }
+.personCode { font-size: 11px; color: var(--color-text-tertiary); }
+.deptCell { font-size: 12px; color: var(--color-text-secondary); text-transform: capitalize; }
+.dateCell { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+
+.statusBadge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+.notRecorded { color: var(--color-text-tertiary); font-size: 12px; }
+
+.timeCell { font-family: monospace; font-size: 13px; }
+
+.checkBtn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: none; border-radius: var(--radius-md); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.checkBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.checkInBtn { background: #059669; color: #fff; }
+.checkInBtn:hover:not(:disabled) { opacity: 0.85; }
+.checkOutBtn { background: #d97706; color: #fff; }
+.checkOutBtn:hover:not(:disabled) { opacity: 0.85; }
+
+.loading { text-align: center; padding: 48px 20px; color: var(--color-text-tertiary); font-size: 13px; }
+.emptyState { text-align: center; padding: 48px 20px; color: var(--color-text-tertiary); }
+.emptyState p { font-size: 13px; margin: 8px 0 0; }

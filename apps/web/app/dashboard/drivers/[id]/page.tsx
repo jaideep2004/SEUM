@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Edit, User, Phone, Calendar, MapPin, FileText, AlertTriangle, Upload, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
+import DriverScheduleView from "@/components/DriverScheduleView";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -23,7 +24,6 @@ const CONFIRM_COLORS: Record<string, string> = {
 
 export default function DriverProfilePage() {
   const { id } = useParams();
-  const router = useRouter();
   const [driver, setDriver] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"info" | "documents" | "schedule">("info");
@@ -31,8 +31,6 @@ export default function DriverProfilePage() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [showDocForm, setShowDocForm] = useState(false);
   const [docForm, setDocForm] = useState({ documentType: "license", documentNumber: "", issueDate: "", expiryDate: "" });
-  const [schedule, setSchedule] = useState<any[]>([]);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
 
   async function fetchDriver() {
     try {
@@ -43,25 +41,7 @@ export default function DriverProfilePage() {
     } catch {} finally { setLoading(false); }
   }
 
-  async function fetchSchedule() {
-    setScheduleLoading(true);
-    try {
-      const token = localStorage.getItem("seum_access_token");
-      const start = new Date().toISOString().slice(0, 10);
-      const end = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-      const res = await fetch(`${API}/operations/drivers/schedule?driverId=${driver?.userId}&startDate=${start}&endDate=${end}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (json.success) setSchedule(json.data);
-    } catch {} finally { setScheduleLoading(false); }
-  }
-
   useEffect(() => { fetchDriver(); }, [id]);
-
-  useEffect(() => {
-    if (activeTab === "schedule" && driver?.userId) fetchSchedule();
-  }, [activeTab, driver?.userId]);
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -280,34 +260,10 @@ export default function DriverProfilePage() {
 
       {activeTab === "schedule" && (
         <div className={styles.scheduleSection}>
-          <h3>Upcoming Trips (Next 7 Days)</h3>
-          {scheduleLoading ? (
-            <p className={styles.empty}>Loading schedule...</p>
-          ) : schedule.length === 0 ? (
-            <p className={styles.empty}>No upcoming trips</p>
+          {driver?.userId ? (
+            <DriverScheduleView key={driver.userId} userId={driver.userId} />
           ) : (
-            <div className={styles.scheduleList}>
-              {schedule.map((t: any) => (
-                <div key={t.id} className={styles.scheduleCard} onClick={() => router.push(`/dashboard/trips/${t.id}`)}>
-                  <div className={styles.schedTime}>
-                    <span className={styles.schedTimeVal}>{t.scheduledStartTime?.slice(0, 5)}</span>
-                    <span className={styles.schedDate}>{new Date(t.scheduledDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric" })}</span>
-                  </div>
-                  <div className={styles.schedRoute}>
-                    <span className={styles.schedRouteName}>{t.routeName || `${t.origin || "?"} → ${t.destination || "?"}`}</span>
-                    <span className={styles.schedBus}>{t.busPlate || "—"}</span>
-                  </div>
-                  <div className={styles.schedStatus}>
-                    <span style={{ color: STATUS_COLORS[t.status] || "#6b7280" }}>{t.status}</span>
-                    {t.driverConfirmationStatus && (
-                      <span style={{ background: (CONFIRM_COLORS[t.driverConfirmationStatus] || "#6b7280") + "18", color: CONFIRM_COLORS[t.driverConfirmationStatus] || "#6b7280" }} className={styles.confirmBadge}>
-                        {t.driverConfirmationStatus}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className={styles.empty}>This driver has no user account linked yet.</p>
           )}
         </div>
       )}

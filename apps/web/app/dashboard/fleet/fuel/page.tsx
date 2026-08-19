@@ -35,6 +35,7 @@ export default function FuelLogsPage() {
   const [showModal, setShowModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [buses, setBuses] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     busId: "", liters: "", costPerLiter: "", totalCost: "",
@@ -61,6 +62,18 @@ export default function FuelLogsPage() {
   }, [page, pageSize, busFilter, startDate, endDate]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("seum_access_token");
+        const res = await fetch(`${API_URL}/fleet/buses?page=1&pageSize=100`,
+          token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+        const json = await res.json();
+        if (json.success) setBuses((json.data || []).sort((a: any, b: any) => a.plateNumber.localeCompare(b.plateNumber)));
+      } catch {}
+    })();
+  }, []);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -110,10 +123,11 @@ export default function FuelLogsPage() {
       {/* Filters */}
       <div className={styles.filterBar}>
         <div className={styles.filterGroup}>
-          <input
-            type="text" className={styles.filterInput} placeholder="Bus ID..."
-            value={busFilter} onChange={(e) => { setBusFilter(e.target.value); setPage(1); }}
-          />
+          <select className={styles.filterInput} value={busFilter}
+            onChange={(e) => { setBusFilter(e.target.value); setPage(1); }}>
+            <option value="">All buses</option>
+            {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
+          </select>
           <input
             type="date" className={styles.filterInput}
             value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
@@ -156,7 +170,7 @@ export default function FuelLogsPage() {
               {logs.map((log: any) => (
                 <tr key={log.id}>
                   <td>{formatDate(log.date)}</td>
-                  <td><span className={styles.busId}>{log.busId.slice(0, 8)}</span></td>
+                  <td><span className={styles.busId}>{buses.find((b: any) => b.id === log.busId)?.plateNumber || log.busId.slice(0, 8)}</span></td>
                   <td>{log.liters} L</td>
                   <td>SAR {log.costPerLiter}</td>
                   <td><strong>SAR {log.totalCost}</strong></td>
@@ -205,8 +219,11 @@ export default function FuelLogsPage() {
                 {error && <div className={styles.formError}><AlertTriangle size={14} />{error}</div>}
                 <div className={styles.formGrid}>
                   <label className={styles.formField}>
-                    <span>Bus ID *</span>
-                    <input required value={form.busId} onChange={(e) => setForm({ ...form, busId: e.target.value })} />
+                    <span>Bus *</span>
+                    <select required value={form.busId} onChange={(e) => setForm({ ...form, busId: e.target.value })}>
+                      <option value="">Select bus...</option>
+                      {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
+                    </select>
                   </label>
                   <label className={styles.formField}>
                     <span>Date</span>

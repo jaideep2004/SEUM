@@ -256,6 +256,24 @@
   - ✅ Route performance table (avg duration, delay frequency %)
   - ✅ Export button dropdown (PDF / CSV)
 
+### 2.7 Trip Types — Single vs Round/Recurring (Client Spec Update, Aug 2026)
+Client clarification: exactly **2 trip types**:
+- **Single / simple trip** — one route, one date (current behavior of the `trips` table).
+- **Round / recurring trip** — ONE trip entity that contains **multiple stops/legs on multiple dates** (e.g. Hajj/Umrah journey: Jeddah → Madinah → Makkah → return, spread across days).
+- Reference files: `Downloads\SEUM\Drj.pdf` (client manifest form showing legs 1–5 with From/To/Date/Time + Nusuk/Flights/Hotels sections) and client screenshot `WhatsApp Image 2026-07-11 at 11.49.17 PM.jpeg`.
+- ✅ Enforce `trips.trip_type` as enum `'single' | 'round'` (migration + validator; backfill existing rows to `'single'`)
+- ✅ `trip_legs` table: trip_id, leg_no, from (origin), to (destination), leg_date, departure_time, arrival_time, overnight_flag — one round trip = many legs, each with its own date/time
+- ✅ Round trip create API — create trip + legs atomically; list/detail includes nested `legs[]` ordered by leg_no
+- ✅ Trip detail/calendar/status flow works for round trips (status applies to the whole trip; legs have per-leg status when needed)
+- ✅ Recurring pattern generation (`2.3`) extended: pattern can be round type with multi-leg template → generated trips carry the legs
+- ✅ Manifest data (from Drj.pdf): trip title, vehicle type, group leader + no, nationality, agent, group no, no of pax, routes 1–N grid
+- ✅ Optional linked info sections: Nusuk info, Flights (flight no, airline, from, to, date, time), Hotels (city, hotel, from, to, date, time) — separate tables or JSONB on trip
+- **Frontend pages:**
+  - ✅ Trip create/edit form gets type toggle (Single / Round) — round type shows legs grid (From, To, Date, Time per leg)
+  - ✅ Trip detail shows legs timeline for round trips
+  - ✅ Trip manifest print view (matches client form: Trip Info, Routes, Flights, Hotels, Transportation)
+  - ✅ Recurring pattern form supports round patterns with leg template
+
 ---
 
 ## PHASE 3: Driver Management
@@ -495,212 +513,281 @@
 ## PHASE 5: HR & Employee Management (Non-Driver)
 
 ### 5.1 Employee Master
-- [ ] `employees` table: tenant_id, user_id, employee_code, department (operations, finance, hr, fleet, maintenance, customer_service, executive, admin), designation, phone, email, join_date, contract_end_date, nationality, id_number, status
-- [ ] `POST /api/hr/employees` — create
-- [ ] `GET /api/hr/employees` — list
-- [ ] `GET /api/hr/employees/:id` — detail
-- [ ] `PATCH /api/hr/employees/:id` — update
-- [ ] `DELETE /api/hr/employees/:id` — soft delete
+- ✅ `employees` table: tenant_id, user_id, employee_code, department (operations, finance, hr, fleet, maintenance, customer_service, executive, admin), designation, phone, email, join_date, contract_end_date, nationality, id_number, status
+- ✅ `POST /api/hr/employees` — create
+- ✅ `GET /api/hr/employees` — list
+- ✅ `GET /api/hr/employees/:id` — detail
+- ✅ `PATCH /api/hr/employees/:id` — update
+- ✅ `DELETE /api/hr/employees/:id` — soft delete
 - **Frontend pages:**
-  - [ ] Employees list page (table with department filter, status badge, search)
-  - [ ] Employee profile page (details, department, documents tab, attendance tab)
-  - [ ] Employee create/edit form
+  - ✅ Employees list page (table with department filter, status badge, search)
+  - ✅ Employee profile page (details, department, documents tab, attendance tab)
+  - ✅ Employee create/edit form
 
 ### 5.2 Employee Attendance
-- [ ] Same pattern as driver attendance (separate or unified table)
-- [ ] `POST /api/hr/employee-attendance/check-in`
-- [ ] `POST /api/hr/employee-attendance/check-out`
-- [ ] `GET /api/hr/employee-attendance` — records
-- [ ] Monthly attendance summary
+- ✅ Same pattern as driver attendance (separate or unified table)
+- ✅ `POST /api/hr/employee-attendance/check-in`
+- ✅ `POST /api/hr/employee-attendance/check-out`
+- ✅ `GET /api/hr/employee-attendance` — records
+- ✅ Monthly attendance summary
 - **Frontend pages:**
-  - [ ] Employee attendance page (table filterable by employee, date range)
-  - [ ] Check-in/out interface
-  - [ ] Monthly summary card
+  - ✅ Employee attendance page (table filterable by employee, date range)
+  - ✅ Check-in/out interface
+  - ✅ Monthly summary card
 
 ### 5.3 Employee Payroll
-- [ ] `employee_payroll` similar to driver payroll
-- [ ] Salary structure (basic, housing, transport, other allowances)
-- [ ] Deductions (insurance, loans, penalties)
-- [ ] Payroll processing (monthly batch)
+- ✅ `employee_payroll` similar to driver payroll
+- ✅ Salary structure (basic, housing, transport, other allowances)
+- ✅ Deductions (insurance, loans, penalties)
+- ✅ Payroll processing (monthly batch)
 - **Frontend pages:**
-  - [ ] Employee payroll list page (by period)
-  - [ ] Salary structure form (per-employee allowance/deduction breakdown)
-  - [ ] Batch payroll processing page
+  - ✅ Employee payroll list page (by period)
+  - ✅ Salary structure form (per-employee allowance/deduction breakdown)
+  - ✅ Batch payroll processing page
 
 ### 5.4 Employee Leaves
-- [ ] Same pattern as driver leaves
-- [ ] Leave balance per employee
-- [ ] Approval workflow (employee → manager → HR)
+- ✅ `employee_leaves` table (tenant_id, employee_id, leave_type, start/end_date, status, manager/HR approver + timestamps, rejection_reason, documents)
+- ✅ Leave balance per employee (annual 30 / sick 20 / maternity 90 / unpaid 0, pro-rated on approval)
+- ✅ Approval workflow (pending_manager → manager approve → pending_hr → HR approve; any-stage reject)
+- ✅ Overlap prevention (409 on overlapping active leave)
+- ✅ Calendar endpoint (monthly, per-employee)
 - **Frontend pages:**
-  - [ ] Employee leave list page (filterable by department, status)
-  - [ ] Leave application form
-  - [ ] Approval workflow UI (manager approves → HR approves)
-  - [ ] Leave balance card per employee
+  - ✅ Employee leave list page (filterable by department, status, leave type)
+  - ✅ Leave application form (type, dates, reason)
+  - ✅ Approval workflow UI (manager approve → HR approve, chain indicator)
+  - ✅ Leave balance card per employee
 
 ### 5.5 Contracts & Documents
-- [ ] `employee_contracts` table: employee_id, contract_type, start_date, end_date, salary, benefits, file_url, status
-- [ ] `employee_documents` table: employee_id, document_type, number, expiry_date, file_url
-- [ ] Contract expiry alerts
-- [ ] Document expiry alerts
+- ✅ `employee_contracts` table: employee_id, contract_type, start_date, end_date, salary, benefits, file_url, status
+- ✅ `employee_documents` table: employee_id, document_type, number, expiry_date, file_url
+- ✅ Contract expiry alerts (`GET /api/v1/hr/expiry-alerts?days=N`)
+- ✅ Document expiry alerts (expiring_within filter + combined alerts endpoint)
 - **Frontend pages:**
-  - [ ] Contracts tab on employee profile (list, upload, expiry badges)
-  - [ ] Documents tab on employee profile (list by type, upload, expiry alerts)
+  - ✅ Contracts tab on employee profile (list, upload, expiry badges)
+  - ✅ Documents tab on employee profile (list by type, upload, expiry alerts)
 
 ---
 
 ## PHASE 6: Maintenance & Workshop
 
 ### 6.1 Maintenance Scheduling
-- [ ] `maintenance_tasks` table: tenant_id, bus_id, task_type (oil_change, tire_replacement, brake_inspection, engine_service, ac_service, electrical, body_repair, general_service, other), description, priority (low, medium, high, critical), scheduled_date, scheduled_km, recurring_interval_days, recurring_interval_km, status (scheduled, in_progress, completed, cancelled), assigned_workshop, assigned_mechanic
-- [ ] `POST /api/maintenance/tasks` — schedule maintenance
-- [ ] `GET /api/maintenance/tasks` — list tasks (filterable by bus, status, priority)
-- [ ] `GET /api/maintenance/tasks/:id` — task detail
-- [ ] `PATCH /api/maintenance/tasks/:id` — update
-- [ ] `POST /api/maintenance/tasks/:id/start` — begin work
-- [ ] `POST /api/maintenance/tasks/:id/complete` — finish with notes and cost
-- [ ] `POST /api/maintenance/tasks/:id/cancel` — cancel with reason
-- [ ] Auto-generate maintenance task when bus reaches next_km_threshold
-- [ ] Maintenance calendar view
+- ✅ `maintenance_tasks` table: tenant_id, bus_id, task_type (oil_change, tire_replacement, brake_inspection, engine_service, ac_service, electrical, body_repair, general_service, other), description, priority (low, medium, high, critical), scheduled_date, scheduled_km, recurring_interval_days, recurring_interval_km, status (scheduled, in_progress, completed, cancelled), assigned_workshop, assigned_mechanic
+- ✅ `POST /api/maintenance/tasks` — schedule maintenance
+- ✅ `GET /api/maintenance/tasks` — list tasks (filterable by bus, status, priority)
+- ✅ `GET /api/maintenance/tasks/:id` — task detail
+- ✅ `PATCH /api/maintenance/tasks/:id` — update
+- ✅ `POST /api/maintenance/tasks/:id/start` — begin work
+- ✅ `POST /api/maintenance/tasks/:id/complete` — finish with notes and cost (advances bus next_km_threshold when recurring_interval_km set)
+- ✅ `POST /api/maintenance/tasks/:id/cancel` — cancel with reason
+- ✅ Auto-generate maintenance task when bus reaches next_km_threshold (`POST /api/maintenance/tasks/auto-generate`; buses gained `current_km` + `next_km_threshold` columns)
+- ✅ Maintenance calendar view
 - **Frontend pages:**
-  - [ ] Maintenance tasks list page (table filterable by bus, status, priority; priority color badges)
-  - [ ] Schedule maintenance form (bus selector, task type, priority, date/km, workshop)
-  - [ ] Task detail page (timeline: scheduled → in_progress → completed)
-  - [ ] Start/Complete/Cancel action buttons (with notes/cost modal on complete)
-  - [ ] Maintenance calendar view (monthly, task blocks color-coded by priority)
+  - ✅ Maintenance tasks list page (table filterable by bus, status, priority; priority color badges)
+  - ✅ Schedule maintenance form (bus selector, task type, priority, date/km, workshop)
+  - ✅ Task detail page (timeline: scheduled → in_progress → completed)
+  - ✅ Start/Complete/Cancel action buttons (with notes/cost modal on complete)
+  - ✅ Maintenance calendar view (monthly, task blocks color-coded by priority)
 
 ### 6.2 Breakdown & Emergency Repair
-- [ ] `breakdown_reports` table: tenant_id, bus_id, trip_id, reported_by, breakdown_type, description, location, severity, status (reported, dispatched, in_progress, resolved), resolution_notes, resolved_at, cost
-- [ ] `POST /api/maintenance/breakdowns` — report breakdown
-- [ ] `GET /api/maintenance/breakdowns` — list
-- [ ] `PATCH /api/maintenance/breakdowns/:id/dispatch` — send mechanic
-- [ ] `PATCH /api/maintenance/breakdowns/:id/resolve` — mark resolved
-- [ ] Breakdown heat map (which routes/locations have most breakdowns)
-- **Frontend pages:**
-  - [ ] Breakdown reports list page (table with severity badge, bus, status)
-  - [ ] Report breakdown form (bus selector, type, location map picker, description)
-  - [ ] Dispatch mechanic button (triggers status change + assign modal)
-  - [ ] Resolve modal (resolution notes, cost)
-  - [ ] Breakdown heat map page (map with cluster markers by location)
+- ✅ `breakdown_reports` table: tenant_id, bus_id, trip_id, reported_by, breakdown_type (engine_failure, transmission, electrical, tire_blowout, brake_failure, suspension, fuel_system, cooling_system, clutch, body_damage, accident, mechanical, other), description, location (+ optional location_lat/lng), severity (low, medium, high, critical), status (reported, dispatched, in_progress, resolved), dispatched_mechanic/at/by, resolution_notes, cost, resolved_at/by
+- ✅ `POST /api/maintenance/breakdowns` — report breakdown (validates bus + optional trip)
+- ✅ `GET /api/maintenance/breakdowns` — list (filterable by bus, status, severity, type; search on plate/location; status-priority ordering)
+- ✅ `PATCH /api/maintenance/breakdowns/:id/dispatch` — send mechanic (reported → dispatched, records mechanic)
+- ✅ `PATCH /api/maintenance/breakdowns/:id/start` — dispatched → in_progress (mechanic starts work)
+- ✅ `PATCH /api/maintenance/breakdowns/:id/resolve` — mark resolved with notes + cost (any non-resolved state)
+- ✅ `GET /api/maintenance/breakdowns/heatmap` — breakdowns grouped by location with total/open counts, avg cost (drives heat map)
+- ✅ State machine enforcement (dispatch only from reported/dispatched, start only from dispatched, no re-resolve)
+- **Frontend pages** (`/dashboard/maintenance/breakdowns`):
+  - ✅ Breakdown reports list page (table with severity badge, bus, type, location, status; filters by bus/status/severity)
+  - ✅ Report breakdown form (bus selector, type, severity, location + optional lat/lng, description)
+  - ✅ Dispatch mechanic button (status change + assign modal with mechanic name)
+  - ✅ Start Work button (dispatched → in_progress)
+  - ✅ Resolve modal (resolution notes, cost)
+  - ✅ Breakdown heat map page (SVG cluster grid colored/intensified by report count per location, total/open/location stats)
+- **Tests:** 12 comprehensive unit tests (create with bus/trip validation, list filters, all state transitions + rejections, heatmap grouping)
 
 ### 6.3 Spare Parts Inventory
-- [ ] `spare_parts` table: tenant_id, part_code, part_name, category, manufacturer, unit_of_measure, quantity_in_stock, reorder_level, unit_price, supplier_id, storage_location
-- [ ] `inventory_transactions` table: spare_part_id, transaction_type (in, out), quantity, reference_type, reference_id, unit_price, total, date, performed_by
-- [ ] `POST /api/maintenance/parts` — create part
-- [ ] `GET /api/maintenance/parts` — list
-- [ ] `PATCH /api/maintenance/parts/:id` — update
-- [ ] `POST /api/maintenance/parts/:id/stock-in` — add stock
-- [ ] `POST /api/maintenance/parts/:id/stock-out` — remove stock (link to maintenance task)
-- [ ] Low stock alerts (when quantity < reorder_level)
-- [ ] Parts usage history per bus
-- **Frontend pages:**
-  - [ ] Spare parts inventory page (table with qty, reorder level, low stock badge)
-  - [ ] Part create/edit form
-  - [ ] Stock-in modal (quantity, unit price, supplier, reference)
-  - [ ] Stock-out modal (quantity, link to maintenance task, reference)
-  - [ ] Parts usage history page per bus (table: part used, qty, date, task)
+- ✅ `spare_parts` table: tenant_id, part_code (unique per tenant), part_name, category, manufacturer, unit_of_measure, quantity_in_stock, reorder_level, unit_price, supplier_id, storage_location
+- ✅ `inventory_transactions` table: spare_part_id, transaction_type (in/out), quantity (>0), reference_type, reference_id, unit_price, total, notes, date, performed_by
+- ✅ `POST /api/maintenance/parts` — create part (logs initial stock-in transaction; 409 on duplicate part code)
+- ✅ `GET /api/maintenance/parts` — list (filterable by category, manufacturer, search; `lowStock=true` filter; low-stock rows sorted first, `lowStock` flag on each part)
+- ✅ `GET /api/maintenance/parts/:id` — part detail with last 10 transactions
+- ✅ `PATCH /api/maintenance/parts/:id` — update (code/name/category/manufacturer/reorder level/price/supplier/location; not quantity)
+- ✅ `POST /api/maintenance/parts/:id/stock-in` — add stock (defaults unit price to current, computes total, records transaction)
+- ✅ `POST /api/maintenance/parts/:id/stock-out` — remove stock (optional `maintenance_task_id` → validates task, links as reference_type=maintenance_task; rejects insufficient stock)
+- ✅ `GET /api/maintenance/parts/transactions` — transaction ledger (filter by part, type, reference_type, date range; paginated)
+- ✅ `GET /api/maintenance/parts/usage/:busId` — parts usage history per bus (join through maintenance tasks; total parts + total cost)
+- ✅ Low stock alerts (lowStock flag on list/detail + filter; banner + per-row badges on frontend)
+- **Frontend pages** (`/dashboard/maintenance/parts`):
+  - ✅ Spare parts inventory page (table with qty vs reorder level, LOW badge below reorder, unit price, supplier, storage location, search/category/low-stock-only filters)
+  - ✅ Part create/edit form (add-part tab + edit modal; initial qty logs an initial stock transaction)
+  - ✅ Stock-in modal (quantity, unit price, supplier, reference)
+  - ✅ Stock-out modal (quantity, link to maintenance task with open-task loader, reference)
+  - ✅ Parts usage history page per bus (bus selector, totals cards, table: part used, qty, unit/total cost, date, task type)
+- **Tests:** 13 comprehensive unit tests (create + duplicate code + initial tx, list filters/low-stock flag, update, stock-in pricing, stock-out with task link + insufficient stock + unknown task, transaction ledger join, usage-per-bus join + totals)
 
 ### 6.4 Maintenance Cost Tracking
-- [ ] `maintenance_costs` table: maintenance_task_id, parts_cost, labor_cost, total_cost, paid_to, invoice_number, status
-- [ ] Auto-calculate cost from parts used + labor hours
-- [ ] `GET /api/maintenance/costs` — costs report (filterable by bus, date, type)
-- [ ] `GET /api/maintenance/costs/by-bus` — total maintenance cost per bus (lifetime)
-- [ ] Maintenance cost vs. bus age analytics
-- **Frontend pages:**
-  - [ ] Maintenance cost report page (date range, bus filter, total cost card)
-  - [ ] Cost per bus chart (bar chart: total lifetime cost per bus)
-  - [ ] Cost vs bus age scatter plot
+- ✅ `maintenance_costs` table: maintenance_task_id (unique per task), parts_cost, labor_hours, labor_rate, labor_cost, total_cost, paid_to, invoice_number, status (pending, invoiced, paid, cancelled)
+- ✅ Auto-calculate cost: parts_cost summed from stock-out transactions linked to the task (reference_type=maintenance_task), labor_cost = labor_hours × labor_rate (default 50/hr), total = parts + labor — recomputed automatically when hours/rate change
+- ✅ `POST /api/maintenance/costs` — record cost for a task (409 if task already has a cost record)
+- ✅ `GET /api/maintenance/costs` — costs report (filterable by bus, task type, status, scheduled-date range; paginated + summary KPI card data via meta.summary)
+- ✅ `GET /api/maintenance/costs/by-bus` — total maintenance cost per bus (lifetime, parts/labor split, task count, sorted desc + fleet grand total)
+- ✅ `GET /api/maintenance/costs/analytics/age` — maintenance cost vs bus age scatter data (age from purchase date/created_at, includes buses with zero cost)
+- ✅ `PATCH /api/maintenance/costs/:id` — update hours/rate (recomputes totals) + paid_to/invoice/status; locked once paid/cancelled
+- **Frontend pages** (`/dashboard/maintenance/costs`):
+  - ✅ Maintenance cost report page (date range + bus/type/status filters, total cost KPI cards, records table with parts/labor/total/invoice/status)
+  - ✅ Record cost form (task selector, labor hours/rate with auto-calc note, paid-to, invoice, status)
+  - ✅ Cost per bus chart (bar chart: total lifetime cost per bus, task counts, fleet total)
+  - ✅ Cost vs bus age scatter plot (SVG: x = bus age years, y = lifetime cost, dot size = task count, axis grid + labels)
+- **Tests:** 9 comprehensive unit tests (auto-calc parts from linked stock-outs + labor, duplicate/unknown task rejections, list filters + summary, update recompute, paid-record lock, by-bus aggregation, age analytics mapping)
 
 ### 6.5 Workshop Management
-- [ ] `workshops` table: tenant_id, name, location, contact, supervisor, is_internal (boolean), services[]
-- [ ] `GET /api/maintenance/workshops` — list
-- [ ] `POST /api/maintenance/workshops` — create
-- [ ] Work order generation (PDF) for external workshops
-- **Frontend pages:**
-  - [ ] Workshops list page (cards: name, location, internal/external badge)
-  - [ ] Workshop create/edit form
-  - [ ] Work order generation button (PDF download with workshop details + task list)
+- ✅ `workshops` table: tenant_id, name, location, contact, supervisor, is_internal (boolean), services[], soft delete (deleted_at)
+- ✅ `POST /api/v1/maintenance/workshops` — create (409 on duplicate name per tenant; services[] array)
+- ✅ `GET /api/v1/maintenance/workshops` — list (filterable by is_internal, search on name/location/supervisor; paginated; internal sorted first)
+- ✅ `GET /api/v1/maintenance/workshops/:id` — detail
+- ✅ `PATCH /api/v1/maintenance/workshops/:id` — update (partial; duplicate-name check excluding self)
+- ✅ `DELETE /api/v1/maintenance/workshops/:id` — soft delete
+- ✅ `GET /api/v1/maintenance/workshops/:id/tasks` — workshop + assigned maintenance tasks (joined via assigned_workshop = workshop name, with bus plate/make/model; pending-first ordering)
+- ✅ `GET /api/v1/maintenance/workshops/:id/work-order.pdf` — work order PDF (pdfkit: workshop details, pending work with priority/date/mechanic, completed/cancelled summary, signature block)
+- ✅ Roles: fleet_manager/company_admin/super_admin write, + operations_manager read
+- **Frontend pages** (`/dashboard/maintenance/workshops`):
+  - ✅ Workshops list page (cards: name, location, contact, supervisor, internal/external badge, services chips)
+  - ✅ Workshop create/edit modal form (name, type, location, contact, supervisor, services multi-select chips)
+  - ✅ Work order modal (pending/completed tabs, task list with bus/priority/status/mechanic/cost) + Download PDF button
+  - ✅ Search + internal/external filter; delete with confirm
+  - ✅ `Work Orders` nav entry now points to this module
+- **Tests:** 8 comprehensive unit tests (create + duplicate rejection, list filters/search, update partial + services, soft delete, not-found, task lookup join, PDF buffer generation)
 
 ---
 
 ## PHASE 7: Booking & Customer Service
 
 ### 7.1 Customer / Passenger Master
-- [ ] `customers` table: tenant_id, name, phone, email, id_number, nationality, address, is_company (boolean), company_name, notes
-- [ ] `POST /api/bookings/customers` — create
-- [ ] `GET /api/bookings/customers` — list / search
-- [ ] `PATCH /api/bookings/customers/:id` — update
+- ✅ `customers` table: tenant_id, name, phone, email, id_number, nationality, address, is_company (boolean), company_name, notes, soft delete (deleted_at); indexes on name/phone/id_number
+- ✅ `POST /api/v1/bookings/customers` — create (409 on duplicate phone/email per tenant; company customers require company_name)
+- ✅ `GET /api/v1/bookings/customers` — list / search (search on name/phone/email/id_number/company_name; is_company filter; paginated; name-sorted)
+- ✅ `GET /api/v1/bookings/customers/:id` — detail
+- ✅ `PATCH /api/v1/bookings/customers/:id` — update (partial; duplicate phone/email excluding self; switching company→individual clears company_name)
+- ✅ `DELETE /api/v1/bookings/customers/:id` — soft delete
+- ✅ `GET /api/v1/bookings/customers/:id/bookings` — booking history (join through trips/routes; empty when bookings table not yet created)
+- ✅ Roles: operations_manager/company_admin/super_admin write, + fleet_manager read
 - **Frontend pages:**
-  - [ ] Customers list / search page (search by name/phone/id, table results)
-  - [ ] Customer profile page (details, booking history tab)
-  - [ ] Customer create/edit form
+  - ✅ Customers list / search page (`/dashboard/customers`, table with search by name/phone/id, individual/company filter + badges, contact + ID/nationality columns)
+  - ✅ Customer profile page (`/dashboard/customers/[id]` — profile card with contact grid, booking history tab with status/payment badges, details tab)
+  - ✅ Customer create/edit form (modal on list page + dedicated `/dashboard/customers/[id]/edit` page; company name conditional field)
+- **Tests:** 9 comprehensive unit tests (create + dup phone + company-name validation, list filters/search, update + company_name clearing, soft delete, not-found, booking history join + 42P01 graceful empty)
 
 ### 7.2 Booking Management
-- [ ] `bookings` table: tenant_id, customer_id, trip_id, booking_reference (auto), number_of_passengers, seat_numbers[], total_amount, paid_amount, balance, status (pending, confirmed, cancelled, completed, refunded), booking_date, payment_status, notes
-- [ ] `booking_passengers` table: booking_id, passenger_name, id_number, seat_number, age, special_requirements
-- [ ] `POST /api/bookings` — create booking
-- [ ] `GET /api/bookings` — list (filterable by status, date, customer, trip)
-- [ ] `GET /api/bookings/:id` — booking detail
-- [ ] `PATCH /api/bookings/:id` — update
-- [ ] `POST /api/bookings/:id/confirm` — confirm booking
-- [ ] `POST /api/bookings/:id/cancel` — cancel
-- [ ] `POST /api/bookings/:id/refund` — process refund
-- [ ] `GET /api/bookings/:id/ticket` — generate ticket (PDF)
-- [ ] Seat availability check per trip (seats filled vs bus capacity)
-- [ ] Prevent overbooking (soft max + waitlist)
+- ✅ `bookings` table: tenant_id, customer_id, trip_id, booking_reference (auto `BK-YYYY-####`), number_of_passengers, seat_numbers[], total_amount, paid_amount, balance, status (pending, confirmed, cancelled, refunded), booking_date, payment_status, notes; indexes on tenant/customer/trip/status/date
+- ✅ `booking_passengers` table: booking_id, passenger_name, id_number, seat_number, age, special_requirements
+- ✅ `POST /api/v1/bookings` — create booking (auto reference, seat conflict + capacity validation, payment_status computed, passengers insert)
+- ✅ `GET /api/v1/bookings` — list (filterable by status, date range, customer, trip, payment_status + search on reference/customer/route; paginated)
+- ✅ `GET /api/v1/bookings/:id` — booking detail (customer + trip + route + bus joined)
+- ✅ `PATCH /api/v1/bookings/:id` — update (seats w/ conflict exclusion of self, passengers, amounts, notes)
+- ✅ `POST /api/v1/bookings/:id/confirm` — confirm booking (pending only)
+- ✅ `POST /api/v1/bookings/:id/cancel` — cancel (reason required; pending/confirmed only)
+- ✅ `POST /api/v1/bookings/:id/refund` — process refund (confirmed/cancelled with paid > 0; zeroes paid_amount)
+- ✅ `GET /api/v1/bookings/:id/ticket` — generate ticket (PDF via pdfkit, attachment download)
+- ✅ Seat availability check per trip (`GET /api/v1/bookings/trips/:tripId/availability` — capacity/occupied/available/bookedCount; seats of pending+confirmed bookings count as occupied)
+- ✅ Prevent overbooking (hard seat conflict check vs bus capacity; waitlist is Phase 7.3)
+- ✅ Roles: super_admin/company_admin/operations_manager/customer_service write, + finance_accountant/executive read
 - **Frontend pages:**
-  - [ ] Bookings list page (table filterable by status, date range, customer, trip)
-  - [ ] Booking create form (customer search, trip selector with seat map, passenger list)
-  - [ ] Booking detail page (customer info, passenger list, payment breakdown, status badge)
-  - [ ] Seat selection UI (visual seat grid: occupied/available/selected)
-  - [ ] Confirm/Cancel/Refund action buttons (with reason modal for cancel)
-  - [ ] Ticket PDF preview / download button
+  - ✅ Bookings list page (`/dashboard/bookings` — table filterable by status, payment status, date range, search; server pagination; status/payment badges)
+  - ✅ Booking create form (`/dashboard/bookings/new` — customer search dropdown, bookable trip selector, seat map, passenger rows auto-synced to seats, payment fields)
+  - ✅ Booking detail page (`/dashboard/bookings/[id]` — customer info, trip info, passenger list, payment breakdown, status badges)
+  - ✅ Seat selection UI (SeatMap component: visual seat grid occupied/available/selected with legend)
+  - ✅ Confirm/Cancel/Refund action buttons (cancel uses reason modal; refund uses confirm dialog)
+  - ✅ Ticket PDF download button (blob download with auth header)
+- **Tests:** 15 backend unit tests (create + seat conflict + out-of-range + paid>total + non-bookable trip, availability calc, list filters/search, confirm/cancel/refund lifecycle, update w/ self-exclusion, PDF buffer) + frontend vitest tests
 
 ### 7.3 Waitlist
-- [ ] `booking_waitlist` table: tenant_id, trip_id, customer_id, number_of_passengers, request_date, status (waiting, offered, converted, expired)
-- [ ] `POST /api/bookings/waitlist` — join waitlist
-- [ ] `GET /api/bookings/waitlist` — view waitlist
-- [ ] Auto-offer when seat becomes available (notify customer)
-- [ ] Auto-expire unresponsive offers
+- ✅ `booking_waitlist` table: tenant_id, trip_id, customer_id, number_of_passengers, request_date, status (waiting, offered, converted, expired)
+- ✅ `POST /api/bookings/waitlist` — join waitlist
+- ✅ `GET /api/bookings/waitlist` — view waitlist
+- ✅ Auto-offer when seat becomes available (notify customer)
+- ✅ Auto-expire unresponsive offers
 - **Frontend pages:**
-  - [ ] Waitlist page per trip (table: customer, requested seats, wait time, status)
-  - [ ] "Join waitlist" button on trip with no availability
+  - ✅ Waitlist page per trip (table: customer, requested seats, wait time, status)
+  - ✅ "Join waitlist" button on trip with no availability
 
 ### 7.4 Booking Dashboard
-- [ ] Today's bookings summary
-- [ ] Upcoming trips with booking counts
-- [ ] Cancellation rate
-- [ ] Revenue from bookings (today, this week, this month)
-- [ ] Customer search (find bookings by name / phone / reference)
+- ✅ Today's bookings summary
+- ✅ Upcoming trips with booking counts
+- ✅ Cancellation rate
+- ✅ Revenue from bookings (today, this week, this month)
+- ✅ Customer search (find bookings by name / phone / reference)
 - **Frontend pages:**
-  - [ ] Booking dashboard page (summary cards, revenue trend, upcoming trips table)
-  - [ ] Global customer search bar (finds bookings across all trips)
+  - ✅ Booking dashboard page (summary cards, revenue trend, upcoming trips table)
+  - ✅ Global customer search bar (finds bookings across all trips)
 
 ### 7.5 Customer Communication (Booking Related)
-- [ ] Booking confirmation (auto)
-- [ ] Trip reminder (24 hours before)
-- [ ] Delay notification to all passengers on affected trip
-- [ ] Cancellation notification
-- [ ] Payment receipt
+- ✅ `booking_communications` table: tenant_id, booking_id, comm_type, recipient_email, subject, status (sent/failed), error, sent_at
+- ✅ Booking confirmation (auto, on create; receipt auto when paid)
+- ✅ Trip reminder (24 hours before; hourly scheduled job backend-side)
+- ✅ Delay notification to all passengers on affected trip (auto on delay)
+- ✅ Cancellation notification (auto on cancel)
+- ✅ Payment receipt (auto; refund receipt on refund), refund notification
+- ✅ `POST /api/bookings/:id/communications/send` — manual resend (confirmation, receipt, reminder, cancellation, delay)
+- ✅ `GET /api/bookings/:id/communications` — communication log
 - **Frontend pages:**
-  - [ ] Communication log tab on booking (sent messages, status: delivered/failed)
-  - [ ] Manual send button (resend confirmation, send delay alert)
+  - ✅ Communication log section on booking detail (type, subject, recipient, status badge sent/failed, timestamp)
+  - ✅ Manual send buttons (resend confirmation, send receipt, send reminder, send delay alert; errors shown inline)
+- **Email:** nodemailer Gmail SMTP with SEUM-branded HTML template (`#1d4ed8` primary); senders degrade gracefully to log-only when SMTP unconfigured
+- **Tests:** 8 backend tests (confirmation + no-email guard, delay alerts, cancellation, comm log, reminder sender guard, reminder job send + dedupe, reminder job no-op) + hooks verified across bookings/trips/driver-assignment suites (40 suites / 393 backend + 94 frontend green)
+
+### 7.6 Booking Approval & Status Workflow (Client: Supervisor Review)
+- [ ] Extend `bookings` status flow to the request pipeline: `draft → pending_approval → approved → planning → assigned → confirmed → in_progress → completed` (keep existing `pending/confirmed/cancelled/refunded` as compatible aliases or migrate carefully)
+- [ ] `booking_status_history` table: booking_id, from_status, to_status, changed_by, changed_at, notes (every transition recorded with actor + timestamp)
+- [ ] `POST /api/v1/bookings/:id/submit` — move `new/draft` booking to `pending_approval`
+- [ ] `POST /api/v1/bookings/:id/approve` — supervisor approve (records approver + timestamp); moves booking to `approved` → appears in planning queue
+- [ ] `POST /api/v1/bookings/:id/reject` — supervisor reject (reason required)
+- [ ] Supervisor review surface: open full booking detail (customer, company, trip, date, time, pickup, destination, pax, trip type, vehicle requirements, special requirements, quotation, invoice info, amounts)
+- [ ] `PATCH /api/v1/bookings/:id` extended for supervisor: edit price/quotation + attach invoice reference at approval stage (price verification)
+- [ ] Planning queue endpoint: `GET /api/v1/bookings?status=approved` → planning team assigns vehicle + driver (reuses existing assignment endpoints from Phase 2 / Fleet)
+- [ ] Auto-transition `confirmed` once planned + assigned (or manual confirm per current flow)
+- [ ] Roles: supervisor = company_admin / operations_manager; planning = operations_manager / fleet_manager
+- **Frontend pages:**
+  - [ ] Booking Management queue: "New Trips / Pending Approval" view (approval status filter on `/dashboard/bookings`)
+  - [ ] Booking detail with supervisor review panel (edit price, attach invoice, verify amounts, Approve / Reject buttons, reject-reason modal)
+  - [ ] Planning queue view (approved bookings awaiting vehicle + driver assignment)
+  - [ ] Status timeline on booking detail (from `booking_status_history`)
+
+### 7.7 Excel Bulk Import (Client: B2B Excel Upload Channel)
+- [ ] Excel template download (`GET /api/v1/bookings/import/template` — standardized columns: customer info, trip info, date, time, pickup, destination, passenger count, trip/service type, price)
+- [ ] `POST /api/v1/bookings/import` — multipart `.xlsx` upload
+- [ ] Validation per row: required fields, customer match (name/phone/company), date format, time format, pickup/destination, passenger count, trip type, price, duplicate records, invalid data
+- [ ] Validation report response with per-row errors; no trips created if errors exist (fail-safe)
+- [ ] Batch create on valid file → all requests land as `pending_approval` (Phase 7.6), `channel = excel`
+- [ ] Frontend: Excel upload page (template download, file picker, error table with row/column references, success summary)
+
+### 7.8 Booking Channels & Source Tagging (Client: Unified Channels)
+- [ ] `channel` column on `bookings`: `internal`, `excel`, `b2b_portal`, `b2c_website`, `cs_employee`, `whatsapp` (reserved for future chatbot)
+- [ ] Set channel at creation by intake source (internal form, import job, portal API, CS screen)
+- [ ] List filter `?channel=...` + channel breakdown in booking dashboard/reports
+- [ ] Frontend: channel badge on booking list/detail, channel filter dropdown
+- [ ] Future-proofing: new channels reuse central booking module without schema change (client principle: multiple channels → central booking management)
 
 ---
 
 ## PHASE 8: Notifications & Communication
 
 ### 8.1 Notification Engine
-- [ ] `notifications` table: tenant_id, user_id, type, title, body, data (JSON), is_read, is_seen, created_at, read_at
-- [ ] `POST /api/notifications` — create notification (internal)
-- [ ] `GET /api/notifications` — list (paginated, unread first)
-- [ ] `POST /api/notifications/:id/read` — mark as read
-- [ ] `POST /api/notifications/mark-all-read` — mark all read
-- [ ] `GET /api/notifications/unread-count` — badge count
-- [ ] `DELETE /api/notifications/:id` — dismiss
+- ✅ `notifications` table: tenant_id, user_id, type, title, message, data (JSONB), resource, resource_id, is_read, is_seen, read_at, created_at
+- ✅ `notification_preferences` table: per-user (tenant_id, user_id, event_type, in_app, email) with PK upsert
+- ✅ `POST /api/notifications` — create notification (internal, preference-aware)
+- ✅ `GET /api/notifications` — list (paginated, unread first, `type` filter)
+- ✅ `PATCH /api/notifications/:id/read` — mark as read (sets read_at)
+- ✅ `PATCH /api/notifications/read-all` — mark all read (sets read_at)
+- ✅ `GET /api/notifications/count` — badge count
+- ✅ `DELETE /api/notifications/:id` — dismiss
+- ✅ `GET/PUT /api/notifications/preferences` — per-event channel toggles
+- ✅ Preference-aware sends: `createNotification` gated by in-app pref; email gated by email pref (document expiry, waitlist offers, trip assignment emails)
 - **Frontend pages:**
-  - [ ] Notification center page (full list with read/unread, filter by type)
-  - [ ] Notification bell dropdown (latest 5, mark-all-read button)
-  - [ ] Notification preference settings page (which events to receive)
+  - ✅ Notification center page (`/dashboard/notifications`) — full list with read/unread, type filter, mark-all-read, dismiss, pagination
+  - ✅ Notification bell dropdown (latest 5, unread badge, mark-all-read button, "Open notification center" link) — pre-existing, verified
+  - ✅ Notification preference settings page (`/dashboard/notifications/preferences`) — per-event in-app/email toggles
+- **Tests:** 9 backend notification tests (data JSON, in-app suppression, pref defaults, prefs catalog/upsert, expiry email gating) + 3 frontend vitest tests (render+unread, type filter, mark-all+dismiss) — 40 suites / 399 backend + 97 frontend green
 
 ### 8.2 WhatsApp Integration
 - [ ] WhatsApp Business API connection (Twilio / Meta API / WATI / direct)
@@ -1096,45 +1183,48 @@
 
 ---
 
-## PHASE 14: Hotel & Multi-Business Expansion (Future)
+## PHASE 14: Customer Portals (B2C Website & B2B Portal)
 
-### 14.1 Hotel Management (Basic)
-- [ ] `hotels` table: tenant_id, name, address, contact, star_rating, room_types[], contract_start, contract_end, contract_rate
-- [ ] `hotel_bookings` table: hotel_id, group_id, check_in, check_out, room_count, room_type, total_cost, status
-- [ ] Room inventory tracking
-- [ ] Check-in/check-out management
-- **Frontend pages:**
-  - [ ] Hotels list page (cards: name, address, star rating, contract dates)
-  - [ ] Hotel create/edit form
-  - [ ] Hotel detail page (room types, contract info, booking list)
-  - [ ] Hotel booking form (group selector, room type, dates)
-  - [ ] Check-in/check-out UI per booking
+> Client scope: B2B Website and B2C Website are current-phase booking channels (only WhatsApp/chatbot is future).
+>
+> **Revenue cut line:** Phases 0–13 = the operational engine (built). Phases 14–15 = go-live critical — without these, no customer can book or pay online. Everything before is enabling; this is where customers + money meet.
 
-### 14.2 Multi-Business Profile
-- [ ] A single tenant can have multiple business profiles (transport, hotel, tours)
-- [ ] Module switching within same login
-- **Frontend pages:**
-  - [ ] Business profile switcher (dropdown in sidebar header)
-  - [ ] Business profile management page (list, create, activate)
+### 14.1 Public Booking API (Backend Foundation)
+- [ ] Public endpoints (no internal session; token/rate-limited): `GET /api/v1/public/trips` (published trip search by route/date), `GET /api/v1/public/trips/:id/availability`, `POST /api/v1/public/bookings` (guest booking create), `GET /api/v1/public/bookings/:reference` (status lookup by reference), `POST /api/v1/public/bookings/:id/payment-link`
+- [ ] `channel` tag written on every public booking (`b2c_website` / `b2b_portal`) — consumes Phase 7.8 field
+- [ ] Public rate limiting + abuse protection (captcha/OTP on portal login)
+- [ ] Customer-facing status reads from `booking_status_history` (Phase 7.6) — history visible to customer, actor names masked for privacy
 
-### 14.3 Customer Portal
-- [ ] Customer-facing website
-- [ ] Trip schedule browsing
-- [ ] Online booking (seat selection)
-- [ ] Ticket download
-- [ ] Live bus tracking
-- [ ] Booking history
-- **Frontend pages:**
-  - [ ] Customer portal homepage (trip search, route listing)
-  - [ ] Trip schedule page (route selector, date picker, timetable)
-  - [ ] Online booking flow (select trip → seat map → passenger info → confirm → pay)
-  - [ ] Ticket download page (PDF preview + download)
-  - [ ] Live bus tracking page (map with bus position for booked trip)
-  - [ ] Booking history page (customer login required)
+### 14.2 B2C Website
+- [ ] Homepage: trip search (route selector, date picker, timetable)
+- [ ] Trip schedule page (search result list with seats/fares)
+- [ ] Online booking flow: select trip → seat map → passenger info → review price → pay → confirm
+- [ ] Ticket download page (PDF preview + download; reuses Phase 7.2 ticket endpoint)
+- [ ] Booking lookup by reference with status/payment badges
+- [ ] Booking history (customer login required)
+- [ ] Live bus tracking page (map with bus position for booked trip — consumes Phase 9 GPS layer)
+- [ ] Guest booking without login (contact info + booking reference as identifier)
+
+### 14.3 B2B Portal
+- [ ] Company login (auth for company customers — user accounts linked to `customers`/`companies`)
+- [ ] Create booking request: company/customer info, trip info, date, time, pickup, destination, passenger count, trip/service type, additional requirements, quotation/selling price
+- [ ] Submit → request lands in central queue as `pending_approval` (Phase 7.6)
+- [ ] Status tracking: request lifecycle, approvals, assignment (vehicle/driver), notifications
+- [ ] Excel upload (reuses Phase 7.7 template + validation)
+- [ ] Booking history + per-request status timeline (from `booking_status_history`)
+- [ ] Resubmit rejected requests (rejection reason shown)
+
+### 14.4 Portal Frontend & Infrastructure
+- [ ] Public Next.js routes outside the dashboard shell (`/`, `/trips`, `/book`, `/payment/return`, `/portal`)
+- [ ] B2B portal pages: login, dashboard (my requests/status), create request form, request detail, upload page
+- [ ] Payment redirect/return pages (consume Phase 15 payment link/gateway)
+- [ ] Shared public components/API client (separate from dashboard shell)
 
 ---
 
 ## PHASE 15: Payment & Billing
+
+> Current scope — required by the B2C channel. Cash/manual recording already exists (Phase 7.2 booking `paid_amount`); this phase adds the online layer.
 
 ### 15.1 Payment Processing
 - [ ] `payments` table: tenant_id, reference_type (invoice, booking, expense), reference_id, amount, payment_method (cash, bank_transfer, card, mada, stc_pay, apple_pay), payment_date, transaction_id, status, notes
@@ -1144,12 +1234,14 @@
 - [ ] `POST /api/payments/reconcile` — reconcile with bank statement
 - [ ] Payment gateway integration (Mada, STC Pay, Apple Pay)
 - [ ] Payment link generation (share via WhatsApp)
-- **Frontend pages:**
+- [ ] Payment link per booking: generate + send (WhatsApp/email), track status (pending/paid/failed), expiry/void on refund
+- [ ] Payment webhook → auto-confirm booking (payment_status paid → booking `confirmed`, feeds Phase 7.6 workflow)
+- [ ] **Frontend pages:**
   - [ ] Payments list page (table filterable by method, status, date)
   - [ ] Record payment form (reference type search, amount, method, date)
   - [ ] Payment detail modal
   - [ ] Reconciliation page (match payments to bank transactions)
-  - [ ] Payment link generator (amount, reference, generate shareable link)
+  - [ ] Payment link generator (amount, reference, generate shareable link; send from booking detail)
 
 ### 15.2 ZATCA E-Invoicing (Saudi Compliance)
 - [ ] ZATCA Phase 2 compliance:
@@ -1232,6 +1324,32 @@
 
 ---
 
+## PHASE 17: Hotel & Multi-Business Expansion (Future)
+
+### 17.1 Hotel Management (Basic)
+- [ ] `hotels` table: tenant_id, name, address, contact, star_rating, room_types[], contract_start, contract_end, contract_rate
+- [ ] `hotel_bookings` table: hotel_id, group_id, check_in, check_out, room_count, room_type, total_cost, status
+- [ ] Room inventory tracking
+- [ ] Check-in/check-out management
+- **Frontend pages:**
+  - [ ] Hotels list page (cards: name, address, star rating, contract dates)
+  - [ ] Hotel create/edit form
+  - [ ] Hotel detail page (room types, contract info, booking list)
+  - [ ] Hotel booking form (group selector, room type, dates)
+  - [ ] Check-in/check-out UI per booking
+
+### 17.2 Multi-Business Profile
+- [ ] A single tenant can have multiple business profiles (transport, hotel, tours)
+- [ ] Module switching within same login
+- **Frontend pages:**
+  - [ ] Business profile switcher (dropdown in sidebar header)
+  - [ ] Business profile management page (list, create, activate)
+
+### 17.3 Customer Extras
+- [ ] Live bus tracking page (map with bus position for booked trip)
+
+---
+
 ## CROSS-CUTTING CONCERNS (Applied Throughout)
 
 ### Performance & Scaling
@@ -1277,4 +1395,4 @@
 
 ---
 
-*End of document. This lifecycle covers all software features of the SEUM ERP platform across 16 phases and hundreds of individual implementable units.*
+*End of document. This lifecycle covers all software features of the SEUM ERP platform across 17 phases and hundreds of individual implementable units.*

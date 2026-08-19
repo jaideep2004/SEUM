@@ -1,0 +1,5 @@
+@media print {
+  body * { visibility: hidden; }
+  #manifest-print, #manifest-print * { visibility: visible; }
+  #manifest-print { position: absolute; left: 0; top: 0; width: 100%; }
+}

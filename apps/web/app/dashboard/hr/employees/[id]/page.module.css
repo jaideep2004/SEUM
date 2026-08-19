@@ -1,0 +1,79 @@
+.page { max-width: 1000px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.loading { text-align: center; padding: 48px; font-size: 12px; color: var(--color-text-tertiary); }
+.backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 16px; }
+.backLink:hover { color: var(--color-text); }
+
+.profileHeader { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); margin-bottom: 16px; }
+.profilePhoto { width: 72px; height: 72px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; overflow: hidden; }
+
+.headerInfo { flex: 1; min-width: 0; }
+.headerNameRow { display: flex; align-items: center; gap: 10px; }
+.employeeName { font-size: 20px; font-weight: 700; color: var(--color-text); margin: 0; }
+.employeeEmail { font-size: 12px; color: var(--color-text-secondary); margin: 2px 0 6px; }
+.headerMeta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--color-text-secondary); }
+.headerMeta span { display: flex; align-items: center; gap: 4px; text-transform: capitalize; }
+.editBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; }
+.editBtn:hover { background: var(--color-hover); }
+
+.statusBadge { padding: 3px 12px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.expiryBanner { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); margin-bottom: 12px; font-size: 12px; color: #92400e; }
+
+.tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--color-text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tab:hover { background: var(--color-hover); }
+.tabActive { background: var(--color-bg-subtle); color: var(--color-text); box-shadow: inset 0 -2px 0 var(--color-primary); }
+
+.infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.infoCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px; }
+.infoCard h3 { font-size: 12px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+.infoRow { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--color-border-subtle); font-size: 12px; gap: 12px; }
+.infoRow:last-child { border-bottom: none; }
+.infoRow span:first-child { color: var(--color-text-secondary); display: inline-flex; align-items: center; gap: 4px; }
+.infoRow span:last-child { color: var(--color-text); font-weight: 500; text-align: right; }
+
+.placeholderSection { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 64px 24px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); text-align: center; }
+.placeholderIcon { color: var(--color-text-tertiary); opacity: 0.4; }
+.placeholderSection h3 { font-size: 15px; font-weight: 700; color: var(--color-text); margin: 8px 0 0; }
+.placeholderSection p { font-size: 12px; color: var(--color-text-secondary); max-width: 420px; }
+
+/* Contracts & Documents */
+.tabSection { display: flex; flex-direction: column; gap: 14px; }
+.sectionHeader { display: flex; align-items: center; justify-content: space-between; }
+.sectionHeader h3 { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 0; }
+.addBtn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: none; border-radius: var(--radius-md); background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.addBtn:hover { opacity: 0.85; }
+
+.docForm { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 18px; }
+.formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 4px; }
+.field input, .field select { width: 100%; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 12px; box-sizing: border-box; }
+.fileField { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px dashed var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-secondary); font-size: 12px; cursor: pointer; width: 100%; box-sizing: border-box; }
+.fileField:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.formActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.primaryBtn { padding: 8px 16px; border: none; border-radius: var(--radius-md); background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+.primaryBtn:hover { opacity: 0.85; }
+.primaryBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { padding: 8px 12px; background: #fef2f2; color: #991b1b; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 12px; }
+
+.tableWrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; padding: 10px 12px; font-size: 10px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; background: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); }
+.table td { padding: 10px 12px; font-size: 12px; color: var(--color-text); border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--color-hover); }
+.periodCell { white-space: nowrap; font-size: 11px; color: var(--color-text-secondary); }
+.benefitsCell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-secondary); }
+.emptyState { text-align: center; color: var(--color-text-tertiary); padding: 24px; }
+
+.typeBadge { display: inline-flex; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: capitalize; background: var(--color-bg-subtle); color: var(--color-text-secondary); }
+.noExpiry { color: var(--color-text-tertiary); }
+.expiredBadge { display: inline-flex; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: #fef2f2; color: #dc2626; }
+.expiringBadge { display: inline-flex; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; background: #fffbeb; color: #d97706; }
+.validBadge { display: inline-flex; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; background: #ecfdf5; color: #059669; }
+
+.fileLink { display: inline-flex; align-items: center; gap: 4px; color: var(--color-primary); font-size: 11px; font-weight: 600; text-decoration: none; }
+.fileLink:hover { text-decoration: underline; }
+.iconBtn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: transparent; color: var(--color-text-tertiary); cursor: pointer; transition: all 0.2s; }
+.iconBtn:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }

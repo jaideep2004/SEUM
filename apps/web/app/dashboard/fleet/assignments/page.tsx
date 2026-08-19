@@ -37,6 +37,8 @@ export default function AssignmentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [error, setError] = useState("");
+  const [buses, setBuses] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   const emptyForm = {
     busId: "", routeName: "", depotName: "", driverId: "", driverName: "",
@@ -65,6 +67,21 @@ export default function AssignmentsPage() {
   }, [page, pageSize, statusFilter, busFilter]);
 
   useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
+
+  useEffect(() => {
+    (async () => {
+      const token = localStorage.getItem("seum_access_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+      try {
+        const [b, d] = await Promise.all([
+          fetch(`${API}/fleet/buses?page=1&pageSize=100`, { headers }).then(r => r.json()),
+          fetch(`${API}/drivers?page=1&pageSize=100`, { headers }).then(r => r.json()),
+        ]);
+        if (b.success) setBuses((b.data || []).sort((x: any, y: any) => x.plateNumber.localeCompare(y.plateNumber)));
+        if (d.success) setDrivers(d.data || []);
+      } catch {}
+    })();
+  }, []);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -139,8 +156,11 @@ export default function AssignmentsPage() {
       {/* Filters */}
       <div className={styles.filterBar}>
         <div className={styles.filterGroup}>
-          <input type="text" className={styles.filterInput} placeholder="Bus ID..."
-            value={busFilter} onChange={(e) => { setBusFilter(e.target.value); setPage(1); }} />
+          <select className={styles.filterInput} value={busFilter}
+            onChange={(e) => { setBusFilter(e.target.value); setPage(1); }}>
+            <option value="">All buses</option>
+            {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
+          </select>
           <select className={styles.filterInput} value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
             <option value="">All Statuses</option>
@@ -240,9 +260,12 @@ export default function AssignmentsPage() {
                 {error && <div className={styles.formError}><AlertTriangle size={14} />{error}</div>}
                 <div className={styles.formGrid}>
                   <label className={styles.formFieldFull}>
-                    <span>Bus ID *</span>
-                    <input required value={form.busId} disabled={!!editing}
-                      onChange={(e) => setForm({ ...form, busId: e.target.value })} />
+                    <span>Bus *</span>
+                    <select required value={form.busId} disabled={!!editing}
+                      onChange={(e) => setForm({ ...form, busId: e.target.value })}>
+                      <option value="">Select bus...</option>
+                      {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
+                    </select>
                   </label>
                   <label className={styles.formField}>
                     <span>Route Name</span>
@@ -252,13 +275,18 @@ export default function AssignmentsPage() {
                     <span>Depot Name</span>
                     <input value={form.depotName} onChange={(e) => setForm({ ...form, depotName: e.target.value })} />
                   </label>
-                  <label className={styles.formField}>
-                    <span>Driver Name</span>
-                    <input value={form.driverName} onChange={(e) => setForm({ ...form, driverName: e.target.value })} />
-                  </label>
-                  <label className={styles.formField}>
-                    <span>Driver ID</span>
-                    <input value={form.driverId} onChange={(e) => setForm({ ...form, driverId: e.target.value })} />
+                  <label className={styles.formFieldFull}>
+                    <span>Driver</span>
+                    <select value={form.driverId} onChange={(e) => {
+                      const dv = drivers.find((x: any) => x.id === e.target.value);
+                      setForm({ ...form, driverId: e.target.value, driverName: dv?.name || "" });
+                    }}>
+                      <option value="">No driver assigned</option>
+                      {editing && form.driverId && !drivers.some((x: any) => x.id === form.driverId) && (
+                        <option value={form.driverId}>{form.driverName || form.driverId.slice(0, 8)}</option>
+                      )}
+                      {drivers.map((dv: any) => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
+                    </select>
                   </label>
                   <label className={styles.formField}>
                     <span>Start Date *</span>

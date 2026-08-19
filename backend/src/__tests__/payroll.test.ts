@@ -23,12 +23,12 @@ beforeEach(() => { jest.clearAllMocks(); });
 describe('createBatch', () => {
   it('creates a batch with items from active drivers', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null)                                                           // existing check → null
-      .mockResolvedValueOnce({ count: '0' })                                                // trip count per driver
+      .mockResolvedValueOnce(null)                                                           // existing check
       .mockResolvedValueOnce({ id: BID, tenant_id: TID, period_start: '2025-01-01', period_end: '2025-01-31', total_salaries: '3000', total_allowances: '0', total_deductions: '0', net_payable: '3000', employee_count: 1, status: 'draft', approved_by: null, paid_at: null, created_by: UID, created_at: '2025-01-01', updated_at: '2025-01-01' })  // RETURNING *
       .mockResolvedValueOnce({ id: BID, tenant_id: TID, period_start: '2025-01-01', period_end: '2025-01-31', total_salaries: '3000', total_allowances: '0', total_deductions: '0', net_payable: '3000', employee_count: 1, status: 'draft', approved_by: null, paid_at: null, created_by: UID, created_at: '2025-01-01', updated_at: '2025-01-01' });  // getBatchDetail SELECT
     mockQuery
       .mockResolvedValueOnce([{ id: DRIVER_ID, employee_code: 'D001', employee_name: 'John Driver', base_salary: '3000' }]) // drivers
+      .mockResolvedValueOnce([])                                                             // batched trip count (no completed trips)
       .mockResolvedValueOnce([])                                                             // INSERT items (no return)
       .mockResolvedValueOnce([{ id: 'item-1', payroll_batch_id: BID, driver_id: DRIVER_ID, employee_name: 'John Driver', net_pay: '3000' }]); // getBatchDetail items
 

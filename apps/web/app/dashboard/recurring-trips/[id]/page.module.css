@@ -1,4 +1,4 @@
-.page { padding: 24px; max-width: 800px; margin: 0 auto; }
+.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
 .backLink { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 12px; }
 .backLink:hover { color: var(--color-text); }
 .pageHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
@@ -7,6 +7,7 @@
 .pageDesc { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
 .headerActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .statusBadge { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.typeTag { padding: 4px 10px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: #ede9fe; color: #5b21b6; }
 .activeBadge { background: #d1fae5; color: #065f46; }
 .inactiveBadge { background: #f3f4f6; color: #6b7280; }
 .actionBtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: none; }
@@ -24,6 +25,16 @@
 .detailLabel { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
 .detailRow > div > span:last-child { font-size: 12px; color: var(--color-text); }
 .dateList { font-size: 11px !important; color: var(--color-text-secondary) !important; }
+.legsTimeline { display: flex; flex-direction: column; }
+.legItem { display: flex; gap: 12px; }
+.legMarker { display: flex; flex-direction: column; align-items: center; width: 22px; }
+.legMarker span { width: 20px; height: 20px; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.legLine { flex: 1; width: 2px; background: var(--color-border); margin: 3px 0; }
+.legContent { flex: 1; padding-bottom: 14px; }
+.legPath { font-size: 12px; font-weight: 600; color: var(--color-text); }
+.legMeta { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.overnightBadge { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 9999px; background: #fef3c7; color: #92400e; font-size: 9px; font-weight: 600; }
+.muted { font-size: 11px; color: var(--color-text-tertiary); }
 
 .modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal { background: var(--color-surface); border-radius: var(--radius-md); width: 400px; max-width: 90vw; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }

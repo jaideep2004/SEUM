@@ -619,28 +619,28 @@ export async function createFuelLog(tenantId: string, input: CreateFuelLogInput)
 }
 
 export async function listFuelLogs(tenantId: string, queryParams: FuelLogQuery) {
-  const conditions: string[] = ['tenant_id = $1'];
+  const conditions: string[] = ['f.tenant_id = $1'];
   const params: any[] = [tenantId];
   let paramIndex = 1;
 
   if (queryParams.busId) {
     params.push(queryParams.busId);
-    conditions.push(`bus_id = $${++paramIndex}`);
+    conditions.push(`f.bus_id = $${++paramIndex}`);
   }
   if (queryParams.startDate) {
     params.push(queryParams.startDate);
-    conditions.push(`date >= $${++paramIndex}`);
+    conditions.push(`f.date >= $${++paramIndex}`);
   }
   if (queryParams.endDate) {
     params.push(queryParams.endDate);
-    conditions.push(`date <= $${++paramIndex}`);
+    conditions.push(`f.date <= $${++paramIndex}`);
   }
 
   const where = conditions.join(' AND ');
   const offset = (queryParams.page - 1) * queryParams.pageSize;
 
   const countResult = await queryOne<{ count: string }>(
-    `SELECT COUNT(*) FROM fuel_logs WHERE ${where}`, params
+    `SELECT COUNT(*) FROM fuel_logs f WHERE ${where}`, params
   );
   const total = parseInt(countResult?.count || '0', 10);
 

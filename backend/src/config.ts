@@ -43,5 +43,16 @@ export const config = {
     origin: process.env.CORS_ORIGIN?.split(',').map(s => s.trim()) || 'http://localhost:3000',
   },
 
+  appUrl: process.env.APP_URL || 'http://localhost:3000',
+
+  smtp: {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || 'SEUM <no-reply@seum.app>',
+  },
+
   auditLogRetentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '90', 10),
 };
