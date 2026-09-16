@@ -57,6 +57,7 @@ import {
   Archive,
   Sun,
   Moon,
+  MessageSquare,
 } from "lucide-react";
 import styles from "./layout.module.css";
 
@@ -75,12 +76,14 @@ const superAdminNav: NavItem[] = [
   { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ClipboardList },
   { label: "Archived", href: "/dashboard/archived", icon: Archive },
   { label: "Global Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 const companyAdminNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard/company", icon: LayoutDashboard },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
   { label: "Operations", href: "/dashboard/operations", icon: Route },
   { label: "Users", href: "/dashboard/users", icon: Users },
   { label: "Fleet", href: "/dashboard/fleet", icon: Truck },
@@ -117,6 +120,7 @@ const operationsNav: NavItem[] = [
   { label: "Dashboard", href: "/dashboard/operations", icon: LayoutDashboard },
   { label: "Bookings", href: "/dashboard/bookings", icon: ClipboardList },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Pilgrim Groups", href: "/dashboard/pilgrim-groups", icon: Users },
   { label: "Trip Planning", href: "/dashboard/trip-planning", icon: CalendarDays },
@@ -197,6 +201,7 @@ const csNav: NavItem[] = [
   { label: "New Booking", href: "/dashboard/bookings/new", icon: ClipboardList },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Waitlist", href: "/dashboard/bookings/waitlist", icon: CalendarDays },
+  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
 ];
 
@@ -287,15 +292,15 @@ const roleAllowed: Record<string, string[]> = {
     "/dashboard/companies", "/dashboard/subscriptions", "/dashboard/plans", "/dashboard/modules",
     "/dashboard/users", "/dashboard/support", "/dashboard/health", "/dashboard/integrations",
     "/dashboard/audit-logs", "/dashboard/archived", "/dashboard/reports", "/dashboard/settings",
-    "/dashboard/notifications",
+    "/dashboard/notifications", "/dashboard/communications",
   ],
   company: [
-    "/dashboard/company", "/dashboard/notifications", "/dashboard/operations", "/dashboard/users",
+    "/dashboard/company", "/dashboard/notifications", "/dashboard/communications", "/dashboard/operations", "/dashboard/users",
     "/dashboard/fleet", "/dashboard/hr", "/dashboard/finance", "/dashboard/delays",
     "/dashboard/accounts", "/dashboard/accounting", "/dashboard/maintenance", "/dashboard/monitoring",
   ],
   operations: [
-    "/dashboard/operations", "/dashboard/notifications", "/dashboard/bookings", "/dashboard/customers",
+    "/dashboard/operations", "/dashboard/notifications", "/dashboard/communications", "/dashboard/bookings", "/dashboard/customers",
     "/dashboard/pilgrim-groups", "/dashboard/trip-planning", "/dashboard/trips",
     "/dashboard/recurring-trips", "/dashboard/schedules", "/dashboard/drivers",
     "/dashboard/fleet/vehicles", "/dashboard/routes", "/dashboard/maintenance/workshops",
@@ -316,7 +321,7 @@ const roleAllowed: Record<string, string[]> = {
     "/dashboard/accounts", "/dashboard/accounting", "/dashboard/notifications",
   ],
   cs: [
-    "/dashboard/bookings", "/dashboard/customers", "/dashboard/notifications",
+    "/dashboard/bookings", "/dashboard/customers", "/dashboard/notifications", "/dashboard/communications",
   ],
   maintenance: [
     "/dashboard/maintenance", "/dashboard/notifications",
@@ -457,6 +462,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     "/dashboard/maintenance/parts", "/dashboard/maintenance/workshops",
     "/dashboard/maintenance/costs",
     "/dashboard/monitoring", "/dashboard/delays",
+    "/dashboard/communications",
   ]);
 
   return (

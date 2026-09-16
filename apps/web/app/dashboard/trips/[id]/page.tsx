@@ -206,13 +206,27 @@ export default function TripDetailPage() {
             </div>
           )}
 
-          {(trip.groupLeader || trip.groupNo || trip.noOfPax != null || trip.agent) && (
+          {(trip.groupLeader || trip.groupNo || trip.noOfPax != null || trip.agent || trip.agentId) && (
             <div className={styles.card}>
               <h3 className={styles.cardTitle}><Users size={14} /> Manifest</h3>
               {trip.tripTitle && <div className={styles.detailRow}><span className={styles.detailLabel}>Title</span><span>{trip.tripTitle}</span></div>}
               {trip.groupLeader && <div className={styles.detailRow}><span className={styles.detailLabel}>Group Leader</span><span>{trip.groupLeader}{trip.groupLeaderNo ? ` (${trip.groupLeaderNo})` : ""}</span></div>}
               {trip.nationality && <div className={styles.detailRow}><span className={styles.detailLabel}>Nationality</span><span>{trip.nationality}</span></div>}
-              {trip.agent && <div className={styles.detailRow}><span className={styles.detailLabel}>Agent</span><span>{trip.agent}</span></div>}
+              {(trip.agent || trip.agentId) && (
+                <div className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Agent</span>
+                  <span>
+                    {trip.agentId ? (
+                      <Link href={`/dashboard/customers/${trip.agentId}`} style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'underline' }}>
+                        {trip.agentCompanyName || trip.agentName || trip.agent}
+                      </Link>
+                    ) : (
+                      trip.agent
+                    )}
+                    {trip.agentPhone && <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--color-text-tertiary)' }}>{trip.agentPhone}</span>}
+                  </span>
+                </div>
+              )}
               {trip.groupNo && <div className={styles.detailRow}><span className={styles.detailLabel}>Group No</span><span>{trip.groupNo}</span></div>}
               {trip.noOfPax != null && <div className={styles.detailRow}><span className={styles.detailLabel}>No of Pax</span><span>{trip.noOfPax}</span></div>}
               {trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>Vehicle Type</span><span>{trip.vehicleType}</span></div>}
@@ -240,6 +254,30 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {trip.agentId && (
+            <div className={styles.card} style={{ borderColor: 'var(--color-primary)', borderWidth: 1 }}>
+              <h3 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Users size={14} /> Linked Agent
+                <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 400, color: 'var(--color-text-tertiary)', textTransform: 'none', letterSpacing: 0 }}>from Accounts → Customers</span>
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Link href={`/dashboard/customers/${trip.agentId}`} style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', textDecoration: 'underline' }}>
+                  {trip.agentCompanyName || trip.agentName || trip.agent || 'View Agent'}
+                </Link>
+                {trip.agentName && trip.agentCompanyName && trip.agentName !== trip.agentCompanyName && (
+                  <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Contact: {trip.agentName}</span>
+                )}
+                <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                  {trip.agentPhone && <span>📞 {trip.agentPhone}</span>}
+                  {trip.agentEmail && <span>✉️ {trip.agentEmail}</span>}
+                </div>
+                <Link href={`/dashboard/customers/${trip.agentId}`} style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--color-primary)', border: '1px solid var(--color-primary)', borderRadius: '9999px', padding: '4px 10px', width: 'fit-content', textDecoration: 'none' }}>
+                  Open in Customers →
+                </Link>
+              </div>
             </div>
           )}
 

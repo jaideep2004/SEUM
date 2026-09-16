@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { query, queryOne } from '../db';
 import { ConflictError, NotFoundError } from '../utils/errors';
+import { logger } from '../utils/logger';
 import { createDocumentExpiryNotifications } from './notificationService';
 import type { CreateBusInput, UpdateBusInput, ListBusesQuery, CreateDocumentInput, UpdateDocumentInput, UpdateReadinessInput, CreateFuelLogInput, FuelLogQuery, CreateAssignmentInput, UpdateAssignmentInput, AssignmentQuery } from '../validators/fleet';
 
@@ -551,12 +552,15 @@ export async function updateReadiness(busId: string, tenantId: string, userId: s
 
 export async function checkBusReadiness(busId: string, tenantId: string): Promise<void> {
   const row = await queryOne<ReadinessRow>(
-    'SELECT status FROM bus_readiness WHERE bus_id = $1 AND tenant_id = $2',
+    'SELECT status FROM bus_readiness WHERE bus_id = $1 AND tenant_id = $2 ORDER BY checked_at DESC LIMIT 1',
     [busId, tenantId]
   );
-  if (row && row.status !== 'ready') {
-    throw new ConflictError(`Bus is currently ${row.status.replace('_', ' ')} and cannot be assigned to a trip`);
+  logger.debug({ busId, tenantId, status: row?.status ?? null }, 'Checking bus readiness for trip assignment');
+  if (row && row.status && row.status !== 'ready') {
+    logger.warn({ busId, tenantId, status: row.status }, 'Prevented trip assignment to non-ready bus');
+    throw new ConflictError(`Bus is not ready for trips (current status: ${row.status.replace(/_/g, ' ')})`);
   }
+  logger.debug({ busId, tenantId, status: row?.status ?? 'none (legacy bus)' }, 'Bus readiness check passed');
 }
 
 // ─── Fuel Tracking ───

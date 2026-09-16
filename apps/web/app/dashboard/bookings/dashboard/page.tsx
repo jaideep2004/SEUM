@@ -235,6 +235,53 @@ export default function BookingDashboardPage() {
             </div>
           </div>
 
+          {/* Channel breakdown — Phase 7.8 */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div>
+                <h2 className={styles.cardTitle}>Bookings by Channel</h2>
+                <p className={styles.cardSubtext}>All-time count & revenue per intake source</p>
+              </div>
+            </div>
+            {(!data.channelBreakdown || data.channelBreakdown.length === 0) ? (
+              <div className={styles.empty}>No channel data yet — bookings will appear after first import or creation.</div>
+            ) : (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Channel</th>
+                      <th>Bookings</th>
+                      <th>Share</th>
+                      <th>Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const totalCh = data.channelBreakdown.reduce((s: number, r: any) => s + r.count, 0) || 1;
+                      const CHANNEL_COLORS: Record<string, string> = { internal: '#64748b', excel: '#059669', b2b_portal: '#0ea5e9', b2c_website: '#8b5cf6', cs_employee: '#f97316', whatsapp: '#22c55e' };
+                      return data.channelBreakdown.map((ch: any) => {
+                        const pct = Math.round((ch.count / totalCh) * 100);
+                        const hex = CHANNEL_COLORS[ch.channel] || '#6b7280';
+                        return (
+                          <tr key={ch.channel}>
+                            <td><span className={styles.statusBadge} style={{ color: hex, background: `${hex}18` }}>{ch.channel.replace('_',' ')}</span></td>
+                            <td>{ch.count}</td>
+                            <td>
+                              <div className={styles.occBar}><div className={styles.occFill} style={{ width: `${pct}%`, background: hex }} /></div>
+                              <span className={styles.occPct}>{pct}%</span>
+                            </td>
+                            <td>{fmtMoney(ch.revenue)}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* Upcoming trips */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>

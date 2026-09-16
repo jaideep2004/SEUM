@@ -8,14 +8,23 @@ const passengerSchema = z.object({
   special_requirements: z.string().max(500).optional(),
 });
 
+export const CHANNELS = ['internal', 'excel', 'b2b_portal', 'b2c_website', 'cs_employee', 'whatsapp'] as const;
+export type BookingChannel = typeof CHANNELS[number];
+
 export const createBookingSchema = z.object({
   customer_id: z.string().uuid(),
-  trip_id: z.string().uuid(),
-  seat_numbers: z.array(z.number().int().positive()).min(1).max(100),
+  trip_id: z.string().uuid().nullable().optional(),
+  seat_numbers: z.array(z.number().int().positive()).min(1).max(100).optional(),
   passengers: z.array(passengerSchema).max(100).optional(),
   total_amount: z.number().min(0).max(99999999.99),
   paid_amount: z.number().min(0).max(99999999.99).optional(),
   notes: z.string().max(2000).optional(),
+  channel: z.enum(CHANNELS).optional(),
+  pickup_location: z.string().max(255).optional(),
+  destination_location: z.string().max(255).optional(),
+  requested_date: z.string().optional(),
+  requested_time: z.string().optional(),
+  trip_type_requested: z.string().max(50).optional(),
 });
 
 export const updateBookingSchema = z.object({
@@ -24,6 +33,8 @@ export const updateBookingSchema = z.object({
   total_amount: z.number().min(0).max(99999999.99).optional(),
   paid_amount: z.number().min(0).max(99999999.99).optional(),
   notes: z.string().max(2000).optional(),
+  invoice_reference: z.string().max(100).optional().nullable(),
+  quotation_amount: z.number().min(0).max(99999999.99).optional().nullable(),
 });
 
 export const listBookingsQuerySchema = z.object({
@@ -31,6 +42,7 @@ export const listBookingsQuerySchema = z.object({
   customer_id: z.string().uuid().optional(),
   trip_id: z.string().uuid().optional(),
   payment_status: z.string().optional(),
+  channel: z.string().optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   search: z.string().optional(),
@@ -39,6 +51,10 @@ export const listBookingsQuerySchema = z.object({
 });
 
 export const cancelBookingSchema = z.object({
+  reason: z.string().min(1).max(500),
+});
+
+export const rejectBookingSchema = z.object({
   reason: z.string().min(1).max(500),
 });
 

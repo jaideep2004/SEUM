@@ -72,8 +72,13 @@ export default function FleetAnalyticsPage() {
     );
   }
 
-  const { summary, avgBusAge, utilizationRate, usedBuses, upcomingRenewals, fuelEfficiency, readinessDistribution } = data;
+  const { summary, avgBusAge, utilizationRate, usedBuses, upcomingRenewals, fuelEfficiency, readinessDistribution, maintenanceCostPerBus, maintenanceCostGrandTotal } = data;
   const utilPct = Math.min(utilizationRate, 100);
+  const maintCosts: any[] = Array.isArray(maintenanceCostPerBus) ? maintenanceCostPerBus : [];
+  const maintGrandTotal = typeof maintenanceCostGrandTotal === "number"
+    ? maintenanceCostGrandTotal
+    : maintCosts.reduce((s: number, b: any) => s + (Number(b.totalCost) || 0), 0);
+  const maxMaintCost = Math.max(...maintCosts.map((b: any) => Number(b.totalCost) || 0), 1);
 
   return (
     <div className={styles.page}>
@@ -223,7 +228,7 @@ export default function FleetAnalyticsPage() {
       </div>
 
       {/* Lower Row: Renewals + Maintenance */}
-      <div className={styles.chartsRow}>
+      <div className={styles.chartsRowLower}>
         {/* Upcoming Renewals Widget */}
         <div className={styles.renewalsCard}>
           <div className={styles.cardHeader}>
@@ -262,13 +267,74 @@ export default function FleetAnalyticsPage() {
           )}
         </div>
 
-        {/* Maintenance Cost Per Bus (placeholder) */}
+        {/* Maintenance Cost Per Bus */}
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Maintenance Cost / Bus</h3>
-          <div className={styles.chartEmpty}>
-            <DollarSign size={24} style={{ opacity: 0.3 }} />
-            <p>Maintenance module not yet active.<br />Cost data will appear here.</p>
+          <div className={styles.cardHeader}>
+            <h3 className={styles.chartTitle}>Maintenance Cost / Bus</h3>
+            {maintCosts.length > 0 ? (
+              <span className={styles.maintTotalBadge}>Fleet total: SAR {Number(maintGrandTotal).toLocaleString()}</span>
+            ) : (
+              <DollarSign size={16} style={{ color: "var(--color-text-tertiary)" }} />
+            )}
           </div>
+          {maintCosts.length === 0 ? (
+            <div className={styles.chartEmpty}>
+              <DollarSign size={24} style={{ opacity: 0.3 }} />
+              <p>No maintenance cost records yet.<br />Costs appear once tasks are invoiced.</p>
+            </div>
+          ) : (
+            <div className={styles.maintWrap}>
+              <div className={styles.maintBarList}>
+                {maintCosts.slice(0, 8).map((b: any) => {
+                  const pct = Math.max((Number(b.totalCost) / maxMaintCost) * 100, 4);
+                  return (
+                    <div key={b.busId} className={styles.maintBarRow}>
+                      <span className={styles.maintBarLabel} title={`${b.plateNumber} ${b.make || ""} ${b.model || ""}`}>
+                        {b.plateNumber}
+                      </span>
+                      <div className={styles.maintBarTrack}>
+                        <div className={styles.maintBarFill} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className={styles.maintBarValue}>SAR {Number(b.totalCost).toLocaleString()}</span>
+                      <span className={styles.maintBarCount}>{b.taskCount} task{b.taskCount !== 1 ? "s" : ""}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {maintCosts.length > 8 && (
+                <p className={styles.maintMore}>+{maintCosts.length - 8} more buses with costs</p>
+              )}
+              <div className={styles.maintTableWrap}>
+                <table className={styles.maintTable}>
+                  <thead>
+                    <tr>
+                      <th>Bus</th>
+                      <th>Tasks</th>
+                      <th style={{ textAlign: "right" }}>Total Cost</th>
+                      <th style={{ textAlign: "right" }}>Parts</th>
+                      <th style={{ textAlign: "right" }}>Labor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {maintCosts.map((b: any) => (
+                      <tr key={b.busId}>
+                        <td>
+                          <span className={styles.maintPlate}>{b.plateNumber}</span>
+                          {(b.make || b.model) && (
+                            <span className={styles.maintSub}> {b.make || ""} {b.model || ""}</span>
+                          )}
+                        </td>
+                        <td>{b.taskCount}</td>
+                        <td style={{ textAlign: "right", fontWeight: 700 }}>SAR {Number(b.totalCost).toLocaleString()}</td>
+                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.partsCost != null ? `SAR ${Number(b.partsCost).toLocaleString()}` : "—"}</td>
+                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.laborCost != null ? `SAR ${Number(b.laborCost).toLocaleString()}` : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

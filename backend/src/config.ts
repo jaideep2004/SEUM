@@ -55,4 +55,10 @@ export const config = {
   },
 
   auditLogRetentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '90', 10),
+
+  recurringTripsCron: {
+    enabled: process.env.RECURRING_TRIPS_AUTO_GENERATE !== 'false',
+    intervalMs: parseInt(process.env.RECURRING_TRIPS_CRON_INTERVAL_MS || String(24 * 60 * 60 * 1000), 10),
+    windowDays: parseInt(process.env.RECURRING_TRIPS_WINDOW_DAYS || '14', 10),
+  },
 };

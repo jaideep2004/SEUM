@@ -2,7 +2,9 @@ import { v4 as uuid } from 'uuid';
 import { query, queryOne, transaction } from '../db';
 import { NotFoundError, ConflictError } from '../utils/errors';
 import { config } from '../config';
+import { logger } from '../utils/logger';
 import { createNotification, emailChannelEnabled } from './notificationService';
+import { checkBusReadiness } from './fleetService';
 import { createProfitJournalEntry } from './tripProfitabilityService';
 import { sendTripDelayAlerts } from './customerCommunicationService';
 import type { CreateTripInput, UpdateTripInput, DelayTripInput, CancelTripInput, TripQuery, AddPassengerInput } from '../validators/operations';
@@ -22,7 +24,7 @@ interface TripRow {
   created_by: string | null; approved_by: string | null;
   trip_title: string | null; vehicle_type: string | null;
   group_leader: string | null; group_leader_no: string | null;
-  nationality: string | null; agent: string | null; group_no: string | null;
+  nationality: string | null; agent: string | null; agent_id: string | null; group_no: string | null;
   no_of_pax: number | null; nusuk_info: any; flights: any; hotels: any;
   created_at: string; updated_at: string; deleted_at: string | null;
 }
@@ -30,7 +32,7 @@ interface TripRow {
 interface TripLegRow {
   id: string; trip_id: string; leg_no: number; origin: string; destination: string;
   leg_date: string; departure_time: string | null; arrival_time: string | null;
-  overnight_flag: boolean; notes: string | null;
+  overnight_flag: boolean; route_type: string | null; notes: string | null;
 }
 
 interface PassengerRow {
@@ -46,6 +48,7 @@ function mapLeg(row: TripLegRow) {
     origin: row.origin, destination: row.destination,
     legDate: row.leg_date, departureTime: row.departure_time,
     arrivalTime: row.arrival_time, overnightFlag: row.overnight_flag,
+    routeType: row.route_type || undefined,
     notes: row.notes,
   };
 }
@@ -54,10 +57,30 @@ function mapManifest(row: TripRow) {
   return {
     tripTitle: row.trip_title, vehicleType: row.vehicle_type,
     groupLeader: row.group_leader, groupLeaderNo: row.group_leader_no,
-    nationality: row.nationality, agent: row.agent, groupNo: row.group_no,
+    nationality: row.nationality, agent: row.agent, agentId: (row as any).agent_id || null, groupNo: row.group_no,
     noOfPax: row.no_of_pax, nusukInfo: row.nusuk_info,
     flights: row.flights, hotels: row.hotels,
   };
+}
+
+function mapAgent(row: any) {
+  if (!row.agent_id) return {};
+  return {
+    agentId: row.agent_id,
+    agentName: row.agent_name || null,
+    agentCompanyName: row.agent_company_name || null,
+    agentPhone: row.agent_phone || null,
+    agentEmail: row.agent_email || null,
+  };
+}
+
+async function resolveAgent(tenantId: string, agentId: string): Promise<{ id: string; displayName: string }> {
+  const customer = await queryOne<any>(
+    'SELECT id, name, company_name FROM customers WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND is_company = true',
+    [agentId, tenantId]
+  );
+  if (!customer) throw new NotFoundError('Agent not found or not a company customer');
+  return { id: customer.id, displayName: customer.company_name || customer.name };
 }
 
 function mapTrip(row: TripRow, extra?: { routeName?: string; busPlate?: string; driverName?: string; stops?: any[]; passengers?: any[] }) {
@@ -113,6 +136,17 @@ export async function createTrip(tenantId: string, userId: string, input: Create
   if (input.busId) {
     const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [input.busId, tenantId]);
     if (!bus) throw new NotFoundError('Bus not found');
+    logger.debug({ busId: input.busId, tenantId }, 'Checking bus readiness before trip creation');
+    await checkBusReadiness(input.busId, tenantId);
+  }
+
+  // Resolve agent linkage: if agentId provided, validate and derive display name
+  let resolvedAgentId: string | null = null;
+  let resolvedAgentDisplay: string | null = (input as any).agent || null;
+  if ((input as any).agentId) {
+    const resolved = await resolveAgent(tenantId, (input as any).agentId);
+    resolvedAgentId = resolved.id;
+    resolvedAgentDisplay = resolved.displayName;
   }
 
   const tripId = uuid();
@@ -123,15 +157,15 @@ export async function createTrip(tenantId: string, userId: string, input: Create
       `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type, scheduled_date,
         scheduled_start_time, scheduled_end_time, notes, created_by,
         trip_title, vehicle_type, group_leader, group_leader_no, nationality,
-        agent, group_no, no_of_pax, nusuk_info, flights, hotels)
+        agent, agent_id, group_no, no_of_pax, nusuk_info, flights, hotels)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22) RETURNING *`,
+               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
       [tripId, tenantId, input.routeId || null, input.busId || null, input.driverId || null,
        tripType, input.scheduledDate, input.scheduledStartTime, input.scheduledEndTime || null,
        input.notes || null, userId,
        input.tripTitle || null, input.vehicleType || null, input.groupLeader || null,
-       input.groupLeaderNo || null, input.nationality || null, input.agent || null,
-       input.groupNo || null, input.noOfPax ?? null, input.nusukInfo || null,
+       input.groupLeaderNo || null, input.nationality || null, resolvedAgentDisplay || null,
+       resolvedAgentId, input.groupNo || null, input.noOfPax ?? null, input.nusukInfo || null,
        input.flights ? JSON.stringify(input.flights) : null,
        input.hotels ? JSON.stringify(input.hotels) : null]
     );
@@ -140,14 +174,14 @@ export async function createTrip(tenantId: string, userId: string, input: Create
 
     if (input.legs && input.legs.length > 0) {
       for (let i = 0; i < input.legs.length; i++) {
-        const leg = input.legs[i];
+        const leg = input.legs[i] as any;
         await client.query(
           `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
-            leg_date, departure_time, arrival_time, overnight_flag, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            leg_date, departure_time, arrival_time, overnight_flag, route_type, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
            leg.legDate, leg.departureTime || null, leg.arrivalTime || null,
-           leg.overnightFlag ?? false, leg.notes || null]
+           leg.overnightFlag ?? false, (leg.routeType || null) as any, leg.notes || null]
         );
       }
     }
@@ -186,11 +220,14 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
   const rows = await query<any>(
      `SELECT t.*, r.name AS route_name, r.origin, r.destination, b.plate_number,
             u.name AS driver_name,
+            c.id AS agent_id, c.name AS agent_name, c.company_name AS agent_company_name,
+            c.phone AS agent_phone, c.email AS agent_email,
             (SELECT COUNT(*)::int FROM trip_legs tl WHERE tl.trip_id = t.id) AS leg_count
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
      LEFT JOIN users u ON u.id = t.driver_id
+     LEFT JOIN customers c ON c.id = t.agent_id AND c.deleted_at IS NULL
      WHERE ${where} ORDER BY t.scheduled_date DESC, t.scheduled_start_time ASC
      LIMIT $${idx} OFFSET $${idx + 1}`,
     params
@@ -209,6 +246,8 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
       busPlate: r.plate_number, driverName: r.driver_name,
       tripTitle: r.trip_title, groupLeader: r.group_leader, groupNo: r.group_no,
       noOfPax: r.no_of_pax, legCount: r.leg_count || 0,
+      agent: r.agent, agentId: r.agent_id, agentName: r.agent_name,
+      agentCompanyName: r.agent_company_name, agentPhone: r.agent_phone, agentEmail: r.agent_email,
     })),
     meta: { total, page: queryParams.page, pageSize: queryParams.pageSize },
   };
@@ -217,11 +256,14 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
 export async function getTripById(tenantId: string, tripId: string) {
   const row = await queryOne<any>(
      `SELECT t.*, r.name AS route_name, r.origin, r.destination,
-            b.plate_number, u.name AS driver_name
+            b.plate_number, u.name AS driver_name,
+            c.id AS agent_id, c.name AS agent_name, c.company_name AS agent_company_name,
+            c.phone AS agent_phone, c.email AS agent_email
      FROM trips t
      LEFT JOIN routes r ON r.id = t.route_id
      LEFT JOIN buses b ON b.id = t.bus_id
      LEFT JOIN users u ON u.id = t.driver_id
+     LEFT JOIN customers c ON c.id = t.agent_id AND c.deleted_at IS NULL
      WHERE t.id = $1 AND t.tenant_id = $2 AND t.deleted_at IS NULL`,
     [tripId, tenantId]
   );
@@ -242,6 +284,7 @@ export async function getTripById(tenantId: string, tripId: string) {
     driverConfirmationStatus: row.driver_confirmation_status,
     createdBy: row.created_by, approvedBy: row.approved_by,
     ...mapManifest(row),
+    ...mapAgent(row),
     createdAt: row.created_at, updatedAt: row.updated_at,
     routeName: row.route_name, origin: row.origin, destination: row.destination,
     busPlate: row.plate_number, driverName: row.driver_name,
@@ -263,7 +306,41 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
   );
   if (!existing) throw new NotFoundError('Trip not found');
 
+  // Prevent reassignment to a non-ready bus
+  const newBusId = (input as any).busId;
+  if (newBusId !== undefined && newBusId !== null) {
+    if (newBusId) {
+      const bus = await queryOne('SELECT id FROM buses WHERE id = $1 AND tenant_id = $2 AND is_active = true', [newBusId, tenantId]);
+      if (!bus) throw new NotFoundError('Bus not found');
+      logger.debug({ busId: newBusId, tenantId, tripId }, 'Checking bus readiness before trip update');
+      await checkBusReadiness(newBusId, tenantId);
+    }
+  }
+
+  // Handle agent linkage: if agentId provided, validate and set display cache
+  const agentIdInput = (input as any).agentId;
+  let agentLinkHandled = false;
+  if (agentIdInput !== undefined) {
+    if (agentIdInput) {
+      const resolved = await resolveAgent(tenantId, agentIdInput);
+      await query(
+        `UPDATE trips SET agent_id = $1, agent = $2, updated_at = NOW() WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL`,
+        [resolved.id, resolved.displayName, tripId, tenantId]
+      );
+      agentLinkHandled = true;
+      if ((input as any).agent !== undefined) delete (input as any).agent;
+    } else if (agentIdInput === null || agentIdInput === '') {
+      await query(
+        `UPDATE trips SET agent_id = NULL, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL`,
+        [tripId, tenantId]
+      );
+      agentLinkHandled = true;
+    }
+    delete (input as any).agentId;
+  }
+
   const fieldMap: Record<string, string> = {
+    busId: 'bus_id',
     tripType: 'trip_type', scheduledDate: 'scheduled_date',
     scheduledStartTime: 'scheduled_start_time', scheduledEndTime: 'scheduled_end_time',
     notes: 'notes', driverId: 'driver_id',
@@ -297,20 +374,23 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
     await transaction(async (client) => {
       await client.query('DELETE FROM trip_legs WHERE trip_id = $1', [tripId]);
       for (let i = 0; i < (input.legs || []).length; i++) {
-        const leg = input.legs![i];
+        const leg = input.legs![i] as any;
         await client.query(
           `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
-            leg_date, departure_time, arrival_time, overnight_flag, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            leg_date, departure_time, arrival_time, overnight_flag, route_type, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
            leg.legDate, leg.departureTime || null, leg.arrivalTime || null,
-           leg.overnightFlag ?? false, leg.notes || null]
+           leg.overnightFlag ?? false, (leg.routeType || null) as any, leg.notes || null]
         );
       }
     });
   }
 
-  if (fields.length === 0) return getTripById(tenantId, tripId);
+  if (fields.length === 0) {
+    if (agentLinkHandled) return getTripById(tenantId, tripId);
+    return getTripById(tenantId, tripId);
+  }
 
   fields.push('updated_at = NOW()');
   params.push(tripId, tenantId);

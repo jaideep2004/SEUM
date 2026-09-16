@@ -57,3 +57,10 @@ export async function getPatternCalendar(req: Request, res: Response, next: Next
     return sendSuccess(res, dates, 'Calendar data retrieved');
   } catch (err) { next(err); }
 }
+
+export async function autoGenerate(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await recurringTripService.autoGenerateUpcomingTripsForTenant(req.user!.tenantId, req.user!.id);
+    return sendSuccess(res, result, `Auto-generation complete: ${result.generatedTotal} trip(s) generated from ${result.processed} pattern(s)`);
+  } catch (err) { next(err); }
+}

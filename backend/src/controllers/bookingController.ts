@@ -4,9 +4,11 @@ import * as waitlistService from '../services/waitlistService';
 import * as communicationService from '../services/customerCommunicationService';
 import {
   createBookingSchema, updateBookingSchema, listBookingsQuerySchema, cancelBookingSchema,
+  rejectBookingSchema,
   joinWaitlistSchema, listWaitlistQuerySchema,
 } from '../validators/bookings';
 import { sendSuccess, sendPaginated } from '../utils/response';
+import * as bookingImportService from '../services/bookingImportService';
 
 export async function getTripAvailability(req: Request, res: Response, next: NextFunction) {
   try {
@@ -65,6 +67,37 @@ export async function refundBooking(req: Request, res: Response, next: NextFunct
   try {
     const result = await bookingService.refundBooking(req.user!.tenantId, req.params.id);
     sendSuccess(res, result, 'Booking refunded');
+  } catch (err) { next(err); }
+}
+
+// ─── Phase 7.6: approval workflow ───
+
+export async function submitBooking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await bookingService.submitBooking(req.user!.tenantId, req.params.id, req.user!.id);
+    sendSuccess(res, result, 'Booking submitted for approval');
+  } catch (err) { next(err); }
+}
+
+export async function approveBooking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await bookingService.approveBooking(req.user!.tenantId, req.params.id, req.user!.id);
+    sendSuccess(res, result, 'Booking approved');
+  } catch (err) { next(err); }
+}
+
+export async function rejectBooking(req: Request, res: Response, next: NextFunction) {
+  try {
+    const input = rejectBookingSchema.parse(req.body);
+    const result = await bookingService.rejectBooking(req.user!.tenantId, req.params.id, input.reason, req.user!.id);
+    sendSuccess(res, result, 'Booking rejected');
+  } catch (err) { next(err); }
+}
+
+export async function getBookingHistory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await bookingService.getBookingHistory(req.user!.tenantId, req.params.id);
+    sendSuccess(res, result, 'Booking history fetched');
   } catch (err) { next(err); }
 }
 
@@ -140,5 +173,40 @@ export async function sendTripDelayAlert(req: Request, res: Response, next: Next
       req.user!.tenantId, req.params.tripId, delayMinutes, reason
     );
     sendSuccess(res, result, `Delay alert sent to ${result.sent} passenger(s)`);
+  } catch (err) { next(err); }
+}
+
+// ─── Phase 7.7: Excel Import ───
+
+export async function downloadImportTemplate(req: Request, res: Response, next: NextFunction) {
+  try {
+    const buf = bookingImportService.generateTemplateBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="seum-booking-import-template.xlsx"');
+    res.setHeader('Content-Length', String(buf.length));
+    res.send(buf);
+  } catch (err) { next(err); }
+}
+
+export async function importBookings(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No file uploaded — attach an .xlsx file as field "file"' } });
+    }
+    // Validate file extension / mimetype loosely
+    const name = (req.file.originalname || '').toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid file type — only .xlsx is accepted' } });
+    }
+    const result = await bookingImportService.importBookings(req.user!.tenantId, req.file.buffer, req.user!.id);
+    if (!result.success) {
+      // Fail-safe: validation errors — 422 with per-row errors, no bookings created
+      return res.status(422).json({
+        success: false,
+        error: { message: 'Import validation failed — no bookings created', details: result.errors },
+        data: result,
+      });
+    }
+    sendSuccess(res, result, `Imported ${result.createdCount} booking(s) as pending approval`, undefined, 201);
   } catch (err) { next(err); }
 }

@@ -94,8 +94,50 @@ export async function getFleetAnalytics(tenantId: string) {
     ? parseFloat((efficiencyTrend.reduce((s: number, d: any) => s + d.kmPerLiter, 0) / efficiencyTrend.length).toFixed(2))
     : null;
 
-  // 6. Maintenance cost per bus (placeholder — no maintenance module)
-  const maintenanceCostPerBus: { busId: string; plateNumber: string; totalCost: number }[] = [];
+  // 6. Maintenance cost per bus (Phase 6 — real data from maintenance_costs)
+  let maintenanceCostPerBus: {
+    busId: string;
+    plateNumber: string;
+    make: string | null;
+    model: string | null;
+    taskCount: number;
+    partsCost: number;
+    laborCost: number;
+    totalCost: number;
+  }[] = [];
+  let maintenanceCostGrandTotal = 0;
+  try {
+    const rows = await query<any>(
+      `SELECT b.id AS bus_id, b.plate_number, b.make, b.model,
+              COUNT(c.id)::int AS task_count,
+              COALESCE(SUM(c.parts_cost), 0)::numeric AS parts_cost,
+              COALESCE(SUM(c.labor_cost), 0)::numeric AS labor_cost,
+              COALESCE(SUM(c.total_cost), 0)::numeric AS total_cost
+       FROM maintenance_costs c
+       JOIN maintenance_tasks t ON t.id = c.maintenance_task_id
+       JOIN buses b ON b.id = t.bus_id
+       WHERE c.tenant_id = $1
+       GROUP BY b.id, b.plate_number, b.make, b.model
+       ORDER BY total_cost DESC`,
+      [tenantId]
+    );
+    if (Array.isArray(rows)) {
+      maintenanceCostPerBus = rows.map((r: any) => ({
+        busId: r.bus_id,
+        plateNumber: r.plate_number,
+        make: r.make,
+        model: r.model,
+        taskCount: Number(r.task_count),
+        partsCost: parseFloat(r.parts_cost || '0'),
+        laborCost: parseFloat(r.labor_cost || '0'),
+        totalCost: parseFloat(r.total_cost || '0'),
+      }));
+      maintenanceCostGrandTotal = maintenanceCostPerBus.reduce((s: number, b: any) => s + b.totalCost, 0);
+    }
+  } catch {
+    maintenanceCostPerBus = [];
+    maintenanceCostGrandTotal = 0;
+  }
 
   // 7. Readiness distribution
   const readinessDist = await query<any>(
@@ -133,6 +175,7 @@ export async function getFleetAnalytics(tenantId: string) {
       trend: efficiencyTrend,
     },
     maintenanceCostPerBus,
+    maintenanceCostGrandTotal,
     readinessDistribution: Object.fromEntries(
       readinessDist.map((r: any) => [r.status, r.count])
     ),
@@ -175,6 +218,25 @@ export async function exportFleetReportPDF(tenantId: string): Promise<Buffer> {
   doc.fontSize(11).text(`Utilization Rate: ${analytics.utilizationRate}%`);
   for (const [status, count] of Object.entries(analytics.readinessDistribution)) {
     doc.text(`${status}: ${count}`);
+  }
+  doc.moveDown(1);
+
+  // Maintenance cost per bus
+  doc.fontSize(14).text('Maintenance Cost per Bus', { underline: true });
+  doc.moveDown(0.5);
+  const maintTotal = (analytics as any).maintenanceCostGrandTotal ?? 0;
+  doc.fontSize(11).text(`Fleet total maintenance cost: SAR ${Number(maintTotal).toLocaleString()}`);
+  const maintList: any[] = (analytics as any).maintenanceCostPerBus || [];
+  if (maintList.length > 0) {
+    doc.moveDown(0.3);
+    for (const b of maintList.slice(0, 15)) {
+      doc.fontSize(9).text(`${b.plateNumber} — ${b.make || ''} ${b.model || ''}: SAR ${Number(b.totalCost).toLocaleString()} (${b.taskCount} task${b.taskCount !== 1 ? 's' : ''})`);
+    }
+    if (maintList.length > 15) {
+      doc.fontSize(9).text(`... and ${maintList.length - 15} more`);
+    }
+  } else {
+    doc.fontSize(10).text('No maintenance cost records yet.');
   }
 
   doc.end();

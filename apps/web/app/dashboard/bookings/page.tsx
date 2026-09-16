@@ -1,16 +1,23 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Search, ArrowRight, ChevronLeft, ChevronRight, ListOrdered, LayoutDashboard } from "lucide-react";
-import { bookingService, type Booking } from "@/services/bookings";
+import { Plus, Search, ArrowRight, ChevronLeft, ChevronRight, ListOrdered, LayoutDashboard, Upload, Download } from "lucide-react";
+import { bookingService, type Booking, BOOKING_CHANNELS } from "@/services/bookings";
 import styles from "./page.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
+  draft: "#8b5cf6",
   pending: "#f59e0b",
+  pending_approval: "#f97316",
+  approved: "#0ea5e9",
+  planning: "#6366f1",
+  assigned: "#0891b2",
   confirmed: "#059669",
-  cancelled: "#dc2626",
+  in_progress: "#eab308",
   completed: "#3b82f6",
+  cancelled: "#dc2626",
   refunded: "#6b7280",
+  rejected: "#dc2626",
 };
 
 const PAYMENT_COLORS: Record<string, string> = {
@@ -20,9 +27,23 @@ const PAYMENT_COLORS: Record<string, string> = {
   refunded: "#6b7280",
 };
 
+const CHANNEL_COLORS: Record<string, string> = {
+  internal: "#64748b",
+  excel: "#059669",
+  b2b_portal: "#0ea5e9",
+  b2c_website: "#8b5cf6",
+  cs_employee: "#f97316",
+  whatsapp: "#22c55e",
+};
+
 function badgeColor(color: string, status: string) {
-  const hex = STATUS_COLORS[status] || PAYMENT_COLORS[status] || color;
+  const hex = STATUS_COLORS[status] || PAYMENT_COLORS[status] || CHANNEL_COLORS[status] || color;
   return { color: hex, background: `${hex}18` };
+}
+
+function channelLabel(ch: string | null | undefined) {
+  if (!ch) return "internal";
+  return ch.replace('_', ' ');
 }
 
 function fmtDate(d: string | null) {
@@ -52,6 +73,7 @@ export default function BookingsPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
+  const [channel, setChannel] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -62,6 +84,7 @@ export default function BookingsPage() {
       if (search.trim()) params.search = search.trim();
       if (status) params.status = status;
       if (paymentStatus) params.payment_status = paymentStatus;
+      if (channel) params.channel = channel;
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
       const result = await bookingService.list(params);
@@ -70,12 +93,12 @@ export default function BookingsPage() {
       setTotal(result.meta.total);
     } catch {}
     setLoading(false);
-  }, [page, search, status, paymentStatus, startDate, endDate]);
+  }, [page, search, status, paymentStatus, channel, startDate, endDate]);
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
   function resetFilters() {
-    setSearch(""); setStatus(""); setPaymentStatus(""); setStartDate(""); setEndDate(""); setPage(1);
+    setSearch(""); setStatus(""); setPaymentStatus(""); setChannel(""); setStartDate(""); setEndDate(""); setPage(1);
   }
 
   return (
@@ -87,9 +110,30 @@ export default function BookingsPage() {
         </div>
         <div className={styles.headerActions}>
           <Link href="/dashboard/bookings/dashboard" className={styles.secondaryBtn}><LayoutDashboard size={15} /> Dashboard</Link>
+          <Link href="/dashboard/bookings/import" className={styles.secondaryBtn}><Upload size={15} /> Excel Import</Link>
           <Link href="/dashboard/bookings/waitlist" className={styles.secondaryBtn}><ListOrdered size={15} /> Waitlist</Link>
           <Link href="/dashboard/bookings/new" className={styles.addBtn}><Plus size={15} /> New Booking</Link>
         </div>
+      </div>
+
+      {/* Queue shortcuts — Phase 7.6 */}
+      <div className={styles.queueTabs} style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+        <button
+          className={styles.filterSelect}
+          style={{ background: status === 'pending_approval' ? '#fff7ed' : undefined, borderColor: status === 'pending_approval' ? '#f97316' : undefined, color: status === 'pending_approval' ? '#c2410c' : undefined, fontWeight: 600 }}
+          onClick={() => { setStatus('pending_approval'); setPage(1); }}
+        >⏳ Pending Approval</button>
+        <button
+          className={styles.filterSelect}
+          style={{ background: status === 'approved' ? '#f0f9ff' : undefined, borderColor: status === 'approved' ? '#0ea5e9' : undefined, color: status === 'approved' ? '#0369a1' : undefined, fontWeight: 600 }}
+          onClick={() => { setStatus('approved'); setPage(1); }}
+        >📋 Planning Queue (Approved)</button>
+        <button
+          className={styles.filterSelect}
+          style={{ background: status === '' ? '#f1f5f9' : undefined, fontWeight: status === '' ? 600 : 400 }}
+          onClick={() => { setStatus(''); setPage(1); }}
+        >All Bookings</button>
+        {status && <span style={{ fontSize: 12, color: '#64748b', alignSelf: 'center' }}>Filtered: {status.replace('_', ' ')}</span>}
       </div>
 
       <div className={styles.filters}>
@@ -99,8 +143,15 @@ export default function BookingsPage() {
         </div>
         <select className={styles.filterSelect} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="">All statuses</option>
-          <option value="pending">Pending</option>
+          <option value="draft">Draft</option>
+          <option value="pending">Pending (legacy)</option>
+          <option value="pending_approval">Pending Approval</option>
+          <option value="approved">Approved — Planning Queue</option>
+          <option value="planning">Planning</option>
+          <option value="assigned">Assigned</option>
           <option value="confirmed">Confirmed</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
           <option value="refunded">Refunded</option>
         </select>
@@ -111,9 +162,18 @@ export default function BookingsPage() {
           <option value="paid">Paid</option>
           <option value="refunded">Refunded</option>
         </select>
+        <select className={styles.filterSelect} value={channel} onChange={(e) => { setChannel(e.target.value); setPage(1); }}>
+          <option value="">All channels</option>
+          <option value="internal">Internal</option>
+          <option value="excel">Excel</option>
+          <option value="b2b_portal">B2B Portal</option>
+          <option value="b2c_website">B2C Website</option>
+          <option value="cs_employee">CS Employee</option>
+          <option value="whatsapp">WhatsApp</option>
+        </select>
         <input type="date" className={styles.filterSelect} value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} title="From date" />
         <input type="date" className={styles.filterSelect} value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} title="To date" />
-        {(search || status || paymentStatus || startDate || endDate) && (
+        {(search || status || paymentStatus || channel || startDate || endDate) && (
           <button className={styles.resetBtn} onClick={resetFilters}>Clear</button>
         )}
       </div>
@@ -131,6 +191,7 @@ export default function BookingsPage() {
                 <th>Amount</th>
                 <th>Payment</th>
                 <th>Status</th>
+                <th>Channel</th>
                 <th></th>
               </tr>
             </thead>
@@ -172,7 +233,12 @@ export default function BookingsPage() {
                   </td>
                   <td>
                     <span className={styles.statusBadge} style={badgeColor("#6b7280", b.status)}>
-                      {b.status}
+                      {b.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={styles.statusBadge} style={badgeColor("#6b7280", (b as any).channel || 'internal')}>
+                      {channelLabel((b as any).channel)}
                     </span>
                   </td>
                   <td>
@@ -183,7 +249,7 @@ export default function BookingsPage() {
                 </tr>
               ))}
               {bookings.length === 0 && (
-                <tr><td colSpan={9} className={styles.emptyState}>No bookings found — create one to get started.</td></tr>
+                <tr><td colSpan={10} className={styles.emptyState}>No bookings found — create one to get started.</td></tr>
               )}
             </tbody>
           </table>

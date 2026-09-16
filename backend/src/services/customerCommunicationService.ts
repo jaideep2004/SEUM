@@ -32,10 +32,11 @@ const FETCH_BOOKING = `
          bk.status, bk.payment_status,
          c.name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
          t.scheduled_date, t.scheduled_start_time, t.id AS trip_id,
-         r.name AS route_name, r.origin, r.destination, bus.plate_number AS bus_plate
+         r.name AS route_name, r.origin, r.destination, bus.plate_number AS bus_plate,
+         bk.pickup_location, bk.destination_location, bk.requested_date, bk.requested_time, bk.channel
   FROM bookings bk
   JOIN customers c ON c.id = bk.customer_id
-  JOIN trips t ON t.id = bk.trip_id
+  LEFT JOIN trips t ON t.id = bk.trip_id
   LEFT JOIN routes r ON r.id = t.route_id
   LEFT JOIN buses bus ON bus.id = t.bus_id
 `;

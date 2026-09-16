@@ -42,6 +42,7 @@ export const tripLegSchema = z.object({
   departureTime: z.string().regex(TIME_REGEX, 'Invalid departure time').optional(),
   arrivalTime: z.string().regex(TIME_REGEX, 'Invalid arrival time').optional(),
   overnightFlag: z.boolean().optional(),
+  routeType: z.enum(['arrival', 'departure', 'intercity', 'intracity']).optional(),
   notes: z.string().max(500).optional(),
 });
 
@@ -52,6 +53,7 @@ export const flightSchema = z.object({
   to: z.string().max(255).optional(),
   date: z.string().regex(DATE_REGEX).optional(),
   time: z.string().regex(TIME_REGEX).optional(),
+  flightType: z.enum(['arrival', 'departure']).optional(),
 });
 
 export const hotelSchema = z.object({
@@ -68,6 +70,7 @@ export const manifestSchema = z.object({
   groupLeaderNo: z.string().max(50).optional(),
   nationality: z.string().max(100).optional(),
   agent: z.string().max(255).optional(),
+  agentId: z.string().uuid().optional().nullable(),
   groupNo: z.string().max(50).optional(),
   noOfPax: z.number().int().min(0).optional(),
   nusukInfo: z.record(z.unknown()).optional(),
@@ -92,7 +95,7 @@ export const createTripSchema = createTripSchemaBase.refine(v => v.tripType !== 
   path: ['legs'],
 });
 
-export const updateTripSchema = createTripSchemaBase.partial().omit({ routeId: true, busId: true }).refine(
+export const updateTripSchema = createTripSchemaBase.partial().omit({ routeId: true }).refine(
   v => v.tripType !== 'round' || (v.legs !== undefined && v.legs.length >= 2),
   { message: 'Round trips require at least 2 legs (stops with dates)', path: ['legs'] }
 );
@@ -169,6 +172,7 @@ export const patternLegSchema = z.object({
   departureTime: z.string().regex(TIME_REGEX, 'Invalid departure time').optional(),
   arrivalTime: z.string().regex(TIME_REGEX, 'Invalid arrival time').optional(),
   overnightFlag: z.boolean().optional(),
+  routeType: z.enum(['arrival', 'departure', 'intercity', 'intracity']).optional(),
   notes: z.string().max(500).optional(),
 });
 

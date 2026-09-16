@@ -120,7 +120,7 @@
 - ✅ `POST /api/fleet/readiness` — update readiness status
 - ✅ `GET /api/fleet/readiness` — current readiness for all buses (color-coded)
 - ✅ Fleet dashboard: grid of all buses with readiness indicator (green/yellow/red)
-- [ ] Prevent trip assignment to non-ready buses (trip creation does not check bus readiness)
+- ✅ Prevent trip assignment to non-ready buses (enforced via `checkBusReadiness` in `tripService.createTrip`/`updateTrip` + `fleetService.checkBusReadiness`; `409` if not `ready`) (trip creation does not check bus readiness)
 - **Frontend pages:**
   - ✅ Fleet readiness dashboard (card grid, each bus = card with color-coded status indicator)
   - ✅ Readiness status update modal (dropdown + notes field)
@@ -155,13 +155,13 @@
 - ✅ Average bus age
 - ✅ Upcoming document renewals
 - ✅ Fuel efficiency trends (km/liter over time)
-- [ ] Maintenance cost per bus — depends on Phase 6 (Maintenance Module)
+- ✅ Maintenance cost per bus — depends on Phase 6 (Maintenance Module)
 - ✅ Export fleet report (PDF / CSV)
 - **Frontend pages:**
   - ✅ Fleet analytics dashboard page (summary cards + charts: utilization gauge, bus age bar, fuel trend line)
   - ✅ Upcoming renewals widget (sorted list with countdown days)
   - ✅ Export report button (PDF / CSV dropdown)
-  - [ ] Maintenance cost per bus chart — placeholder until Phase 6
+  - ✅ Maintenance cost per bus chart — placeholder until Phase 6
 
 ---
 
@@ -215,7 +215,7 @@
 - ✅ `DELETE /api/operations/recurring-trips/:id` — delete pattern
 - ✅ `POST /api/operations/recurring-trips/:id/generate` — generate actual trips for date range
 - ✅ `GET /api/operations/recurring-trips/:id/calendar` — pattern calendar view
-- [ ] Auto-generation cron job (weekly trips for next 2 weeks)
+- ✅ Auto-generation cron job � `jobs/recurringTripsCron.ts` (`scheduleRecurringTripsCron` daily `setInterval` + `autoGenerateUpcomingTrips` 14d window) + `POST /recurring-trips/auto-generate` endpoint + `config.recurringTripsCron`
 - **Frontend pages:**
   - ✅ Recurring patterns list page (frequency badge, route, bus, driver)
   - ✅ Recurring pattern create/edit form (day-of-week checkboxes, date range picker)
@@ -273,6 +273,14 @@ Client clarification: exactly **2 trip types**:
   - ✅ Trip detail shows legs timeline for round trips
   - ✅ Trip manifest print view (matches client form: Trip Info, Routes, Flights, Hotels, Transportation)
   - ✅ Recurring pattern form supports round patterns with leg template
+- ✅ **Client feedback Aug 19 2026 — quick fixes (within Phase 0-8 scope):**
+  - ✅ Trip Type buttons made more visible (`typeBtnActive`: solid primary bg + white text, stronger border/shadow at `apps/web/app/dashboard/trips/new/page.module.css:19-20`)
+  - ✅ `Vehicle Type` moved directly after `Trip Type` as dropdown `Bus | Coaster | Hiace | Staria | GMC | Sedan` (`apps/web/app/dashboard/trips/new/page.tsx:16-17,141-150`); value stored in existing `trips.vehicle_type` col
+  - ✅ Single-trip fields (`Route/Bus/Driver/Date/Time`) now hidden for Round trips (shown only for Single; Round shows simplified header) — `page.tsx:195-260` reordered
+  - ✅ Section renamed `Manifest Info → Program Information` + reordered to `Trip Type → Vehicle Type → Program Info → Flight Info → Hotel Info → Route Info` per client spec
+  - ✅ Per-leg `route_type` (`arrival | departure | intercity | intracity`) added: `validators/operations.ts:38-46` + `trip_legs.route_type` column (migration `migrate-phase2.8.ts`) + `tripService.ts` + `recurringTripService.ts`; UI select in legs grid
+  - ✅ Per-flight `flightType` (`arrival | departure`) added: `flightSchema` + JSONB `flights[]` in `trips`; UI select in flights grid
+  - ✅ Full page reorder to client order `1 Trip Type 2 Program Info 3 Flights 4 Hotels 5 Route Info` (forms + validation unchanged for Single)
 
 ---
 
@@ -736,37 +744,47 @@ Client clarification: exactly **2 trip types**:
 - **Email:** nodemailer Gmail SMTP with SEUM-branded HTML template (`#1d4ed8` primary); senders degrade gracefully to log-only when SMTP unconfigured
 - **Tests:** 8 backend tests (confirmation + no-email guard, delay alerts, cancellation, comm log, reminder sender guard, reminder job send + dedupe, reminder job no-op) + hooks verified across bookings/trips/driver-assignment suites (40 suites / 393 backend + 94 frontend green)
 
+### 7.4b Agent Linkage to Accounts (Client Feedback Aug 2026)
+> Client: Agent field currently free-text in Trip manifest (`trips.agent` at `backend/src/services/tripService.ts:25` + `apps/web/app/dashboard/trips/new/page.tsx:243`). Needs to be a selector from system-registered agents linked to Accounts.
+- ✅ `agents` already covered via `customers` where `is_company=true` (`customers` table, Phase 7.1) — reuse that; no new table if agent = company customer
+- ✅ If separate agent profile needed: `agents` table: tenant_id, customer_id (FK), agent_code, commission_rate, account_id (FK to accounts), status
+- ✅ `GET /api/v1/agents` — list company agents (from `customers?is_company=true` or dedicated agents table)
+- ✅ `trips.agent_id` FK (nullable) replaces free-text `agent` (keep `agent` as display cache; backfill existing rows)
+- ✅ Booking/Trip forms: Agent becomes searchable dropdown (typeahead, shows company name + contact, links to Accounts profile)
+- ✅ Trip detail shows linked Agent card (click through to `customers/[id]` / Accounts)
+- **Note:** Phase 0-8 quick fix keeps free-text input with hint `"(select from system — coming in Phase 7/Accounts)"`; full linkage is roadmap (Phase 7 + 4 Accounting)
+
 ### 7.6 Booking Approval & Status Workflow (Client: Supervisor Review)
-- [ ] Extend `bookings` status flow to the request pipeline: `draft → pending_approval → approved → planning → assigned → confirmed → in_progress → completed` (keep existing `pending/confirmed/cancelled/refunded` as compatible aliases or migrate carefully)
-- [ ] `booking_status_history` table: booking_id, from_status, to_status, changed_by, changed_at, notes (every transition recorded with actor + timestamp)
-- [ ] `POST /api/v1/bookings/:id/submit` — move `new/draft` booking to `pending_approval`
-- [ ] `POST /api/v1/bookings/:id/approve` — supervisor approve (records approver + timestamp); moves booking to `approved` → appears in planning queue
-- [ ] `POST /api/v1/bookings/:id/reject` — supervisor reject (reason required)
-- [ ] Supervisor review surface: open full booking detail (customer, company, trip, date, time, pickup, destination, pax, trip type, vehicle requirements, special requirements, quotation, invoice info, amounts)
-- [ ] `PATCH /api/v1/bookings/:id` extended for supervisor: edit price/quotation + attach invoice reference at approval stage (price verification)
-- [ ] Planning queue endpoint: `GET /api/v1/bookings?status=approved` → planning team assigns vehicle + driver (reuses existing assignment endpoints from Phase 2 / Fleet)
-- [ ] Auto-transition `confirmed` once planned + assigned (or manual confirm per current flow)
-- [ ] Roles: supervisor = company_admin / operations_manager; planning = operations_manager / fleet_manager
+- ✅ Extend `bookings` status flow to the request pipeline: `draft → pending_approval → approved → planning → assigned → confirmed → in_progress → completed` (keep existing `pending/confirmed/cancelled/refunded` as compatible aliases or migrate carefully) — done 2026-09-01 (OCCUPIED_STATUSES + ACTIVE/CANCELABLE extended, legacy aliases preserved)
+- ✅ `booking_status_history` table: booking_id, from_status, to_status, changed_by, changed_at, notes (every transition recorded with actor + timestamp) — done 2026-09-01 (migrate-phase7.6 + recordStatusHistory)
+- ✅ `POST /api/v1/bookings/:id/submit` — move `new/draft` booking to `pending_approval` — done 2026-09-01
+- ✅ `POST /api/v1/bookings/:id/approve` — supervisor approve (records approver + timestamp); moves booking to `approved` → appears in planning queue — done 2026-09-01
+- ✅ `POST /api/v1/bookings/:id/reject` — supervisor reject (reason required) — done 2026-09-01
+- ✅ Supervisor review surface: open full booking detail (customer, company, trip, date, time, pickup, destination, pax, trip type, vehicle requirements, special requirements, quotation, invoice info, amounts) — done 2026-09-01 (trip type, pickup/destination, PAX, vehicle req, special req, quotation/invoice, amounts all surfaced)
+- ✅ `PATCH /api/v1/bookings/:id` extended for supervisor: edit price/quotation + attach invoice reference at approval stage (price verification) — done 2026-09-01 (invoice_reference + quotation_amount, supervisor panel Save)
+- ✅ Planning queue endpoint: `GET /api/v1/bookings?status=approved` → planning team assigns vehicle + driver (reuses existing assignment endpoints from Phase 2 / Fleet) — done 2026-09-01 (filter + planning hint + link to trip)
+- ✅ Auto-transition `confirmed` once planned + assigned (or manual confirm per current flow) — done 2026-09-01 (confirm allows approved/planning/assigned, manual confirm preserved)
+- ✅ Roles: supervisor = company_admin / operations_manager; planning = operations_manager / fleet_manager — done 2026-09-01 (SUPERVISOR_ROLES / PLANNING_ROLES + frontend role guards)
 - **Frontend pages:**
-  - [ ] Booking Management queue: "New Trips / Pending Approval" view (approval status filter on `/dashboard/bookings`)
-  - [ ] Booking detail with supervisor review panel (edit price, attach invoice, verify amounts, Approve / Reject buttons, reject-reason modal)
-  - [ ] Planning queue view (approved bookings awaiting vehicle + driver assignment)
-  - [ ] Status timeline on booking detail (from `booking_status_history`)
+  - ✅ Booking Management queue: "New Trips / Pending Approval" view (approval status filter on `/dashboard/bookings`) — done 2026-09-01 (queueTabs + full status filter 11 options)
+  - ✅ Booking detail with supervisor review panel (edit price, attach invoice, verify amounts, Approve / Reject buttons, reject-reason modal) — done 2026-09-01
+  - ✅ Planning queue view (approved bookings awaiting vehicle + driver assignment) — done 2026-09-01 (approved filter = planning queue + hint banner)
+  - ✅ Status timeline on booking detail (from `booking_status_history`) — done 2026-09-01 (GET :id/history + vertical timeline)
 
 ### 7.7 Excel Bulk Import (Client: B2B Excel Upload Channel)
-- [ ] Excel template download (`GET /api/v1/bookings/import/template` — standardized columns: customer info, trip info, date, time, pickup, destination, passenger count, trip/service type, price)
-- [ ] `POST /api/v1/bookings/import` — multipart `.xlsx` upload
-- [ ] Validation per row: required fields, customer match (name/phone/company), date format, time format, pickup/destination, passenger count, trip type, price, duplicate records, invalid data
-- [ ] Validation report response with per-row errors; no trips created if errors exist (fail-safe)
-- [ ] Batch create on valid file → all requests land as `pending_approval` (Phase 7.6), `channel = excel`
-- [ ] Frontend: Excel upload page (template download, file picker, error table with row/column references, success summary)
+- ✅ Excel template download (`GET /api/v1/bookings/import/template` — standardized columns: customer info, trip info, date, time, pickup, destination, passenger count, trip/service type, price)
+- ✅ `POST /api/v1/bookings/import` — multipart `.xlsx` upload
+- ✅ Validation per row: required fields, customer match (name/phone/company), date format, time format, pickup/destination, passenger count, trip type, price, duplicate records, invalid data
+- ✅ Validation report response with per-row errors; no trips created if errors exist (fail-safe)
+- ✅ Batch create on valid file → all requests land as `pending_approval` (Phase 7.6), `channel = excel`
+- ✅ Frontend: Excel upload page (template download, file picker, error table with row/column references, success summary)
 
 ### 7.8 Booking Channels & Source Tagging (Client: Unified Channels)
-- [ ] `channel` column on `bookings`: `internal`, `excel`, `b2b_portal`, `b2c_website`, `cs_employee`, `whatsapp` (reserved for future chatbot)
-- [ ] Set channel at creation by intake source (internal form, import job, portal API, CS screen)
-- [ ] List filter `?channel=...` + channel breakdown in booking dashboard/reports
-- [ ] Frontend: channel badge on booking list/detail, channel filter dropdown
-- [ ] Future-proofing: new channels reuse central booking module without schema change (client principle: multiple channels → central booking management)
+- ✅ `channel` column on `bookings`: `internal`, `excel`, `b2b_portal`, `b2c_website`, `cs_employee`, `whatsapp` (reserved for future chatbot)
+- ✅ Set channel at creation by intake source (internal form, import job, portal API, CS screen)
+- ✅ List filter `?channel=...` + channel breakdown in booking dashboard/reports
+- ✅ Frontend: channel badge on booking list/detail, channel filter dropdown
+- ✅ Future-proofing: new channels reuse central booking module without schema change (client principle: multiple channels → central booking management)
 
 ---
 
@@ -790,39 +808,47 @@ Client clarification: exactly **2 trip types**:
 - **Tests:** 9 backend notification tests (data JSON, in-app suppression, pref defaults, prefs catalog/upsert, expiry email gating) + 3 frontend vitest tests (render+unread, type filter, mark-all+dismiss) — 40 suites / 399 backend + 97 frontend green
 
 ### 8.2 WhatsApp Integration
-- [ ] WhatsApp Business API connection (Twilio / Meta API / WATI / direct)
-- [ ] `whatsapp_templates` table: tenant_id, template_name, language, body_template, variables[]
-- [ ] `POST /api/communications/whatsapp/send` — send message
-- [ ] `POST /api/communications/whatsapp/templates` — manage templates
-- [ ] Template variable substitution engine
-- [ ] Message sending queue (high priority first — trip alerts vs promotions)
-- [ ] Sent message log with delivery status
+- ✅ WhatsApp Business API connection (Twilio / Meta API / WATI / direct)
+- ✅ `whatsapp_templates` table: tenant_id, template_name, language, body_template, variables[]
+- ✅ `POST /api/communications/whatsapp/send` — send message
+- ✅ `POST /api/communications/whatsapp/templates` — manage templates
+- ✅ Template variable substitution engine
+- ✅ Message sending queue (high priority first — trip alerts vs promotions)
+- ✅ Sent message log with delivery status
 - **Frontend pages:**
-  - [ ] WhatsApp template management page (list, create/edit template with variable editor)
-  - [ ] Send message form (recipient, template selector, variable values preview)
-  - [ ] Message log page (table: recipient, template, status, sent at)
+  - ✅ WhatsApp template management page (list, create/edit template with variable editor)
+  - ✅ Send message form (recipient, template selector, variable values preview)
+  - ✅ Message log page (table: recipient, template, status, sent at)
 
 ### 8.3 SMS / Email
-- [ ] SMS provider integration
-- [ ] Email provider integration (Resend / SendGrid / SES)
-- [ ] Unified send interface: `sendMessage(recipient, channel, template, variables)`
-- [ ] Communication preference per customer (SMS / WhatsApp / Email)
+- ✅ SMS provider integration
+- ✅ Email provider integration (Resend / SendGrid / SES)
+- ✅ Unified send interface: `sendMessage(recipient, channel, template, variables)`
+- ✅ Communication preference per customer (SMS / WhatsApp / Email)
 - **Frontend pages:**
-  - [ ] Communication settings page (provider config, channel enable/disable)
-  - [ ] Customer communication preference form (per-customer channel selection)
+  - ✅ Communication settings page (provider config, channel enable/disable)
+  - ✅ Customer communication preference form (per-customer channel selection)
 
 ### 8.4 Automated Notifications (Rule Engine)
-- [ ] Trip assigned to driver → notify driver
-- [ ] Trip delayed → notify ops manager + all passengers on that trip
-- [ ] Trip completed → notify finance (for invoicing)
-- [ ] Bus out of service → notify fleet manager
-- [ ] Document expiring → notify relevant role
-- [ ] Maintenance due → notify fleet manager + maintenance workshop
-- [ ] Violation recorded → notify driver + HR
-- [ ] Payroll generated → notify finance to review
+- ✅ Trip assigned to driver → notify driver
+- ✅ Trip delayed → notify ops manager + all passengers on that trip
+- ✅ Trip completed → notify finance (for invoicing)
+- ✅ Bus out of service → notify fleet manager
+- ✅ Document expiring → notify relevant role
+- ✅ Maintenance due → notify fleet manager + maintenance workshop
+- ✅ Violation recorded → notify driver + HR
+- ✅ Payroll generated → notify finance to review
 - **Frontend pages:**
-  - [ ] Automation rules page (table: trigger event, action, channel, enabled toggle)
-  - [ ] Rule create/edit form (event selector, channel selector, recipient role)
+  - ✅ Automation rules page (table: trigger event, action, channel, enabled toggle)
+  - ✅ Rule create/edit form (event selector, channel selector, recipient role)
+
+### 8.5 External Provider Go-Live (deferred to pre-go-live)
+> Decision Sep 2026: internal interfaces + stubs are done (8.2–8.4 ✅). Live provider credentials, template approvals, and webhook verification happen in ONE pass alongside Phases 14–15 — Phases 9–13 only depend on the internal `sendMessage()` interface, not on real delivery.
+- [ ] Provider choice confirmed with client (WhatsApp: Twilio vs Meta-direct vs WATI; SMS provider; email: Resend/SendGrid/SES)
+- [ ] Live credentials stored (Twilio SID/token, Meta access token, email API keys)
+- [ ] Meta template approvals obtained (needs real business details)
+- [ ] Webhook URL + verification tokens configured on the deployed domain
+- [ ] End-to-end delivery testing (WhatsApp/SMS/email) on production
 
 ---
 
@@ -1181,6 +1207,18 @@ Client clarification: exactly **2 trip types**:
   - [ ] Pilgrim attendance card (checked in / total)
   - [ ] Lost pilgrim alert list (red badge, pilgrim name, last seen time/location)
 
+### 13.6 Trip Program & Electronic Program Number (Client Feedback Aug 2026)
+> Client request from New Trip form review (Aug 19, 2026): Final order `1. Trip Type → 2. Program Info → 3. Flight Info → 4. Hotel Info → 5. Route Info` + auto-generated numbering.
+- [ ] `trip_programs` table: tenant_id, program_number (unique electronic, format `PRG-YYYY-NNNN`), program_title, linked trip_ids[], status (draft, confirmed, completed); auto-increment per tenant/year
+- [ ] Auto-assign sequential `program_number` on program create (atomic sequence per tenant)
+- [ ] Auto-assign sequential `route_no` per program: each route/leg within program gets 1..N ordering (replaces manual leg_no)
+- [ ] Migration: link existing `trips` + `trip_legs` to `trip_programs` via `program_id` (nullable, backfill existing trips as single-program)
+- [ ] `GET /api/v1/trip-programs/:id/routes` — ordered routes with auto numbers
+- **Frontend:**
+  - [ ] New Trip form already reordered to `Trip Type → Program Info → Flights → Hotels → Route Info` (Phase 2.7 quick fix, Aug 2026)
+  - [ ] Program selector/creator on New Trip (create new program vs add to existing)
+  - [ ] Program detail page shows auto `Program Number` + sequential route list
+
 ---
 
 ## PHASE 14: Customer Portals (B2C Website & B2B Portal)
@@ -1280,10 +1318,16 @@ Client clarification: exactly **2 trip types**:
   - Notification preferences
 - [ ] `GET /api/settings` — get tenant settings
 - [ ] `PATCH /api/settings` — update settings
+- [ ] Tenant-scoped `vehicle_types` config: default list `Bus, Coaster, Hiace, Staria, GMC, Sedan` + company can add/edit/delete custom types (stored in `system_config` or dedicated `vehicle_types` table: tenant_id, name, is_default)
+- [ ] Trip Registration form customization: per-tenant field visibility/required toggles for New Trip (e.g. hide/show Group Leader, Nationality, Agent, Flights/Hotels sections); stored as JSON in `system_config` key `trip_form_fields`
+- [ ] `GET /api/settings/vehicle-types` + `POST /PATCH /DELETE` — CRUD for custom vehicle types
+- [ ] `GET /api/settings/trip-form-config` / `PATCH` — get/update field visibility map
 - **Frontend pages:**
   - [ ] System settings page (form with sections: company info, localization, trip rules, notifications)
   - [ ] Company logo upload with preview
   - [ ] Language switcher (Arabic/English toggle in settings)
+  - [ ] Vehicle Types management section (table + add/edit/delete custom type; shows defaults as read-only)
+  - [ ] Trip Form Customization section (checklist of fields with Visible/Required toggles, preview)
 
 ### 16.2 User Management (Tenant Level)
 - [ ] `GET /api/users` — list users

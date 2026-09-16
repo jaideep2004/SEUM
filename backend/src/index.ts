@@ -39,7 +39,10 @@ import costRoutes from './routes/costs';
 import workshopRoutes from './routes/workshops';
 import customerRoutes from './routes/customers';
 import bookingRoutes from './routes/bookings';
+import agentRoutes from './routes/agents';
+import communicationRoutes from './routes/communications';
 import { runReminderJob } from './services/customerCommunicationService';
+import { scheduleRecurringTripsCron } from './jobs/recurringTripsCron';
 
 const app = express();
 
@@ -92,6 +95,8 @@ app.use('/api/v1/maintenance/costs', costRoutes);
 app.use('/api/v1/maintenance/workshops', workshopRoutes);
 app.use('/api/v1/bookings/customers', customerRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/agents', agentRoutes);
+app.use('/api/v1/communications', communicationRoutes);
 
 app.use(errorHandler);
 
@@ -108,6 +113,9 @@ if (!process.env.VERCEL) {
     runReminderJob().catch((err) => logger.error({ err }, 'Reminder job failed'));
   }, REMINDER_INTERVAL_MS);
   logger.info('Trip reminder job scheduled (hourly)');
+
+  // Daily recurring trips auto-generation (next 14 days). Respects RECURRING_TRIPS_AUTO_GENERATE env.
+  scheduleRecurringTripsCron();
 }
 
 export default app;

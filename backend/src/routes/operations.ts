@@ -47,6 +47,7 @@ router.get('/drivers/schedule', authenticate, requireRole('super_admin', 'compan
 // ─── Recurring Trip Patterns ───
 router.post('/recurring-trips', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.createPattern);
 router.get('/recurring-trips', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.listPatterns);
+router.post('/recurring-trips/auto-generate', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.autoGenerate);
 router.get('/recurring-trips/:id', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.getPattern);
 router.patch('/recurring-trips/:id', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.updatePattern);
 router.delete('/recurring-trips/:id', authenticate, requireRole('super_admin', 'company_admin', 'operations_manager'), recurringTripController.deletePattern);

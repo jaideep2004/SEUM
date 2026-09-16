@@ -22,11 +22,14 @@ export interface BookingPassenger {
   specialRequirements: string | null;
 }
 
+export const BOOKING_CHANNELS = ['internal', 'excel', 'b2b_portal', 'b2c_website', 'cs_employee', 'whatsapp'] as const;
+export type BookingChannel = typeof BOOKING_CHANNELS[number];
+
 export interface Booking {
   id: string;
   tenantId: string;
   customerId: string;
-  tripId: string;
+  tripId: string | null;
   bookingReference: string;
   numberOfPassengers: number;
   seatNumbers: number[];
@@ -42,6 +45,20 @@ export interface Booking {
   refundedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  invoiceReference: string | null;
+  quotationAmount: number | null;
+  submittedAt: string | null;
+  approvedAt: string | null;
+  approvedBy: string | null;
+  rejectedAt: string | null;
+  rejectedBy: string | null;
+  rejectionReason: string | null;
+  channel: BookingChannel;
+  pickupLocation: string | null;
+  destinationLocation: string | null;
+  requestedDate: string | null;
+  requestedTime: string | null;
+  tripTypeRequested: string | null;
   customer: {
     id: string;
     name: string;
@@ -51,10 +68,12 @@ export interface Booking {
     companyName: string | null;
   };
   trip: {
-    id: string;
+    id: string | null;
     scheduledDate: string | null;
     scheduledStartTime: string | null;
+    scheduledEndTime: string | null;
     status: string | null;
+    tripType: string | null;
     busPlate: string | null;
     busMake: string | null;
     busModel: string | null;
@@ -65,6 +84,18 @@ export interface Booking {
     };
   };
   passengers?: BookingPassenger[];
+}
+
+export interface BookingHistoryEntry {
+  id: string;
+  bookingId: string;
+  fromStatus: string | null;
+  toStatus: string;
+  changedBy: string | null;
+  changedByName: string | null;
+  changedByEmail: string | null;
+  changedAt: string;
+  notes: string | null;
 }
 
 export interface Customer {
@@ -192,6 +223,8 @@ export interface BookingDashboard {
     confirmed: number;
     cancelled: number;
     refunded: number;
+    pendingApproval: number;
+    approved: number;
   };
   cancellationRate: { today: number; overall: number };
   revenue: {
@@ -201,6 +234,7 @@ export interface BookingDashboard {
     thisMonth: number;
   };
   revenueTrend: { day: string; revenue: number }[];
+  channelBreakdown: { channel: string; count: number; revenue: number }[];
   upcomingTrips: {
     id: string;
     scheduledDate: string;
@@ -239,13 +273,22 @@ export interface CommunicationLogEntry {
   createdAt: string;
 }
 
+export interface ImportResult {
+  success: boolean;
+  totalRows: number;
+  validRows: number;
+  errors: { row: number; column: string; field: string; message: string; value: any }[];
+  created?: { bookingReference: string; row: number; customerName: string }[];
+  createdCount?: number;
+}
+
 export const bookingService = {
   list: paginated<Booking>("/bookings"),
   get: (id: string) => request<Booking>(`/bookings/${id}`),
   create: (body: {
     customer_id: string;
-    trip_id: string;
-    seat_numbers: number[];
+    trip_id?: string | null;
+    seat_numbers?: number[];
     passengers?: {
       passenger_name: string;
       id_number?: string;
@@ -256,9 +299,20 @@ export const bookingService = {
     total_amount: number;
     paid_amount?: number;
     notes?: string;
+    channel?: string;
+    pickup_location?: string;
+    destination_location?: string;
+    requested_date?: string;
+    requested_time?: string;
+    trip_type_requested?: string;
   }) => request<Booking>("/bookings", { method: "POST", body }),
   update: (id: string, body: Record<string, unknown>) =>
     request<Booking>(`/bookings/${id}`, { method: "PATCH", body }),
+  submit: (id: string) => request<Booking>(`/bookings/${id}/submit`, { method: "POST" }),
+  approve: (id: string) => request<Booking>(`/bookings/${id}/approve`, { method: "POST" }),
+  reject: (id: string, reason: string) =>
+    request<Booking>(`/bookings/${id}/reject`, { method: "POST", body: { reason } }),
+  history: (id: string) => request<BookingHistoryEntry[]>(`/bookings/${id}/history`),
   confirm: (id: string) => request<Booking>(`/bookings/${id}/confirm`, { method: "POST" }),
   cancel: (id: string, reason: string) =>
     request<Booking>(`/bookings/${id}/cancel`, { method: "POST", body: { reason } }),
@@ -277,6 +331,44 @@ export const bookingService = {
       method: "POST",
       body,
     }),
+  downloadImportTemplate: async () => {
+    const token = getToken();
+    const res = await fetch(`${API}/bookings/import/template`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.error?.message || "Failed to download template");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "seum-booking-import-template.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
+  importExcel: async (file: File): Promise<ImportResult> => {
+    const token = getToken();
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${API}/bookings/import`, {
+      method: "POST",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: form,
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      // 422 validation case returns error details
+      if (json?.data && json?.error) {
+        return json.data as ImportResult;
+      }
+      throw new Error(json?.error?.message || json?.message || `Import failed (${res.status})`);
+    }
+    return (json.data || json) as ImportResult;
+  },
 };
 
 export const waitlistService = {

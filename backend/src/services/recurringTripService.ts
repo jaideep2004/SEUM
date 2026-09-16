@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { query, queryOne } from '../db';
 import { NotFoundError, ConflictError } from '../utils/errors';
+import { logger } from '../utils/logger';
 import type { CreateRecurringTripPatternInput, UpdateRecurringTripPatternInput, RecurringTripPatternQuery, GenerateTripsInput } from '../validators/operations';
 
 interface PatternRow {
@@ -86,14 +87,14 @@ export async function createPattern(tenantId: string, userId: string, input: Cre
 
   if (input.legs && input.legs.length > 0) {
     for (let i = 0; i < input.legs.length; i++) {
-      const leg = input.legs[i];
+      const leg = input.legs[i] as any;
       await query(
         `INSERT INTO recurring_pattern_legs (id, tenant_id, pattern_id, leg_no, origin, destination,
-          day_offset, departure_time, arrival_time, overnight_flag, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          day_offset, departure_time, arrival_time, overnight_flag, route_type, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
         [uuid(), tenantId, id, i + 1, leg.origin, leg.destination,
          leg.dayOffset ?? 0, leg.departureTime || null, leg.arrivalTime || null,
-         leg.overnightFlag ?? false, leg.notes || null]
+         leg.overnightFlag ?? false, (leg.routeType || null) as any, leg.notes || null]
       );
     }
   }
@@ -288,7 +289,7 @@ function addDays(dateStr: string, offset: number): string {
   return `${y}-${m}-${day}`;
 }
 
-export async function generateTrips(tenantId: string, userId: string, patternId: string, input: GenerateTripsInput) {
+export async function generateTrips(tenantId: string, userId: string | null, patternId: string, input: GenerateTripsInput) {
   const pattern = await queryOne<any>(
     `SELECT p.*, r.name AS route_name, b.plate_number,
             u.name AS driver_name
@@ -415,4 +416,130 @@ export async function getPatternCalendar(tenantId: string, patternId: string, st
   }
 
   return dates;
+}
+
+// ─── Auto-generation (cron) ───
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getAutoGenerateWindow(windowDays: number, startDateStr?: string): { startDate: string; endDate: string } {
+  const startDate = startDateStr ?? formatDate(new Date());
+  const endDate = addDays(startDate, windowDays);
+  return { startDate, endDate };
+}
+
+export interface AutoGenerateResult {
+  window: { startDate: string; endDate: string };
+  totalPatterns: number;
+  processed: number;
+  generatedTotal: number;
+  perPattern: Array<{ patternId: string; tenantId: string; generatedCount: number; error?: string; skipped?: string }>;
+}
+
+export interface AutoGenerateOptions {
+  windowDays?: number;
+  windowStartDate?: string;
+}
+
+/**
+ * Auto-generate trips for all active patterns across all tenants for the next `windowDays` days.
+ * Tenant-scoped, idempotent via generateTrips duplicate check, honours frequency/custom_days.
+ */
+export async function autoGenerateUpcomingTrips(opts?: AutoGenerateOptions): Promise<AutoGenerateResult> {
+  const windowDays = opts?.windowDays ?? 14;
+  const window = getAutoGenerateWindow(windowDays, opts?.windowStartDate);
+
+  const patterns = await query<PatternRow>(
+    'SELECT id, tenant_id, created_by, start_date, end_date FROM recurring_trip_patterns WHERE is_active = true'
+  );
+
+  const result: AutoGenerateResult = {
+    window,
+    totalPatterns: patterns.length,
+    processed: 0,
+    generatedTotal: 0,
+    perPattern: [],
+  };
+
+  for (const p of patterns) {
+    const creatorId = p.created_by ?? null;
+    try {
+      const gen = await generateTrips(p.tenant_id, creatorId, p.id, {
+        startDate: window.startDate,
+        endDate: window.endDate,
+      });
+      result.processed += 1;
+      result.generatedTotal += gen.generatedCount;
+      result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: gen.generatedCount });
+      if (gen.generatedCount > 0) {
+        logger.info({ patternId: p.id, tenantId: p.tenant_id, generatedCount: gen.generatedCount, window }, 'Auto-generated trips');
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      // Expected non-error: window does not overlap pattern period
+      if (err instanceof ConflictError && msg.includes('does not overlap')) {
+        result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: 0, skipped: 'no_overlap' });
+        continue;
+      }
+      logger.error({ err, patternId: p.id, tenantId: p.tenant_id }, 'Auto-generation failed for pattern');
+      result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: 0, error: msg });
+    }
+  }
+
+  logger.info({ window, totalPatterns: result.totalPatterns, generatedTotal: result.generatedTotal }, 'Recurring trips auto-generation complete (all tenants)');
+  return result;
+}
+
+/**
+ * Tenant-scoped auto-generation (used by cron per-tenant loop or manual endpoint).
+ */
+export async function autoGenerateUpcomingTripsForTenant(
+  tenantId: string,
+  userId: string | null,
+  opts?: AutoGenerateOptions,
+): Promise<AutoGenerateResult> {
+  const windowDays = opts?.windowDays ?? 14;
+  const window = getAutoGenerateWindow(windowDays, opts?.windowStartDate);
+
+  const patterns = await query<PatternRow>(
+    'SELECT id, tenant_id, created_by, start_date, end_date FROM recurring_trip_patterns WHERE tenant_id = $1 AND is_active = true',
+    [tenantId]
+  );
+
+  const result: AutoGenerateResult = {
+    window,
+    totalPatterns: patterns.length,
+    processed: 0,
+    generatedTotal: 0,
+    perPattern: [],
+  };
+
+  for (const p of patterns) {
+    const creatorId = userId ?? p.created_by ?? null;
+    try {
+      const gen = await generateTrips(p.tenant_id, creatorId, p.id, {
+        startDate: window.startDate,
+        endDate: window.endDate,
+      });
+      result.processed += 1;
+      result.generatedTotal += gen.generatedCount;
+      result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: gen.generatedCount });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (err instanceof ConflictError && msg.includes('does not overlap')) {
+        result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: 0, skipped: 'no_overlap' });
+        continue;
+      }
+      logger.error({ err, patternId: p.id, tenantId: p.tenant_id }, 'Tenant auto-generation failed for pattern');
+      result.perPattern.push({ patternId: p.id, tenantId: p.tenant_id, generatedCount: 0, error: msg });
+    }
+  }
+
+  logger.info({ tenantId, window, totalPatterns: result.totalPatterns, generatedTotal: result.generatedTotal }, 'Tenant recurring trips auto-generation complete');
+  return result;
 }

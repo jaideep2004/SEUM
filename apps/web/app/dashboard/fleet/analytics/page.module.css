@@ -14,6 +14,15 @@
 .kpiSub { font-size: 11px; color: var(--color-text-secondary); }
 
 .chartsRow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.chartsRowLower { display: grid; grid-template-columns: 1fr 1.8fr; gap: 14px; margin-bottom: 20px; }
+@media (max-width: 980px) {
+  .chartsRow { grid-template-columns: 1fr; }
+  .chartsRowLower { grid-template-columns: 1fr; }
+  .kpiGrid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+}
 .chartCard, .renewalsCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; }
 .cardHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .chartTitle { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
@@ -41,3 +50,22 @@
 .loadingState, .emptyState { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 24px; color: var(--color-text-secondary); font-size: 13px; }
 .spinner { width: 24px; height: 24px; border: 2px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Maintenance cost per bus — Phase 6 */
+.maintTotalBadge { padding: 4px 10px; border-radius: 9999px; background: rgba(59,130,246,0.08); color: #2563eb; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.maintWrap { display: flex; flex-direction: column; gap: 14px; }
+.maintBarList { display: flex; flex-direction: column; gap: 8px; }
+.maintBarRow { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.maintBarLabel { min-width: 76px; max-width: 90px; font-weight: 700; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.maintBarTrack { flex: 1; height: 14px; background: var(--color-bg); border-radius: 9999px; overflow: hidden; border: 1px solid var(--color-border); }
+.maintBarFill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #3b82f6, #1d4ed8); transition: width 0.4s ease; }
+.maintBarValue { min-width: 92px; text-align: right; font-weight: 700; color: var(--color-text); font-size: 12px; }
+.maintBarCount { min-width: 54px; text-align: right; color: var(--color-text-secondary); font-size: 11px; }
+.maintMore { margin: 0; font-size: 11px; color: var(--color-text-tertiary); text-align: center; }
+.maintTableWrap { max-height: 220px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.maintTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.maintTable th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-secondary); background: var(--color-bg); border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.maintTable td { padding: 8px 10px; border-bottom: 1px solid var(--color-border); vertical-align: middle; white-space: nowrap; }
+.maintTable tr:last-child td { border-bottom: none; }
+.maintPlate { font-weight: 700; color: var(--color-primary); }
+.maintSub { color: var(--color-text-secondary); font-size: 11px; }

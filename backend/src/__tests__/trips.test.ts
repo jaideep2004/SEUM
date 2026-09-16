@@ -58,6 +58,7 @@ describe("createTrip", () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: RID })      // route exists
       .mockResolvedValueOnce({ id: BID })      // bus exists
+      .mockResolvedValueOnce({ status: 'ready' }) // bus readiness - ready
       .mockResolvedValueOnce(makeTripRow());   // getTripById row
     mockQuery
       .mockResolvedValueOnce([makeTripRow()])  // INSERT RETURNING (inside transaction)
@@ -70,13 +71,14 @@ describe("createTrip", () => {
       scheduledDate: "2026-07-20", scheduledStartTime: "08:00",
     });
     expect(result.status).toBe("scheduled");
-    expect(mockQueryOne).toHaveBeenCalledTimes(3);
+    expect(mockQueryOne).toHaveBeenCalledTimes(4);
   });
 
   it("creates a round trip with legs", async () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: RID })
       .mockResolvedValueOnce({ id: BID })
+      .mockResolvedValueOnce({ status: 'ready' }) // bus readiness - ready
       .mockResolvedValueOnce(makeTripRow({ trip_type: "round", trip_title: "Hajj Group 12" }));
     mockQuery
       .mockResolvedValueOnce([makeTripRow({ trip_type: "round" })]) // INSERT trip
