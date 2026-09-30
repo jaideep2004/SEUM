@@ -6,6 +6,7 @@ import { config } from '../config';
 import { query, queryOne } from '../db';
 import { ConflictError, UnauthorizedError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { capabilitiesFor } from '../auth/roles';
 import { sendEmailAsync } from './emailService';
 
 function escapeHtml(value: string): string {
@@ -76,7 +77,7 @@ export async function registerUser(
     );
   }
 
-  return { id, tenantId, email, name, roles };
+  return { id, tenantId, email, name, roles, capabilities: capabilitiesFor(roles) };
 }
 
 export async function loginUser(email: string, password: string, ipAddress?: string, userAgent?: string) {
@@ -147,6 +148,9 @@ export async function loginUser(email: string, password: string, ipAddress?: str
       email: user.email,
       name: user.name,
       roles: user.roles,
+      // The web sidebar is built from this list — one source of truth for
+      // "what may this user see", shared with the route gates above.
+      capabilities: capabilitiesFor(user.roles),
       isActive: user.is_active,
       createdAt: user.created_at,
     },
@@ -296,6 +300,7 @@ export async function getUserProfile(userId: string) {
     email: user.email,
     name: user.name,
     roles: user.roles,
+    capabilities: capabilitiesFor(user.roles),
     tenantName: user.tenant_name,
     isActive: user.is_active,
     createdAt: user.created_at,

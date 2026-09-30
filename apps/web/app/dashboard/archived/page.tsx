@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import {
   Archive,
   Building2,
@@ -18,10 +19,10 @@ import styles from "./page.module.css";
 
 type Tab = "companies" | "users" | "plans";
 
-const tabs: { key: Tab; label: string; icon: any }[] = [
-  { key: "companies", label: "Companies", icon: Building2 },
-  { key: "users", label: "Users", icon: Users },
-  { key: "plans", label: "Plans", icon: Package },
+const tabs: { key: Tab; labelKey: string; icon: any }[] = [
+  { key: "companies", labelKey: "companies.arch.tabsCompanies", icon: Building2 },
+  { key: "users", labelKey: "companies.arch.tabsUsers", icon: Users },
+  { key: "plans", labelKey: "companies.arch.tabsPlans", icon: Package },
 ];
 
 interface TrashedTenant {
@@ -70,6 +71,7 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function ArchivedPage() {
+  const { lang, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<Tab>("companies");
   const [tenants, setTenants] = useState<TrashedTenant[]>([]);
   const [users, setUsers] = useState<TrashedUser[]>([]);
@@ -129,16 +131,28 @@ export default function ArchivedPage() {
     (p) => !search || p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className={styles.page}><div className={styles.loading}>Loading archived data...</div></div>;
+  if (loading) return <div className={styles.page}><div className={styles.loading}>{t("companies.arch.loading")}</div></div>;
+
+  const trashedCount = tenants.length + users.length + plans.length;
+  const tierLabel = (tier: string | null | undefined) => {
+    if (!tier) return "—";
+    const map: Record<string, string> = {
+      starter: t("companies.tierStarter"),
+      professional: t("companies.tierProfessional"),
+      enterprise: t("companies.tierEnterprise"),
+      custom: t("companies.tierCustom"),
+    };
+    return map[tier] || tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <Archive size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Archived Items</h1>
+          <h1 className={styles.headerTitle}>{t("companies.arch.title")}</h1>
           <p className={styles.headerSub}>
-            {tenants.length + users.length + plans.length} trashed item{(tenants.length + users.length + plans.length) !== 1 ? "s" : ""}
+            {trashedCount} {t("companies.arch.trashedWord")}{trashedCount !== 1 ? t("companies.arch.pluralS") : ""}
           </p>
         </div>
       </div>
@@ -154,7 +168,7 @@ export default function ArchivedPage() {
               onClick={() => setActiveTab(tab.key)}
             >
               <Icon size={15} />
-              {tab.label}
+              {t(tab.labelKey)}
               {count > 0 && <span>({count})</span>}
             </button>
           );
@@ -165,7 +179,7 @@ export default function ArchivedPage() {
         <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
           <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--color-text-tertiary)" }} />
           <input
-            placeholder="Search trashed items..."
+            placeholder={t("companies.arch.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -183,46 +197,46 @@ export default function ArchivedPage() {
           {filteredTenants.length === 0 ? (
             <div className={styles.empty}>
               <Archive size={32} className={styles.emptyIcon} />
-              No trashed companies
+              {t("companies.arch.noCompanies")}
             </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Company Name</th>
-                  <th>Domain</th>
-                  <th>Contact</th>
-                  <th>Plan</th>
-                  <th>Created</th>
+                  <th>{t("companies.arch.colCompany")}</th>
+                  <th>{t("companies.arch.colDomain")}</th>
+                  <th>{t("companies.arch.colContact")}</th>
+                  <th>{t("companies.arch.colPlan")}</th>
+                  <th>{t("companies.arch.colCreated")}</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTenants.map((t) => (
-                  <tr key={t.id}>
-                    <td style={{ fontWeight: 600 }}>{t.name}</td>
-                    <td style={{ color: "var(--color-text-secondary)" }}>{t.domain || "—"}</td>
+                {filteredTenants.map((tt) => (
+                  <tr key={tt.id}>
+                    <td style={{ fontWeight: 600 }}>{tt.name}</td>
+                    <td style={{ color: "var(--color-text-secondary)" }}>{tt.domain || "—"}</td>
                     <td style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                         <Mail size={12} />
-                        {t.contactEmail || "—"}
+                        {tt.contactEmail || "—"}
                       </div>
                     </td>
                     <td>
                       <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
-                        {t.subscriptionTier ? t.subscriptionTier.charAt(0).toUpperCase() + t.subscriptionTier.slice(1) : "—"}
+                        {tierLabel(tt.subscriptionTier)}
                       </span>
                     </td>
                     <td style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                         <Calendar size={12} />
-                        {new Date(t.createdAt).toLocaleDateString()}
+                        {formatDate(tt.createdAt, lang)}
                       </div>
                     </td>
                     <td>
-                      <button className={styles.deleteBtn} onClick={() => openDelete("companies", t.id, t.name)}>
+                      <button className={styles.deleteBtn} onClick={() => openDelete("companies", tt.id, tt.name)}>
                         <Trash2 size={13} />
-                        Delete Forever
+                        {t("companies.arch.deleteForever")}
                       </button>
                     </td>
                   </tr>
@@ -239,17 +253,17 @@ export default function ArchivedPage() {
           {filteredUsers.length === 0 ? (
             <div className={styles.empty}>
               <Archive size={32} className={styles.emptyIcon} />
-              No trashed users
+              {t("companies.arch.noUsers")}
             </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Roles</th>
-                  <th>Tenant</th>
-                  <th>Joined</th>
+                  <th>{t("companies.arch.colName")}</th>
+                  <th>{t("companies.arch.colEmail")}</th>
+                  <th>{t("companies.arch.colRoles")}</th>
+                  <th>{t("companies.arch.colTenant")}</th>
+                  <th>{t("companies.arch.colJoined")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -267,7 +281,7 @@ export default function ArchivedPage() {
                             background: "rgba(107,114,128,0.12)", color: "#6b7280",
                           }}>
                             <Shield size={10} />
-                            {roleLabels[role] || role}
+                            {roleLabels[role] ? t(`companies.arch.role.${role}`) : role}
                           </span>
                         ))}
                       </div>
@@ -276,13 +290,13 @@ export default function ArchivedPage() {
                     <td style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                         <Calendar size={12} />
-                        {new Date(u.created_at).toLocaleDateString()}
+                        {formatDate(u.created_at, lang)}
                       </div>
                     </td>
                     <td>
                       <button className={styles.deleteBtn} onClick={() => openDelete("users", u.id, u.name)}>
                         <Trash2 size={13} />
-                        Delete Forever
+                        {t("companies.arch.deleteForever")}
                       </button>
                     </td>
                   </tr>
@@ -299,18 +313,18 @@ export default function ArchivedPage() {
           {filteredPlans.length === 0 ? (
             <div className={styles.empty}>
               <Archive size={32} className={styles.emptyIcon} />
-              No trashed plans
+              {t("companies.arch.noPlans")}
             </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Plan Name</th>
-                  <th>Tier</th>
-                  <th>Price (Monthly)</th>
-                  <th>Max Users</th>
-                  <th>Status</th>
-                  <th>Created</th>
+                  <th>{t("companies.arch.colPlanName")}</th>
+                  <th>{t("companies.arch.colTier")}</th>
+                  <th>{t("companies.arch.colPrice")}</th>
+                  <th>{t("companies.arch.colMaxUsers")}</th>
+                  <th>{t("companies.arch.colStatus")}</th>
+                  <th>{t("companies.arch.colCreated")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -319,25 +333,25 @@ export default function ArchivedPage() {
                   <tr key={p.id}>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
                     <td style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>
-                      {p.tier.charAt(0).toUpperCase() + p.tier.slice(1)}
+                      {tierLabel(p.tier)}
                     </td>
                     <td style={{ color: "var(--color-text-secondary)" }}>
-                      SAR {p.priceMonthly?.toLocaleString()}
+                      {t("companies.plans.sar")} {formatNumber(p.priceMonthly, lang, 0)}
                     </td>
                     <td style={{ color: "var(--color-text-secondary)" }}>{p.maxUsers}</td>
                     <td>
-                      <span className={`${styles.badge} ${styles.badgeDanger}`}>Inactive</span>
+                      <span className={`${styles.badge} ${styles.badgeDanger}`}>{t("companies.arch.inactive")}</span>
                     </td>
                     <td style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                         <Calendar size={12} />
-                        {new Date(p.createdAt).toLocaleDateString()}
+                        {formatDate(p.createdAt, lang)}
                       </div>
                     </td>
                     <td>
                       <button className={styles.deleteBtn} onClick={() => openDelete("plans", p.id, p.name)}>
                         <Trash2 size={13} />
-                        Delete Forever
+                        {t("companies.arch.deleteForever")}
                       </button>
                     </td>
                   </tr>
@@ -355,16 +369,16 @@ export default function ArchivedPage() {
             <div className={styles.modalIcon}>
               <AlertTriangle size={24} />
             </div>
-            <h3 className={styles.modalTitle}>Permanently Delete</h3>
+            <h3 className={styles.modalTitle}>{t("companies.arch.permDelete")}</h3>
             <p className={styles.modalText}>
-              This will permanently delete <strong>{deletingItem.name}</strong> from the database. This action <strong>cannot</strong> be undone.
+              {t("companies.arch.permDeleteA")} <strong>{deletingItem.name}</strong> {t("companies.arch.permDeleteB")} <strong>{t("companies.arch.cannot")}</strong> {t("companies.arch.permDeleteC")}
             </p>
             <div className={styles.modalActions}>
               <button className={styles.modalCancel} onClick={() => setShowDeleteModal(false)}>
-                Cancel
+                {t("companies.arch.cancel")}
               </button>
               <button className={styles.modalConfirm} onClick={handlePermanentDelete} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete Forever"}
+                {deleting ? t("companies.arch.deleting") : t("companies.arch.deleteForever")}
               </button>
             </div>
           </div>

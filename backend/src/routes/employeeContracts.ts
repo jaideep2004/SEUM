@@ -2,12 +2,13 @@ import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as contractController from '../controllers/employeeContractController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });
 
-const HR_WRITE = ['super_admin', 'company_admin', 'hr_manager'];
-const HR_READ = [...HR_WRITE, 'operations_manager', 'finance_accountant'];
+const HR_WRITE = CAP.hrWrite;
+const HR_READ = CAP.hrRead;
 
 // Contracts
 router.post('/contracts', authenticate, requireRole(...HR_WRITE), upload.single('file'), contractController.createContract);

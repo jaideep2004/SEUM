@@ -5,6 +5,13 @@ import { api } from "@/services/api";
 import {
   Search, Users as UsersIcon, Shield, Mail, Calendar, Plus, Pencil, Trash2, AlertTriangle, X, Eye, EyeOff,
 } from "lucide-react";
+import {
+  ASSIGNABLE_ROLES,
+  ROLE_COLORS,
+  SUPER_ADMIN_ROLE,
+  roleLabel,
+} from "@/lib/access";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface User {
@@ -23,51 +30,30 @@ interface Tenant {
   name: string;
 }
 
-const roleColors: Record<string, string> = {
-  super_admin: "#ef4444",
-  company_admin: "#f59e0b",
-  operations_manager: "#3b82f6",
-  fleet_manager: "#10b981",
-  monitoring_control: "#8b5cf6",
-  driver: "#06b6d4",
-  hr_manager: "#ec4899",
-  finance_accountant: "#14b8a6",
-  customer_service: "#f97316",
-  executive: "#6366f1",
-  maintenance_workshop: "#6b7280",
-};
-
-const roleLabels: Record<string, string> = {
-  super_admin: "Super Admin",
-  company_admin: "Company Admin",
-  operations_manager: "Operations",
-  fleet_manager: "Fleet Manager",
-  monitoring_control: "Monitoring",
-  driver: "Driver",
-  hr_manager: "HR Manager",
-  finance_accountant: "Finance",
-  customer_service: "Customer Service",
-  executive: "Executive",
-  maintenance_workshop: "Maintenance",
-};
-
-const allAvailableRoles = Object.keys(roleLabels);
-
+/**
+ * Roles the client offers today: company admin and operations manager.
+ * A super admin may also create another super admin. Legacy roles
+ * (fleet_manager, hr_manager, …) still render on existing users but are no
+ * longer offered when creating or editing one.
+ */
 function getIsSuperAdmin(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const stored = localStorage.getItem("seum_user");
     if (!stored) return false;
     const user = JSON.parse(stored);
-    return (user.roles || []).includes("super_admin");
+    return (user.roles || []).includes(SUPER_ADMIN_ROLE);
   } catch {
     return false;
   }
 }
 
 export default function UsersPage() {
+  const { lang, t } = useLanguage();
   const [isSuper] = useState(getIsSuperAdmin);
-  const assignableRoles = isSuper ? allAvailableRoles : allAvailableRoles.filter((r) => r !== "super_admin");
+  const assignableRoles: string[] = isSuper
+    ? [SUPER_ADMIN_ROLE, ...ASSIGNABLE_ROLES]
+    : [...ASSIGNABLE_ROLES];
   const [users, setUsers] = useState<User[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +97,7 @@ export default function UsersPage() {
       const data = await api.get<User[]>("/users");
       setUsers(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load users");
+      setError(err.message || t("admin.users.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -162,7 +148,7 @@ export default function UsersPage() {
       setShowAddModal(false);
       fetchUsers();
     } catch (err: any) {
-      setSubmitError(err?.message || "Failed to create user");
+      setSubmitError(err?.message || t("admin.users.createFailed"));
     } finally {
       setSaving(false);
     }
@@ -208,7 +194,7 @@ export default function UsersPage() {
       setEditingUser(null);
       fetchUsers();
     } catch (err: any) {
-      setEditError(err?.message || "Failed to update user");
+      setEditError(err?.message || t("admin.users.updateFailed"));
     } finally {
       setSavingEdit(false);
     }
@@ -219,24 +205,24 @@ export default function UsersPage() {
       <div className={styles.header}>
         <UsersIcon size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Users</h1>
-          <p className={styles.headerSub}>{users.length} user{users.length !== 1 ? "s" : ""} across all tenants</p>
+          <h1 className={styles.headerTitle}>{t("admin.users.title")}</h1>
+          <p className={styles.headerSub}>{formatNumber(users.length, lang)} {users.length === 1 ? t("admin.users.unitSingular") : t("admin.users.unitPlural")} {t("admin.users.across")}</p>
         </div>
         <button className={styles.addBtn} onClick={openAddModal}>
           <Plus size={16} />
-          Add New User
+          {t("admin.users.add")}
         </button>
       </div>
 
       <div className={styles.toolbar}>
         <div className={styles.searchWrap}>
           <Search size={16} className={styles.searchIcon} />
-          <input className={styles.searchInput} placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className={styles.searchInput} placeholder={t("admin.users.searchPh")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <select className={styles.filterSelect} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          <option value="">All Roles</option>
+          <option value="">{t("admin.users.allRoles")}</option>
           {allRoles.map((r) => (
-            <option key={r} value={r}>{roleLabels[r] || r}</option>
+            <option key={r} value={r}>{roleLabel(r)}</option>
           ))}
         </select>
       </div>
@@ -244,19 +230,19 @@ export default function UsersPage() {
       {error && <div className={styles.errorBanner}>{error}</div>}
 
       {loading ? (
-        <div className={styles.loading}>Loading users...</div>
+        <div className={styles.loading}>{t("admin.users.loading")}</div>
       ) : (
         <div className={styles.card}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Roles</th>
-                  <th>Tenant</th>
-                  <th>Status</th>
-                  <th>Created</th>
+                  <th>{t("admin.users.colName")}</th>
+                  <th>{t("admin.users.colEmail")}</th>
+                  <th>{t("admin.users.colRoles")}</th>
+                  <th>{t("admin.users.colTenant")}</th>
+                  <th>{t("admin.users.colStatus")}</th>
+                  <th>{t("admin.users.colCreated")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -276,9 +262,9 @@ export default function UsersPage() {
                     <td>
                       <div className={styles.roleList}>
                         {u.roles.map((role) => (
-                          <span key={role} className={styles.roleBadge} style={{ background: `${roleColors[role] || "#6b7280"}18`, color: roleColors[role] || "#6b7280" }}>
+                          <span key={role} className={styles.roleBadge} style={{ background: `${ROLE_COLORS[role] || "#6b7280"}18`, color: ROLE_COLORS[role] || "#6b7280" }}>
                             <Shield size={10} />
-                            {roleLabels[role] || role}
+                            {roleLabel(role)}
                           </span>
                         ))}
                       </div>
@@ -287,21 +273,21 @@ export default function UsersPage() {
                     <td>
                       <span className={u.is_active ? styles.statusActive : styles.statusInactive}>
                         <span className={u.is_active ? styles.dotActive : styles.dotInactive} />
-                        {u.is_active ? "Active" : "Inactive"}
+                        {u.is_active ? t("admin.users.active") : t("admin.users.inactive")}
                       </span>
                     </td>
                     <td className={styles.cellMuted}>
                       <div className={styles.cellWithIcon}>
                         <Calendar size={12} />
-                        {new Date(u.created_at).toLocaleDateString()}
+                        {formatDate(u.created_at, lang)}
                       </div>
                     </td>
                     <td>
                       <div className={styles.rowActions}>
-                        <button className={styles.editBtn} onClick={() => openEditModal(u)} title="Edit user">
+                        <button className={styles.editBtn} onClick={() => openEditModal(u)} title={t("admin.users.editTitle")}>
                           <Pencil size={13} />
                         </button>
-                        <button className={styles.deleteBtn} onClick={() => { setDeletingUser(u); setShowDeleteModal(true); }} title="Delete user">
+                        <button className={styles.deleteBtn} onClick={() => { setDeletingUser(u); setShowDeleteModal(true); }} title={t("admin.users.deleteTitle")}>
                           <Trash2 size={13} />
                         </button>
                       </div>
@@ -312,7 +298,7 @@ export default function UsersPage() {
             </table>
           </div>
           {filtered.length === 0 && (
-            <div className={styles.emptyState}>No users found</div>
+            <div className={styles.emptyState}>{t("admin.users.empty")}</div>
           )}
         </div>
       )}
@@ -324,14 +310,14 @@ export default function UsersPage() {
             <div className={styles.modalIconDanger}>
               <AlertTriangle size={24} />
             </div>
-            <h3 className={styles.modalTitle}>Delete User</h3>
+            <h3 className={styles.modalTitle}>{t("admin.users.deleteModal")}</h3>
             <p className={styles.modalText}>
-              Are you sure you want to delete <strong>{deletingUser.name}</strong>? This will deactivate the user account.
+              {t("admin.users.deleteTextA")}<strong>{deletingUser.name}</strong>{t("admin.users.deleteTextB")}
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>{t("admin.users.cancel")}</button>
               <button className={styles.deleteConfirmBtn} onClick={handleDeleteUser} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete User"}
+                {deleting ? t("admin.users.deleting") : t("admin.users.deleteModal")}
               </button>
             </div>
           </div>
@@ -343,30 +329,30 @@ export default function UsersPage() {
         <div className={styles.modalOverlay} onClick={() => setEditingUser(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Edit User</h2>
+              <h2 className={styles.modalTitle}>{t("admin.users.editModal")}</h2>
               <button className={styles.modalClose} onClick={() => setEditingUser(null)}><X size={18} /></button>
             </div>
             <form className={styles.modalBody} onSubmit={handleEditUser}>
               <div className={styles.fieldGrid}>
                 <div className={styles.field}>
-                  <label className={styles.label}>Full Name *</label>
-                  <input className={styles.input} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required placeholder="e.g. John Doe" />
+                  <label className={styles.label}>{t("admin.users.fullName")}</label>
+                  <input className={styles.input} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required placeholder={t("admin.users.namePh")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Email *</label>
-                  <input className={styles.input} type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required placeholder="user@example.com" />
+                  <label className={styles.label}>{t("admin.users.emailLabel")}</label>
+                  <input className={styles.input} type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} required placeholder={t("admin.users.emailPh")} />
                 </div>
               </div>
 
               <div className={styles.field} style={{ marginTop: 16 }}>
-                <label className={styles.label}>Roles *</label>
+                <label className={styles.label}>{t("admin.users.rolesLabel")}</label>
                 <div className={styles.roleCheckList}>
                   {assignableRoles.map((role) => (
                     <label key={role} className={styles.roleCheckItem}>
                       <input type="checkbox" checked={editForm.roles.includes(role)} onChange={() => toggleEditRole(role)} />
-                      <span className={styles.roleCheckBadge} style={{ background: `${roleColors[role] || "#6b7280"}18`, color: roleColors[role] || "#6b7280" }}>
+                      <span className={styles.roleCheckBadge} style={{ background: `${ROLE_COLORS[role] || "#6b7280"}18`, color: ROLE_COLORS[role] || "#6b7280" }}>
                         <Shield size={10} />
-                        {roleLabels[role]}
+                        {roleLabel(role)}
                       </span>
                     </label>
                   ))}
@@ -374,12 +360,12 @@ export default function UsersPage() {
               </div>
 
               <div className={styles.field} style={{ marginTop: 16 }}>
-                <label className={styles.label}>Account Status</label>
+                <label className={styles.label}>{t("admin.users.accountStatus")}</label>
                 <label className={styles.statusToggle}>
                   <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} />
                   <span className={editForm.isActive ? styles.statusActive : styles.statusInactive}>
                     <span className={editForm.isActive ? styles.dotActive : styles.dotInactive} />
-                    {editForm.isActive ? "Active" : "Deactivated"}
+                    {editForm.isActive ? t("admin.users.active") : t("admin.users.deactivated")}
                   </span>
                 </label>
               </div>
@@ -392,9 +378,9 @@ export default function UsersPage() {
               )}
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setEditingUser(null)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setEditingUser(null)}>{t("admin.users.cancel")}</button>
                 <button type="submit" className={styles.submitBtn} disabled={savingEdit || editForm.roles.length === 0}>
-                  {savingEdit ? "Saving..." : "Save Changes"}
+                  {savingEdit ? t("admin.users.saving") : t("admin.users.saveChanges")}
                 </button>
               </div>
             </form>
@@ -407,16 +393,16 @@ export default function UsersPage() {
         <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add New User</h2>
+              <h2 className={styles.modalTitle}>{t("admin.users.add")}</h2>
               <button className={styles.modalClose} onClick={() => setShowAddModal(false)}><X size={18} /></button>
             </div>
             <form className={styles.modalBody} onSubmit={handleAddUser}>
               <div className={styles.fieldGrid}>
                 {isSuper && (
                   <div className={styles.field}>
-                    <label className={styles.label}>Tenant *</label>
+                    <label className={styles.label}>{t("admin.users.tenantLabel")}</label>
                     <select className={styles.select} value={formData.tenantId} onChange={(e) => setFormData({ ...formData, tenantId: e.target.value })} required>
-                      <option value="">Select tenant...</option>
+                      <option value="">{t("admin.users.tenantPh")}</option>
                       {tenants.map((t) => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
@@ -424,17 +410,17 @@ export default function UsersPage() {
                   </div>
                 )}
                 <div className={styles.field}>
-                  <label className={styles.label}>Full Name *</label>
-                  <input className={styles.input} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder="e.g. John Doe" />
+                  <label className={styles.label}>{t("admin.users.fullName")}</label>
+                  <input className={styles.input} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder={t("admin.users.namePh")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Email *</label>
-                  <input className={styles.input} type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required placeholder="user@example.com" />
+                  <label className={styles.label}>{t("admin.users.emailLabel")}</label>
+                  <input className={styles.input} type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required placeholder={t("admin.users.emailPh")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Password *</label>
+                  <label className={styles.label}>{t("admin.users.passwordLabel")}</label>
                   <div className={styles.pwInputWrap}>
-                    <input className={styles.input} type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required minLength={8} placeholder="Min 8 characters" />
+                    <input className={styles.input} type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required minLength={8} placeholder={t("admin.users.passwordPh")} />
                     <button type="button" className={styles.pwToggle} onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
@@ -443,14 +429,14 @@ export default function UsersPage() {
               </div>
 
               <div className={styles.field} style={{ marginTop: 16 }}>
-                <label className={styles.label}>Roles *</label>
+                <label className={styles.label}>{t("admin.users.rolesLabel")}</label>
                 <div className={styles.roleCheckList}>
                   {assignableRoles.map((role) => (
                     <label key={role} className={styles.roleCheckItem}>
                       <input type="checkbox" checked={formData.roles.includes(role)} onChange={() => toggleRole(role)} />
-                      <span className={styles.roleCheckBadge} style={{ background: `${roleColors[role] || "#6b7280"}18`, color: roleColors[role] || "#6b7280" }}>
+                      <span className={styles.roleCheckBadge} style={{ background: `${ROLE_COLORS[role] || "#6b7280"}18`, color: ROLE_COLORS[role] || "#6b7280" }}>
                         <Shield size={10} />
-                        {roleLabels[role]}
+                        {roleLabel(role)}
                       </span>
                     </label>
                   ))}
@@ -465,9 +451,9 @@ export default function UsersPage() {
               )}
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowAddModal(false)}>{t("admin.users.cancel")}</button>
                 <button type="submit" className={styles.submitBtn} disabled={saving || formData.roles.length === 0}>
-                  {saving ? "Creating..." : "Create User"}
+                  {saving ? t("admin.users.creating") : t("admin.users.createUser")}
                 </button>
               </div>
             </form>

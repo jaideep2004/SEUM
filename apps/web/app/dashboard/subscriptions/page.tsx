@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import {
   CreditCard,
   Search,
@@ -50,6 +51,7 @@ const tierColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function SubscriptionsPage() {
+  const { lang, t } = useLanguage();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,11 +74,11 @@ export default function SubscriptionsPage() {
       setTenants(tenantData);
       setPlans(planData);
     } catch (err: any) {
-      setError(err.message || "Failed to load subscriptions");
+      setError(err.message || t("companies.subs.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -106,7 +108,7 @@ export default function SubscriptionsPage() {
       setModalTenant(null);
       await fetchData();
     } catch (err: any) {
-      setError(err.message || "Failed to update subscription");
+      setError(err.message || t("companies.subs.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -136,16 +138,32 @@ export default function SubscriptionsPage() {
     return sum + (t.billingCycle === "yearly" ? plan.priceYearly / 12 : plan.priceMonthly);
   }, 0);
 
+  const tierLabel = (tier: string | null | undefined) => {
+    if (!tier) return t("companies.subs.noPlan");
+    const map: Record<string, string> = {
+      starter: t("companies.subs.tierStarter"),
+      professional: t("companies.subs.tierProfessional"),
+      enterprise: t("companies.subs.tierEnterprise"),
+    };
+    return map[tier] || tier.replace("_", " ");
+  };
+  const billingLabel = (cycle: string | null | undefined) => {
+    if (!cycle) return t("companies.subs.monthly");
+    if (cycle === "yearly") return t("companies.subs.yearly");
+    if (cycle === "monthly") return t("companies.subs.monthly");
+    return cycle;
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <CreditCard size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Subscriptions</h1>
-          <p className={styles.headerSub}>Manage subscription plans across companies</p>
+          <h1 className={styles.headerTitle}>{t("companies.subs.title")}</h1>
+          <p className={styles.headerSub}>{t("companies.subs.subtitle")}</p>
         </div>
-        <button className={styles.refreshBtn} onClick={fetchData} title="Refresh">
-          <RefreshCw size={14} /> Refresh
+        <button className={styles.refreshBtn} onClick={fetchData} title={t("companies.subs.refresh")}>
+          <RefreshCw size={14} /> {t("companies.subs.refresh")}
         </button>
       </div>
 
@@ -154,28 +172,28 @@ export default function SubscriptionsPage() {
           <Building2 size={18} className={styles.statIcon} />
           <div>
             <span className={styles.statValue}>{tenants.length}</span>
-            <span className={styles.statLabel}>Total Companies</span>
+            <span className={styles.statLabel}>{t("companies.subs.totalCompanies")}</span>
           </div>
         </div>
         <div className={styles.statCard}>
           <CheckCircle2 size={18} className={styles.statIcon} />
           <div>
             <span className={styles.statValue}>{active.length}</span>
-            <span className={styles.statLabel}>Active Subscriptions</span>
+            <span className={styles.statLabel}>{t("companies.subs.activeSubs")}</span>
           </div>
         </div>
         <div className={styles.statCard}>
           <Wallet size={18} className={styles.statIcon} />
           <div>
-            <span className={styles.statValue}>{monthlyRecurring.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-            <span className={styles.statLabel}>Monthly Recurring (SAR)</span>
+            <span className={styles.statValue}>{formatNumber(monthlyRecurring, lang, 0)}</span>
+            <span className={styles.statLabel}>{t("companies.subs.mrr")}</span>
           </div>
         </div>
         <div className={styles.statCard}>
           <CalendarClock size={18} className={styles.statIcon} />
           <div>
             <span className={styles.statValue}>{renewingSoon.length}</span>
-            <span className={styles.statLabel}>Renewing in 30 Days</span>
+            <span className={styles.statLabel}>{t("companies.subs.renewing")}</span>
           </div>
         </div>
       </div>
@@ -185,78 +203,78 @@ export default function SubscriptionsPage() {
           <Search size={14} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Search company, email, domain..."
+            placeholder={t("companies.subs.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="all">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="all">{t("companies.subs.allStatuses")}</option>
+          <option value="active">{t("companies.subs.active")}</option>
+          <option value="inactive">{t("companies.subs.inactive")}</option>
         </select>
       </div>
 
       {error && <div className={styles.error}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div className={styles.empty}>Loading subscriptions...</div>
+        <div className={styles.empty}>{t("companies.subs.loading")}</div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Company</th>
-                <th>Plan</th>
-                <th>Billing</th>
-                <th>Renewal Date</th>
-                <th>Status</th>
+                <th>{t("companies.subs.colCompany")}</th>
+                <th>{t("companies.subs.colPlan")}</th>
+                <th>{t("companies.subs.colBilling")}</th>
+                <th>{t("companies.subs.colRenewal")}</th>
+                <th>{t("companies.subs.colStatus")}</th>
                 <th style={{ width: 130 }}></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t) => {
-                const plan = planById(t.planId);
-                const tc = tierColors[t.subscriptionTier] || tierColors.starter;
-                const renewalDays = t.subscriptionRenewalDate
-                  ? Math.ceil((new Date(t.subscriptionRenewalDate).getTime() - Date.now()) / 86400000)
+              {filtered.map((tt) => {
+                const plan = planById(tt.planId);
+                const tc = tierColors[tt.subscriptionTier] || tierColors.starter;
+                const renewalDays = tt.subscriptionRenewalDate
+                  ? Math.ceil((new Date(tt.subscriptionRenewalDate).getTime() - Date.now()) / 86400000)
                   : null;
                 return (
-                  <tr key={t.id}>
+                  <tr key={tt.id}>
                     <td>
-                      <div className={styles.companyName}>{t.name}</div>
-                      <div className={styles.cellSub}>{t.contactEmail || t.domain || "—"}</div>
+                      <div className={styles.companyName}>{tt.name}</div>
+                      <div className={styles.cellSub}>{tt.contactEmail || tt.domain || "—"}</div>
                     </td>
                     <td>
                       <span className={styles.tierBadge} style={{ background: tc.bg, color: tc.text }}>
-                        {plan?.name || t.subscriptionTier?.replace("_", " ") || "No plan"}
+                        {plan?.name || tierLabel(tt.subscriptionTier)}
                       </span>
                     </td>
-                    <td className={styles.billingCell}>{t.billingCycle || "monthly"}</td>
+                    <td className={styles.billingCell}>{billingLabel(tt.billingCycle)}</td>
                     <td>
-                      {t.subscriptionRenewalDate ? (
+                      {tt.subscriptionRenewalDate ? (
                         <span>
-                          {new Date(t.subscriptionRenewalDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          {formatDate(tt.subscriptionRenewalDate, lang)}
                           {renewalDays !== null && renewalDays >= 0 && renewalDays <= 30 && (
-                            <span className={styles.renewalSoon}>({renewalDays}d)</span>
+                            <span className={styles.renewalSoon}>({renewalDays}{t("companies.subs.daysSuffix")})</span>
                           )}
                         </span>
                       ) : "—"}
                     </td>
                     <td>
-                      <span className={`${styles.statusBadge} ${t.isActive ? styles.statusActive : styles.statusInactive}`}>
-                        {t.isActive ? "Active" : "Inactive"}
+                      <span className={`${styles.statusBadge} ${tt.isActive ? styles.statusActive : styles.statusInactive}`}>
+                        {tt.isActive ? t("companies.subs.active") : t("companies.subs.inactive")}
                       </span>
                     </td>
                     <td>
-                      <button className={styles.changeBtn} onClick={() => openModal(t)}>Change Plan</button>
+                      <button className={styles.changeBtn} onClick={() => openModal(tt)}>{t("companies.subs.changePlan")}</button>
                     </td>
                   </tr>
                 );
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className={styles.emptyState}>No companies found</td>
+                  <td colSpan={6} className={styles.emptyState}>{t("companies.subs.noCompanies")}</td>
                 </tr>
               )}
             </tbody>
@@ -269,7 +287,7 @@ export default function SubscriptionsPage() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <h3 className={styles.modalTitle}>Change Subscription</h3>
+                <h3 className={styles.modalTitle}>{t("companies.subs.changeTitle")}</h3>
                 <p className={styles.modalSub}>{modalTenant.name}</p>
               </div>
               <button className={styles.modalClose} onClick={() => setModalTenant(null)}><X size={15} /></button>
@@ -277,26 +295,26 @@ export default function SubscriptionsPage() {
 
             <div className={styles.modalBody}>
               <div className={styles.field}>
-                <label>Plan *</label>
+                <label>{t("companies.subs.plan")} *</label>
                 <select value={form.planId} onChange={(e) => setForm(f => ({ ...f, planId: e.target.value }))}>
-                  <option value="">Select a plan</option>
+                  <option value="">{t("companies.subs.selectPlan")}</option>
                   {plans.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} — {p.priceMonthly} SAR/mo ({p.maxUsers} users, {p.maxVehicles} vehicles)
+                      {p.name} — {p.priceMonthly} SAR/mo ({p.maxUsers} {t("companies.subs.users")}, {p.maxVehicles} {t("companies.subs.vehicles")})
                     </option>
                   ))}
                 </select>
               </div>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Billing Cycle</label>
+                  <label>{t("companies.subs.billingCycle")}</label>
                   <select value={form.billingCycle} onChange={(e) => setForm(f => ({ ...f, billingCycle: e.target.value }))}>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
+                    <option value="monthly">{t("companies.subs.monthlyCap")}</option>
+                    <option value="yearly">{t("companies.subs.yearlyCap")}</option>
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label>Renewal Date</label>
+                  <label>{t("companies.subs.renewalDate")}</label>
                   <input
                     type="date"
                     value={form.subscriptionRenewalDate}
@@ -305,7 +323,7 @@ export default function SubscriptionsPage() {
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Billing Email</label>
+                <label>{t("companies.subs.billingEmail")}</label>
                 <input
                   type="email"
                   value={form.billingEmail}
@@ -315,14 +333,14 @@ export default function SubscriptionsPage() {
               </div>
 
               {!form.planId && (
-                <div className={styles.warnNote}><AlertTriangle size={12} /> A plan must be selected to save.</div>
+                <div className={styles.warnNote}><AlertTriangle size={12} /> {t("companies.subs.planRequired")}</div>
               )}
             </div>
 
             <div className={styles.modalFooter}>
-              <button className={styles.cancelBtn} onClick={() => setModalTenant(null)}>Cancel</button>
+              <button className={styles.cancelBtn} onClick={() => setModalTenant(null)}>{t("companies.subs.cancel")}</button>
               <button className={styles.saveBtn} onClick={save} disabled={saving || !form.planId}>
-                {saving ? "Saving..." : "Save Subscription"}
+                {saving ? t("companies.subs.saving") : t("companies.subs.save")}
               </button>
             </div>
           </div>

@@ -299,3 +299,6 @@
   color: var(--color-text);
   font-size: var(--text-sm);
 }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }

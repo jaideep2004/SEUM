@@ -5,6 +5,7 @@ import {
   BarChart3, Download, Truck, Wrench, AlertTriangle, Clock,
   Gauge, TrendingDown, DollarSign, Calendar, FileText,
 } from "lucide-react";
+import { useLanguage, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -15,6 +16,7 @@ function daysUntil(dateStr: string) {
 }
 
 export default function FleetAnalyticsPage() {
+  const { lang, t } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,7 @@ export default function FleetAnalyticsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.loadingState}>
-          <div className={styles.spinner} /> Loading analytics...
+          <div className={styles.spinner} /> {t("fleet.analytics.loading")}
         </div>
       </div>
     );
@@ -66,7 +68,7 @@ export default function FleetAnalyticsPage() {
       <div className={styles.page}>
         <div className={styles.emptyState}>
           <BarChart3 size={48} style={{ opacity: 0.3 }} />
-          <p>No fleet data available.</p>
+          <p>{t("fleet.analytics.empty")}</p>
         </div>
       </div>
     );
@@ -84,12 +86,12 @@ export default function FleetAnalyticsPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Fleet Analytics</h1>
-          <p className={styles.pageDesc}>Comprehensive fleet performance dashboard</p>
+          <h1 className={styles.pageTitle}>{t("fleet.analytics.title")}</h1>
+          <p className={styles.pageDesc}>{t("fleet.analytics.desc")}</p>
         </div>
         <div className={styles.exportDropdown}>
           <button className={styles.exportBtn} onClick={() => handleExport("csv")}>
-            <Download size={14} /> Export CSV
+            <Download size={14} /> {t("fleet.analytics.exportCsv")}
           </button>
         </div>
       </div>
@@ -98,39 +100,39 @@ export default function FleetAnalyticsPage() {
       <div className={styles.kpiGrid}>
         <div className={styles.kpiCard}>
           <Truck size={20} style={{ color: "#3b82f6" }} />
-          <span className={styles.kpiLabel}>Total Buses</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.totalBuses")}</span>
           <span className={styles.kpiValue}>{summary.totalBuses}</span>
-          <span className={styles.kpiSub}>{summary.activeBuses} active</span>
+          <span className={styles.kpiSub}>{summary.activeBuses} {t("fleet.analytics.activeWord")}</span>
         </div>
         <div className={styles.kpiCard}>
           <Wrench size={20} style={{ color: "#f59e0b" }} />
-          <span className={styles.kpiLabel}>Maintenance</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.maintenance")}</span>
           <span className={styles.kpiValue}>{summary.maintenanceBuses}</span>
-          <span className={styles.kpiSub}>{summary.retiredBuses} retired</span>
+          <span className={styles.kpiSub}>{summary.retiredBuses} {t("fleet.analytics.retiredWord")}</span>
         </div>
         <div className={styles.kpiCard}>
           <Gauge size={20} style={{ color: "#10b981" }} />
-          <span className={styles.kpiLabel}>Utilization</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.utilization")}</span>
           <span className={styles.kpiValue}>{utilizationRate}%</span>
-          <span className={styles.kpiSub}>{usedBuses} of {summary.totalBuses} in use</span>
+          <span className={styles.kpiSub}>{usedBuses} {t("fleet.analytics.ofWord")} {summary.totalBuses} {t("fleet.analytics.inUse")}</span>
         </div>
         <div className={styles.kpiCard}>
           <Calendar size={20} style={{ color: "#8b5cf6" }} />
-          <span className={styles.kpiLabel}>Avg Bus Age</span>
-          <span className={styles.kpiValue}>{avgBusAge} yrs</span>
-          <span className={styles.kpiSub}>Fleet average</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.avgAge")}</span>
+          <span className={styles.kpiValue}>{avgBusAge} {t("fleet.analytics.yrs")}</span>
+          <span className={styles.kpiSub}>{t("fleet.analytics.fleetAvg")}</span>
         </div>
         <div className={styles.kpiCard}>
           <TrendingDown size={20} style={{ color: "#ef4444" }} />
-          <span className={styles.kpiLabel}>Avg Efficiency</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.avgEff")}</span>
           <span className={styles.kpiValue}>{fuelEfficiency.avgKmPerLiter ?? "—"}</span>
-          <span className={styles.kpiSub}>km/L</span>
+          <span className={styles.kpiSub}>{t("fleet.analytics.kmPerL")}</span>
         </div>
         <div className={styles.kpiCard}>
           <Clock size={20} style={{ color: "#f97316" }} />
-          <span className={styles.kpiLabel}>Renewals Due</span>
+          <span className={styles.kpiLabel}>{t("fleet.analytics.renewals")}</span>
           <span className={styles.kpiValue}>{upcomingRenewals.length}</span>
-          <span className={styles.kpiSub}>within 30 days</span>
+          <span className={styles.kpiSub}>{t("fleet.analytics.within30")}</span>
         </div>
       </div>
 
@@ -138,7 +140,7 @@ export default function FleetAnalyticsPage() {
       <div className={styles.chartsRow}>
         {/* Utilization Gauge */}
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Fleet Utilization</h3>
+          <h3 className={styles.chartTitle}>{t("fleet.analytics.utilTitle")}</h3>
           <div className={styles.gaugeWrap}>
             <svg viewBox="0 0 200 120" className={styles.gaugeSvg}>
               <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--color-border)" strokeWidth="16" strokeLinecap="round" />
@@ -151,7 +153,7 @@ export default function FleetAnalyticsPage() {
                 {utilizationRate}%
               </text>
               <text x="100" y="98" textAnchor="middle" fontSize="10" fill="var(--color-text-secondary)">
-                {usedBuses} of {summary.totalBuses} buses assigned
+                {usedBuses} {t("fleet.analytics.ofWord")} {summary.totalBuses} {t("fleet.analytics.assigned")}
               </text>
             </svg>
           </div>
@@ -159,24 +161,24 @@ export default function FleetAnalyticsPage() {
 
         {/* Bus Age Bar */}
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Bus Age Distribution</h3>
+          <h3 className={styles.chartTitle}>{t("fleet.analytics.ageDist")}</h3>
           <div className={styles.barChart}>
             <div className={styles.barRow}>
-              <span className={styles.barLabel}>0-3 yrs</span>
+              <span className={styles.barLabel}>0-3 {t("fleet.analytics.yrs")}</span>
               <div className={styles.barTrack}>
                 <div className={styles.barFill} style={{ width: "45%", background: "#10b981" }} />
               </div>
               <span className={styles.barCount}>—</span>
             </div>
             <div className={styles.barRow}>
-              <span className={styles.barLabel}>4-7 yrs</span>
+              <span className={styles.barLabel}>4-7 {t("fleet.analytics.yrs")}</span>
               <div className={styles.barTrack}>
                 <div className={styles.barFill} style={{ width: "30%", background: "#3b82f6" }} />
               </div>
               <span className={styles.barCount}>—</span>
             </div>
             <div className={styles.barRow}>
-              <span className={styles.barLabel}>8+ yrs</span>
+              <span className={styles.barLabel}>8+ {t("fleet.analytics.yrs")}</span>
               <div className={styles.barTrack}>
                 <div className={styles.barFill} style={{ width: "25%", background: "#f59e0b" }} />
               </div>
@@ -187,7 +189,7 @@ export default function FleetAnalyticsPage() {
 
         {/* Fuel Efficiency Trend */}
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>Fuel Efficiency (km/L)</h3>
+          <h3 className={styles.chartTitle}>{t("fleet.analytics.fuelTrend")}</h3>
           {fuelEfficiency.trend?.length > 0 ? (
             <svg viewBox="0 0 300 140" className={styles.trendSvg}>
               <defs>
@@ -215,14 +217,14 @@ export default function FleetAnalyticsPage() {
                   <g key={i}>
                     <circle cx={x} cy={y} r="3" fill="#10b981" stroke="#fff" strokeWidth="1.5" />
                     <text x={x} y={142} textAnchor="middle" fill="var(--color-text-tertiary)" fontSize="7">
-                      {new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                      {new Date(d.date).toLocaleDateString(localeOf(lang), { day: "2-digit", month: "short" })}
                     </text>
                   </g>
                 );
               })}
             </svg>
           ) : (
-            <p className={styles.chartEmpty}>No efficiency data yet</p>
+            <p className={styles.chartEmpty}>{t("fleet.analytics.noEff")}</p>
           )}
         </div>
       </div>
@@ -232,11 +234,11 @@ export default function FleetAnalyticsPage() {
         {/* Upcoming Renewals Widget */}
         <div className={styles.renewalsCard}>
           <div className={styles.cardHeader}>
-            <h3 className={styles.chartTitle}>Upcoming Renewals</h3>
+            <h3 className={styles.chartTitle}>{t("fleet.analytics.renewalsTitle")}</h3>
             <FileText size={16} style={{ color: "var(--color-text-secondary)" }} />
           </div>
           {upcomingRenewals.length === 0 ? (
-            <p className={styles.chartEmpty}>No renewals due in the next 30 days</p>
+            <p className={styles.chartEmpty}>{t("fleet.analytics.noRenewals")}</p>
           ) : (
             <div className={styles.renewalList}>
               {upcomingRenewals.map((r: any) => {
@@ -270,9 +272,9 @@ export default function FleetAnalyticsPage() {
         {/* Maintenance Cost Per Bus */}
         <div className={styles.chartCard}>
           <div className={styles.cardHeader}>
-            <h3 className={styles.chartTitle}>Maintenance Cost / Bus</h3>
+            <h3 className={styles.chartTitle}>{t("fleet.analytics.maintTitle")}</h3>
             {maintCosts.length > 0 ? (
-              <span className={styles.maintTotalBadge}>Fleet total: SAR {Number(maintGrandTotal).toLocaleString()}</span>
+              <span className={styles.maintTotalBadge}>{t("fleet.analytics.fleetTotal")} {t("fleet.analytics.sar")} {Number(maintGrandTotal).toLocaleString()}</span>
             ) : (
               <DollarSign size={16} style={{ color: "var(--color-text-tertiary)" }} />
             )}
@@ -280,7 +282,7 @@ export default function FleetAnalyticsPage() {
           {maintCosts.length === 0 ? (
             <div className={styles.chartEmpty}>
               <DollarSign size={24} style={{ opacity: 0.3 }} />
-              <p>No maintenance cost records yet.<br />Costs appear once tasks are invoiced.</p>
+              <p>{t("fleet.analytics.noMaint1")}<br />{t("fleet.analytics.noMaint2")}</p>
             </div>
           ) : (
             <div className={styles.maintWrap}>
@@ -295,25 +297,25 @@ export default function FleetAnalyticsPage() {
                       <div className={styles.maintBarTrack}>
                         <div className={styles.maintBarFill} style={{ width: `${pct}%` }} />
                       </div>
-                      <span className={styles.maintBarValue}>SAR {Number(b.totalCost).toLocaleString()}</span>
-                      <span className={styles.maintBarCount}>{b.taskCount} task{b.taskCount !== 1 ? "s" : ""}</span>
+                      <span className={styles.maintBarValue}>{t("fleet.analytics.sar")} {Number(b.totalCost).toLocaleString()}</span>
+                      <span className={styles.maintBarCount}>{b.taskCount} {b.taskCount !== 1 ? t("fleet.analytics.tasksPl") : t("fleet.analytics.taskSg")}</span>
                     </div>
                   );
                 })}
               </div>
               {maintCosts.length > 8 && (
-                <p className={styles.maintMore}>+{maintCosts.length - 8} more buses with costs</p>
+                <p className={styles.maintMore}>+{maintCosts.length - 8} {t("fleet.analytics.moreBuses")}</p>
               )}
               <div className={styles.maintTableWrap}>
                 <table className={styles.maintTable}>
                   <thead>
-                    <tr>
-                      <th>Bus</th>
-                      <th>Tasks</th>
-                      <th style={{ textAlign: "right" }}>Total Cost</th>
-                      <th style={{ textAlign: "right" }}>Parts</th>
-                      <th style={{ textAlign: "right" }}>Labor</th>
-                    </tr>
+                      <tr>
+                        <th>{t("fleet.analytics.colBus")}</th>
+                        <th>{t("fleet.analytics.colTasks")}</th>
+                        <th style={{ textAlign: "right" }}>{t("fleet.analytics.colTotal")}</th>
+                        <th style={{ textAlign: "right" }}>{t("fleet.analytics.colParts")}</th>
+                        <th style={{ textAlign: "right" }}>{t("fleet.analytics.colLabor")}</th>
+                      </tr>
                   </thead>
                   <tbody>
                     {maintCosts.map((b: any) => (
@@ -325,9 +327,9 @@ export default function FleetAnalyticsPage() {
                           )}
                         </td>
                         <td>{b.taskCount}</td>
-                        <td style={{ textAlign: "right", fontWeight: 700 }}>SAR {Number(b.totalCost).toLocaleString()}</td>
-                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.partsCost != null ? `SAR ${Number(b.partsCost).toLocaleString()}` : "—"}</td>
-                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.laborCost != null ? `SAR ${Number(b.laborCost).toLocaleString()}` : "—"}</td>
+                        <td style={{ textAlign: "right", fontWeight: 700 }}>{t("fleet.analytics.sar")} {Number(b.totalCost).toLocaleString()}</td>
+                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.partsCost != null ? `${t("fleet.analytics.sar")} ${Number(b.partsCost).toLocaleString()}` : "—"}</td>
+                        <td style={{ textAlign: "right", color: "var(--color-text-secondary)" }}>{b.laborCost != null ? `${t("fleet.analytics.sar")} ${Number(b.laborCost).toLocaleString()}` : "—"}</td>
                       </tr>
                     ))}
                   </tbody>

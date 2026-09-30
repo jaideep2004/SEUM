@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as payrollController from '../controllers/employeePayrollController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-const HR_WRITE = ['super_admin', 'company_admin', 'hr_manager', 'finance_accountant'];
-const HR_READ = [...HR_WRITE, 'operations_manager'];
+const HR_WRITE = CAP.payrollWrite;
+const HR_READ = CAP.payrollRead;
 
 router.post('/salary-structures', authenticate, requireRole(...HR_WRITE), payrollController.upsertStructure);
 router.get('/salary-structures', authenticate, requireRole(...HR_READ), payrollController.listStructures);

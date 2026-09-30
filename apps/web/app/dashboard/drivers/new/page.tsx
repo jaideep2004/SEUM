@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, Trash2, Plus, ImageIcon, Camera } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
-const DOC_TYPES: Record<string, string> = {
-  license: "License", passport: "Passport", visa: "Visa", id_card: "ID Card",
-  medical: "Medical", contract: "Contract", training_cert: "Training Cert", other: "Other",
+const DOC_KEYS: Record<string, string> = {
+  license: "drivers.docTypes.license", passport: "drivers.docTypes.passport", visa: "drivers.docTypes.visa", id_card: "drivers.docTypes.idCard",
+  medical: "drivers.docTypes.medical", contract: "drivers.docTypes.contract", training_cert: "drivers.docTypes.trainingCert", other: "drivers.docTypes.other",
 };
 
 interface DocDraft {
@@ -23,6 +24,7 @@ interface DocDraft {
 const emptyDoc: DocDraft = { documentType: "license", documentNumber: "", issueDate: "", expiryDate: "" };
 
 export default function NewDriverPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState("");
@@ -56,28 +58,28 @@ export default function NewDriverPage() {
 
   async function uploadPhoto(driverId: string) {
     if (!photo) return;
-    setProgress("Uploading photo...");
+    setProgress(t("drivers.new.progressPhoto"));
     const fd = new FormData();
     fd.append("photo", photo);
     const res = await fetch(`${API}/drivers/${driverId}/photo`, {
       method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("seum_access_token")}` }, body: fd,
     });
     const json = await res.json().catch(() => null);
-    if (!json?.success) throw new Error(json?.error?.message || "Photo upload failed");
+    if (!json?.success) throw new Error(json?.error?.message || t("drivers.new.photoUploadFailed"));
   }
 
   async function uploadDocuments(driverId: string) {
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
       if (!doc.documentType) continue;
-      setProgress(`Adding document ${i + 1} of ${documents.length}...`);
+      setProgress(`${t("drivers.new.progressDocPre")} ${i + 1} ${t("drivers.new.progressDocMid")} ${documents.length}...`);
       const res = await fetch(`${API}/drivers/${driverId}/documents`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("seum_access_token")}` },
         body: JSON.stringify(doc),
       });
       const json = await res.json().catch(() => null);
-      if (!json?.success) throw new Error(json?.error?.message || `Failed to add document (${DOC_TYPES[doc.documentType] || doc.documentType})`);
+      if (!json?.success) throw new Error(json?.error?.message || `${t("drivers.new.docFailedPre")} (${t(DOC_KEYS[doc.documentType] || doc.documentType)})`);
     }
   }
 
@@ -86,14 +88,14 @@ export default function NewDriverPage() {
     setSaving(true);
     setError("");
     try {
-      setProgress("Creating driver...");
+      setProgress(t("drivers.new.progressCreating"));
       const res = await fetch(`${API}/drivers`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("seum_access_token")}` },
         body: JSON.stringify(form),
       });
       const json = await res.json();
-      if (!json.success) { setError(json.error?.message || json.message || "Failed to create driver"); return; }
+      if (!json.success) { setError(json.error?.message || json.message || t("drivers.new.failedCreate")); return; }
       const driverId = json.data.id;
 
       await uploadPhoto(driverId);
@@ -102,34 +104,34 @@ export default function NewDriverPage() {
       setProgress("");
       router.push(`/dashboard/drivers/${driverId}`);
     } catch (err: any) {
-      setError(err.message || "Network error");
+      setError(err.message || t("drivers.common.networkError"));
     } finally { setSaving(false); }
   }
 
   return (
     <div className={styles.page}>
-      <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> Back to Drivers</Link>
-      <h1 className={styles.pageTitle}>Add New Driver</h1>
+      <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> {t("drivers.profile.back")}</Link>
+      <h1 className={styles.pageTitle}>{t("drivers.new.title")}</h1>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <div className={styles.error}>{error}</div>}
         {progress && <div className={styles.progress}>{progress}</div>}
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Photo</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.new.secPhoto")}</h2>
           <div className={styles.photoRow}>
             <div className={styles.photoPreview}>
-              {photoPreview ? <img src={photoPreview} alt="Driver preview" className={styles.photoImg} /> : <Camera size={22} />}
+              {photoPreview ? <img src={photoPreview} alt={t("drivers.new.photoAlt")} className={styles.photoImg} /> : <Camera size={22} />}
             </div>
             <div className={styles.photoActions}>
               <label className={styles.photoBtn}>
                 <Upload size={13} />
-                {photo ? "Change Photo" : "Upload Photo"}
+                {photo ? t("drivers.new.changePhoto") : t("drivers.new.uploadPhoto")}
                 <input type="file" accept="image/*" onChange={handlePhoto} hidden />
               </label>
               {photo && (
                 <button type="button" className={styles.photoRemove} onClick={() => { setPhoto(null); setPhotoPreview(""); }}>
-                  <Trash2 size={13} /> Remove
+                  <Trash2 size={13} /> {t("drivers.new.removePhoto")}
                 </button>
               )}
               {photo && <span className={styles.photoHint}><ImageIcon size={12} /> {photo.name}</span>}
@@ -138,64 +140,64 @@ export default function NewDriverPage() {
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Account</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.new.secAccount")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>Full Name *</label>
-              <input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="e.g. Khalid Al-Ghamdi" />
+              <label>{t("drivers.new.fFullNameReq")}</label>
+              <input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder={t("drivers.new.phName")} />
             </div>
             <div className={styles.field}>
-              <label>Email *</label>
-              <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required placeholder="driver@company.com" />
+              <label>{t("drivers.new.fEmailReq")}</label>
+              <input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required placeholder={t("drivers.new.phEmail")} />
             </div>
             <div className={styles.field}>
-              <label>Password *</label>
-              <input type="password" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={6} placeholder="Min 6 characters" />
+              <label>{t("drivers.new.fPasswordReq")}</label>
+              <input type="password" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={6} placeholder={t("drivers.new.phPassword")} />
             </div>
             <div className={styles.field}>
-              <label>Employee Code</label>
-              <input value={form.employeeCode} onChange={(e) => update("employeeCode", e.target.value)} placeholder="e.g. DRV-001" />
+              <label>{t("drivers.new.fEmpCode")}</label>
+              <input value={form.employeeCode} onChange={(e) => update("employeeCode", e.target.value)} placeholder={t("drivers.new.phEmpCode")} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>License & Identity</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.profile.secLicense")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>License Number</label>
+              <label>{t("drivers.profile.fLicenseNumber")}</label>
               <input value={form.licenseNumber} onChange={(e) => update("licenseNumber", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>License Expiry</label>
+              <label>{t("drivers.profile.fLicenseExpiry")}</label>
               <input type="date" value={form.licenseExpiry} onChange={(e) => update("licenseExpiry", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>License Category</label>
-              <input value={form.licenseCategory} onChange={(e) => update("licenseCategory", e.target.value)} placeholder="e.g. B, C, D" />
+              <label>{t("drivers.profile.fLicenseCategory")}</label>
+              <input value={form.licenseCategory} onChange={(e) => update("licenseCategory", e.target.value)} placeholder={t("drivers.new.phLicenseCat")} />
             </div>
             <div className={styles.field}>
-              <label>Passport Number</label>
+              <label>{t("drivers.profile.fPassportNumber")}</label>
               <input value={form.passportNumber} onChange={(e) => update("passportNumber", e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Personal Info</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.new.secPersonal")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>Nationality</label>
-              <input value={form.nationality} onChange={(e) => update("nationality", e.target.value)} placeholder="e.g. Saudi" />
+              <label>{t("drivers.profile.fNationality")}</label>
+              <input value={form.nationality} onChange={(e) => update("nationality", e.target.value)} placeholder={t("drivers.new.phNationality")} />
             </div>
             <div className={styles.field}>
-              <label>Date of Birth</label>
+              <label>{t("drivers.profile.fDob")}</label>
               <input type="date" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Blood Type</label>
+              <label>{t("drivers.profile.fBloodType")}</label>
               <select value={form.bloodType} onChange={(e) => update("bloodType", e.target.value)}>
-                <option value="">Select</option>
+                <option value="">{t("drivers.edit.bloodSelect")}</option>
                 <option value="A+">A+</option><option value="A-">A-</option>
                 <option value="B+">B+</option><option value="B-">B-</option>
                 <option value="AB+">AB+</option><option value="AB-">AB-</option>
@@ -203,62 +205,62 @@ export default function NewDriverPage() {
               </select>
             </div>
             <div className={styles.field}>
-              <label>Medical Fitness Expiry</label>
+              <label>{t("drivers.profile.fMedicalExpiry")}</label>
               <input type="date" value={form.medicalFitnessExpiry} onChange={(e) => update("medicalFitnessExpiry", e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Employment & Emergency</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.new.secEmployment")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>Hire Date</label>
+              <label>{t("drivers.profile.fHireDate")}</label>
               <input type="date" value={form.hireDate} onChange={(e) => update("hireDate", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Emergency Contact Name</label>
+              <label>{t("drivers.edit.fEmergencyName")}</label>
               <input value={form.emergencyContactName} onChange={(e) => update("emergencyContactName", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Emergency Contact Phone</label>
-              <input value={form.emergencyContactPhone} onChange={(e) => update("emergencyContactPhone", e.target.value)} placeholder="+966 5X XXX XXXX" />
+              <label>{t("drivers.edit.fEmergencyPhone")}</label>
+              <input value={form.emergencyContactPhone} onChange={(e) => update("emergencyContactPhone", e.target.value)} placeholder={t("drivers.new.phEmergencyPhone")} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
           <div className={styles.docHeader}>
-            <h2 className={styles.sectionTitle}>Documents</h2>
+            <h2 className={styles.sectionTitle}>{t("drivers.profile.tabDocs")}</h2>
             <button type="button" className={styles.addDocBtn} onClick={() => setDocuments(docs => [...docs, emptyDoc])}>
-              <Plus size={13} /> Add Document
+              <Plus size={13} /> {t("drivers.profile.addDocBtn")}
             </button>
           </div>
           {documents.length === 0 ? (
-            <p className={styles.docEmpty}>No documents added — add license, medical fitness, passport etc.</p>
+            <p className={styles.docEmpty}>{t("drivers.new.docEmpty")}</p>
           ) : (
             <div className={styles.docList}>
               {documents.map((doc, i) => (
                 <div key={i} className={styles.docRow}>
                   <div className={styles.field}>
-                    <label>Type</label>
+                    <label>{t("drivers.profile.docType")}</label>
                     <select value={doc.documentType} onChange={(e) => updateDoc(i, "documentType", e.target.value)}>
-                      {Object.entries(DOC_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      {Object.entries(DOC_KEYS).map(([k, key]) => <option key={k} value={k}>{t(key)}</option>)}
                     </select>
                   </div>
                   <div className={styles.field}>
-                    <label>Document Number</label>
+                    <label>{t("drivers.profile.docNumber")}</label>
                     <input value={doc.documentNumber} onChange={(e) => updateDoc(i, "documentNumber", e.target.value)} />
                   </div>
                   <div className={styles.field}>
-                    <label>Issue Date</label>
+                    <label>{t("drivers.profile.issueDate")}</label>
                     <input type="date" value={doc.issueDate} onChange={(e) => updateDoc(i, "issueDate", e.target.value)} />
                   </div>
                   <div className={styles.field}>
-                    <label>Expiry Date</label>
+                    <label>{t("drivers.profile.expiryDate")}</label>
                     <input type="date" value={doc.expiryDate} onChange={(e) => updateDoc(i, "expiryDate", e.target.value)} />
                   </div>
-                  <button type="button" className={styles.docRemoveBtn} onClick={() => setDocuments(docs => docs.filter((_, j) => j !== i))} title="Remove document">
+                  <button type="button" className={styles.docRemoveBtn} onClick={() => setDocuments(docs => docs.filter((_, j) => j !== i))} title={t("drivers.new.removeDocTitle")}>
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -268,9 +270,9 @@ export default function NewDriverPage() {
         </div>
 
         <div className={styles.actions}>
-          <Link href="/dashboard/drivers" className={styles.cancelBtn}>Cancel</Link>
+          <Link href="/dashboard/drivers" className={styles.cancelBtn}>{t("common.cancel")}</Link>
           <button className={styles.saveBtn} disabled={saving}>
-            <Save size={14} /> {saving ? "Creating..." : "Create Driver"}
+            <Save size={14} /> {saving ? t("drivers.new.creating") : t("drivers.new.createDriver")}
           </button>
         </div>
       </form>

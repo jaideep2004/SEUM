@@ -1,0 +1,39 @@
+/* ─── Global RTL defaults (Arabic mode, <html dir="rtl">) ───
+ * Flex/grid layouts mirror automatically. These rules cover the parts
+ * the browser does not flip on its own. Page modules that use physical
+ * left/right properties add their own `:global([dir="rtl"])` block. */
+
+[dir="rtl"] body {
+  direction: rtl;
+  letter-spacing: 0 !important;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea {
+  text-align: right;
+}
+
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="date"],
+[dir="rtl"] input[type="time"],
+[dir="rtl"] input[type="email"] {
+  text-align: right;
+}
+
+/* Mixed Arabic/Latin strings (names, plates, references) stay readable. */
+[dir="rtl"] .bidi,
+[dir="rtl"] code,
+[dir="rtl"] pre {
+  unicode-bidi: plaintext;
+}
+
+/* Opt-in flip for directional icons (back arrows, pagination chevrons). */
+[dir="rtl"] .flip-rtl {
+  transform: scaleX(-1);
+}
+
+/* Tables flow right-to-left natively; keep headers aligned with body. */
+[dir="rtl"] th {
+  text-align: right;
+}

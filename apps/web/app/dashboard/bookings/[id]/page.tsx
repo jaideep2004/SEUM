@@ -7,6 +7,7 @@ import {
   ShieldCheck, FileText, History, Edit3, Save, AlertTriangle, Clock3, Check,
 } from "lucide-react";
 import { bookingService, downloadBookingTicket, type Booking, type CommunicationLogEntry, type CommunicationType, type BookingHistoryEntry } from "@/services/bookings";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -40,29 +41,18 @@ const CHANNEL_COLORS: Record<string, string> = {
   whatsapp: "#22c55e",
 };
 
-const COMM_TYPE_LABELS: Record<string, string> = {
-  confirmation: "Confirmation",
-  receipt: "Payment receipt",
-  refund: "Refund receipt",
-  cancellation: "Cancellation",
-  reminder: "Trip reminder",
-  delay_alert: "Delay alert",
+const COMM_TYPE_KEYS: Record<string, string> = {
+  confirmation: "bookings.detail.commConfirmation",
+  receipt: "bookings.detail.commReceipt",
+  refund: "bookings.detail.commRefund",
+  cancellation: "bookings.detail.commCancellation",
+  reminder: "bookings.detail.commReminder",
+  delay_alert: "bookings.detail.commDelay",
 };
 
 function statusStyle(map: Record<string, string>, status: string) {
   const hex = map[status] || "#6b7280";
   return { color: hex, background: `${hex}18` };
-}
-
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function fmtDateTime(d: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  return dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " " + dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 function fmtTime(t: string | null) {
@@ -71,10 +61,6 @@ function fmtTime(t: string | null) {
   const date = new Date();
   date.setHours(Number(h), Number(m));
   return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-}
-
-function fmtMoney(n: number | null) {
-  return n == null ? "—" : Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function getUserRoles(): string[] {
@@ -88,6 +74,7 @@ function getUserRoles(): string[] {
 }
 
 export default function BookingDetailPage({ params }: { params: { id: string } }) {
+  const { lang, t } = useLanguage();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -167,13 +154,13 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     try {
       const r = await bookingService.resendCommunication(params.id, type as CommunicationType);
       if (r.sent) {
-        setActionMsg(`Email sent — ${COMM_TYPE_LABELS[type]} delivered.`);
+        setActionMsg(`${t("bookings.detail.emailSentA")}${t(COMM_TYPE_KEYS[type] || type)} ${t("bookings.detail.deliveredB")}`);
       } else {
-        setActionError(`Email failed (${r.reason || "unknown"}). Check customer email and SMTP settings.`);
+        setActionError(`${t("bookings.detail.emailFailedA")}${r.reason || t("bookings.detail.unknown")}${t("bookings.detail.emailFailedB")}`);
       }
       fetchCommunications(params.id);
     } catch (err) {
-      setActionError((err as Error).message || "Failed to send email");
+      setActionError((err as Error).message || t("bookings.detail.errSendEmail"));
     }
     setSendingType(null);
   }
@@ -181,7 +168,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
   async function sendManualDelay() {
     setActionError(""); setActionMsg("");
     if (!booking?.trip?.id) {
-      setActionError("Delay alert requires an assigned trip — this booking has no trip yet.");
+      setActionError(t("bookings.detail.errDelayTrip"));
       return;
     }
     setSendingType("delay_alert");
@@ -190,10 +177,10 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         delay_minutes: 0,
         delay_reason: "Manual alert",
       });
-      setActionMsg(`Delay alert sent to ${r.sent} passenger${r.sent === 1 ? "" : "s"} on this trip.`);
+      setActionMsg(`${t("bookings.detail.delaySentA")}${formatNumber(r.sent, lang)} ${r.sent === 1 ? t("bookings.detail.passenger") : t("bookings.detail.passengers")} ${t("bookings.detail.delaySentB")}`);
       fetchCommunications(booking!.id);
     } catch (err) {
-      setActionError((err as Error).message || "Failed to send delay alert");
+      setActionError((err as Error).message || t("bookings.detail.errDelay"));
     }
     setSendingType(null);
   }
@@ -212,23 +199,23 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
   }
 
   function confirmBooking() {
-    runAction(() => bookingService.confirm(params.id), "Booking confirmed.");
+    runAction(() => bookingService.confirm(params.id), t("bookings.detail.confirmedMsg"));
   }
 
   function submitForApproval() {
-    runAction(() => bookingService.submit(params.id), "Booking submitted for approval.");
+    runAction(() => bookingService.submit(params.id), t("bookings.detail.submittedMsg"));
   }
 
   function approveBooking() {
-    runAction(() => bookingService.approve(params.id), "Booking approved — moved to planning queue.");
+    runAction(() => bookingService.approve(params.id), t("bookings.detail.approvedMsg"));
   }
 
   function submitReject() {
-    if (!rejectReason.trim()) { setActionError("Rejection reason is required."); return; }
+    if (!rejectReason.trim()) { setActionError(t("bookings.detail.rejectReasonRequired")); return; }
     setRejectOpen(false);
     const reason = rejectReason.trim();
     setRejectReason("");
-    runAction(() => bookingService.reject(params.id, reason), "Booking rejected.");
+    runAction(() => bookingService.reject(params.id, reason), t("bookings.detail.rejectedMsg"));
   }
 
   async function savePriceInvoice() {
@@ -242,7 +229,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       body.invoice_reference = editInvoice.trim() || null;
       const updated = await bookingService.update(params.id, body);
       setBooking(updated);
-      setActionMsg("Price / invoice updated.");
+      setActionMsg(t("bookings.detail.priceUpdated"));
       fetchHistory(params.id);
     } catch (err) {
       setActionError((err as Error).message);
@@ -251,15 +238,15 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
   }
 
   function submitCancel() {
-    if (!cancelReason.trim()) { setActionError("A cancellation reason is required."); return; }
+    if (!cancelReason.trim()) { setActionError(t("bookings.detail.cancelReasonRequired")); return; }
     setActionError("");
     setCancelOpen(false);
-    runAction(() => bookingService.cancel(params.id, cancelReason.trim()), "Booking cancelled.");
+    runAction(() => bookingService.cancel(params.id, cancelReason.trim()), t("bookings.detail.cancelledMsg"));
   }
 
   function refundBooking() {
-    if (!window.confirm("Refund this booking? Paid amount will be returned and the booking marked as refunded.")) return;
-    runAction(() => bookingService.refund(params.id), "Booking refunded.");
+    if (!window.confirm(t("bookings.detail.refundConfirm"))) return;
+    runAction(() => bookingService.refund(params.id), t("bookings.detail.refundedMsg"));
   }
 
   async function downloadTicket() {
@@ -274,12 +261,12 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     setDownloading(false);
   }
 
-  if (loading) return <div className={styles.page}><div className={styles.loading}>Loading booking...</div></div>;
+  if (loading) return <div className={styles.page}><div className={styles.loading}>{t("bookings.detail.loading")}</div></div>;
   if (error || !booking) {
     return (
       <div className={styles.page}>
-        <div className={styles.errorBox}>{error || "Booking not found"}</div>
-        <Link href="/dashboard/bookings" className={styles.backBtn}><ArrowLeft size={14} /> Back to Bookings</Link>
+        <div className={styles.errorBox}>{error || t("bookings.detail.notFound")}</div>
+        <Link href="/dashboard/bookings" className={styles.backBtn}><ArrowLeft size={14} /> {t("bookings.detail.backToBookings")}</Link>
       </div>
     );
   }
@@ -294,60 +281,60 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className={styles.page}>
-      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> Bookings</Link>
+      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> {t("bookings.detail.back")}</Link>
 
       <div className={styles.header}>
         <div>
           <div className={styles.titleRow}>
             <h1 className={styles.monoRef}>{booking.bookingReference}</h1>
             <span className={styles.statusBadge} style={statusStyle(STATUS_COLORS, booking.status)}>{booking.status.replace('_', ' ')}</span>
-            <span className={styles.statusBadge} style={statusStyle(PAYMENT_COLORS, booking.paymentStatus)}>payment: {booking.paymentStatus}</span>
-            <span className={styles.statusBadge} style={statusStyle(CHANNEL_COLORS, (booking as any).channel || 'internal')}>channel: {String((booking as any).channel || 'internal').replace('_',' ')}</span>
+            <span className={styles.statusBadge} style={statusStyle(PAYMENT_COLORS, booking.paymentStatus)}>{t("bookings.detail.paymentPrefix")} {booking.paymentStatus}</span>
+            <span className={styles.statusBadge} style={statusStyle(CHANNEL_COLORS, (booking as any).channel || 'internal')}>{t("bookings.detail.channelPrefix")} {String((booking as any).channel || 'internal').replace('_',' ')}</span>
             {booking.invoiceReference && <span className={styles.statusBadge} style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}><FileText size={11} /> {booking.invoiceReference}</span>}
           </div>
-          <p className={styles.subtitle}>Booked {fmtDate(booking.bookingDate)} · {booking.numberOfPassengers} passenger{booking.numberOfPassengers === 1 ? "" : "s"} {booking.trip.tripType ? `· ${booking.trip.tripType}` : (booking as any).tripTypeRequested ? `· ${(booking as any).tripTypeRequested}` : ""} {booking.trip.route.origin ? `· ${booking.trip.route.origin} → ${booking.trip.route.destination}` : (booking as any).pickupLocation ? `· ${(booking as any).pickupLocation} → ${(booking as any).destinationLocation}` : ""} {(booking as any).requestedDate ? `· ${fmtDate((booking as any).requestedDate)} ${(booking as any).requestedTime || ''}` : ''}</p>
+          <p className={styles.subtitle}>{t("bookings.detail.booked")} {formatDate(booking.bookingDate, lang)} · {formatNumber(booking.numberOfPassengers, lang)} {booking.numberOfPassengers === 1 ? t("bookings.detail.passenger") : t("bookings.detail.passengers")} {booking.trip.tripType ? `· ${booking.trip.tripType}` : (booking as any).tripTypeRequested ? `· ${(booking as any).tripTypeRequested}` : ""} {booking.trip.route.origin ? `· ${booking.trip.route.origin} → ${booking.trip.route.destination}` : (booking as any).pickupLocation ? `· ${(booking as any).pickupLocation} → ${(booking as any).destinationLocation}` : ""} {(booking as any).requestedDate ? `· ${formatDate((booking as any).requestedDate, lang)} ${(booking as any).requestedTime || ''}` : ''}</p>
         </div>
         <div className={styles.actions}>
           {canSubmit && (
             <button className={styles.actionBtn} onClick={submitForApproval} disabled={acting} style={{ borderColor: '#f97316', color: '#c2410c' }}>
-              <Send size={14} /> Submit for Approval
+              <Send size={14} /> {t("bookings.detail.submitApproval")}
             </button>
           )}
           {canApproveReject && (
             <>
               <button className={styles.actionBtn} onClick={approveBooking} disabled={acting} style={{ background: '#059669', color: '#fff', borderColor: '#059669' }}>
-                <ShieldCheck size={14} /> Approve
+                <ShieldCheck size={14} /> {t("bookings.detail.approve")}
               </button>
               <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={() => { setActionError(""); setRejectOpen(true); }} disabled={acting}>
-                <XCircle size={14} /> Reject
+                <XCircle size={14} /> {t("bookings.detail.reject")}
               </button>
             </>
           )}
           {canConfirm && !canApproveReject && (
             <button className={styles.actionBtn} onClick={confirmBooking} disabled={acting}>
-              <CheckCircle2 size={14} /> Confirm
+              <CheckCircle2 size={14} /> {t("bookings.detail.confirm")}
             </button>
           )}
           {canCancel && (
             <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={() => { setActionError(""); setCancelOpen(true); }} disabled={acting}>
-              <XCircle size={14} /> Cancel
+              <XCircle size={14} /> {t("bookings.detail.cancel")}
             </button>
           )}
           {canRefund && (
             <button className={styles.actionBtn} onClick={refundBooking} disabled={acting}>
-              <RotateCcw size={14} /> Refund
+              <RotateCcw size={14} /> {t("bookings.detail.refund")}
             </button>
           )}
           <button className={styles.actionBtn} onClick={downloadTicket} disabled={downloading}>
-            <Download size={14} /> {downloading ? "Downloading..." : "Ticket PDF"}
+            <Download size={14} /> {downloading ? t("bookings.detail.downloading") : t("bookings.detail.ticketPdf")}
           </button>
         </div>
       </div>
 
       {showPlanningHint && (
         <div className={styles.success} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Bus size={14} /> This booking is <strong>approved</strong> and in the <strong>planning queue</strong> — assign vehicle + driver from Trips / Fleet. Once assigned, confirm the booking.
-          {booking.trip.id ? <Link href={`/dashboard/trips/${booking.trip.id}`} style={{ marginLeft: 'auto', fontWeight: 600, color: '#0369a1' }}>Open Trip →</Link> : <span style={{ marginLeft: 'auto', fontSize: 12, color: '#64748b' }}>No trip assigned yet</span>}
+          <Bus size={14} /> {t("bookings.detail.planHintA")}<strong>{t("bookings.detail.approved")}</strong>{t("bookings.detail.planHintB")}<strong>{t("bookings.detail.planningQueue")}</strong>{t("bookings.detail.planHintC")}
+          {booking.trip.id ? <Link href={`/dashboard/trips/${booking.trip.id}`} style={{ marginLeft: 'auto', fontWeight: 600, color: '#0369a1' }}>{t("bookings.detail.openTrip")}</Link> : <span style={{ marginLeft: 'auto', fontSize: 12, color: '#64748b' }}>{t("bookings.detail.noTrip")}</span>}
         </div>
       )}
 
@@ -357,40 +344,40 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       {/* Supervisor review panel — Phase 7.6 */}
       {showSupervisorPanel && (
         <section className={styles.card} style={{ borderColor: '#f97316', background: '#fff7ed' }}>
-          <h2 className={styles.cardTitle} style={{ color: '#9a3412' }}><ShieldCheck size={14} /> Supervisor Review — Price Verification</h2>
-          <p style={{ fontSize: 12.5, color: '#7c2d12', margin: '0 0 12px' }}>Verify quotation and attach invoice reference before approving. Editing price here updates the booking total.</p>
+          <h2 className={styles.cardTitle} style={{ color: '#9a3412' }}><ShieldCheck size={14} /> {t("bookings.detail.reviewTitle")}</h2>
+          <p style={{ fontSize: 12.5, color: '#7c2d12', margin: '0 0 12px' }}>{t("bookings.detail.reviewDesc")}</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
             <div className={styles.field} style={{ marginBottom: 0 }}>
-              <label>Quotation / Total Price (SAR) *</label>
+              <label>{t("bookings.detail.quotationLabel")}</label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
-                placeholder="0.00"
+                placeholder={t("bookings.detail.pricePh")}
                 style={{ padding: '8px 10px', border: '1px solid #fed7aa', borderRadius: 8, fontSize: 13 }}
               />
             </div>
             <div className={styles.field} style={{ marginBottom: 0 }}>
-              <label>Invoice Reference</label>
+              <label>{t("bookings.detail.invoiceLabel")}</label>
               <input
                 value={editInvoice}
                 onChange={(e) => setEditInvoice(e.target.value)}
-                placeholder="INV-2026-XXXX"
+                placeholder={t("bookings.detail.invoicePh")}
                 style={{ padding: '8px 10px', border: '1px solid #fed7aa', borderRadius: 8, fontSize: 13 }}
               />
             </div>
             <button className={styles.primaryBtn} onClick={savePriceInvoice} disabled={savingPrice} style={{ background: '#ea580c', height: 36 }}>
-              <Save size={14} /> {savingPrice ? "Saving..." : "Save"}
+              <Save size={14} /> {savingPrice ? t("bookings.detail.saving") : t("bookings.detail.save")}
             </button>
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <button className={styles.primaryBtn} onClick={approveBooking} disabled={acting} style={{ background: '#059669', flex: 1 }}>
-              <Check size={14} /> Approve Booking
+              <Check size={14} /> {t("bookings.detail.approveBooking")}
             </button>
             <button className={`${styles.primaryBtn} ${styles.dangerPrimary}`} onClick={() => setRejectOpen(true)} disabled={acting} style={{ flex: 1 }}>
-              <X size={14} /> Reject
+              <X size={14} /> {t("bookings.detail.reject")}
             </button>
           </div>
         </section>
@@ -398,87 +385,87 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
 
       <div className={styles.grid}>
         <section className={styles.card}>
-          <h2 className={styles.cardTitle}><User size={14} /> Customer</h2>
+          <h2 className={styles.cardTitle}><User size={14} /> {t("bookings.detail.customerCard")}</h2>
           <div className={styles.detailList}>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Name</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.nameLabel")}</span>
               <span className={styles.detailValue}>
                 {booking.customer.name}
                 {booking.customer.isCompany && <span className={styles.companyTag}><Building2 size={11} /> {booking.customer.companyName}</span>}
               </span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Phone</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.phoneLabel")}</span>
               <span className={styles.detailValue}><Phone size={12} /> {booking.customer.phone || "—"}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Email</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.emailLabel")}</span>
               <span className={styles.detailValue}><Mail size={12} /> {booking.customer.email || "—"}</span>
             </div>
-            <Link href={`/dashboard/customers/${booking.customer.id}`} className={styles.customerLink}>View customer profile →</Link>
+            <Link href={`/dashboard/customers/${booking.customer.id}`} className={styles.customerLink}>{t("bookings.detail.viewProfile")}</Link>
           </div>
         </section>
 
         <section className={styles.card}>
-          <h2 className={styles.cardTitle}><Bus size={14} /> Trip {booking.trip.id ? '' : '(Request — not yet assigned to trip)'}</h2>
+          <h2 className={styles.cardTitle}><Bus size={14} /> {t("bookings.detail.tripCard")} {booking.trip.id ? '' : t("bookings.detail.tripRequest")}</h2>
           <div className={styles.detailList}>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Channel</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.channelLabel")}</span>
               <span className={styles.detailValue}><span className={styles.statusBadge} style={statusStyle(CHANNEL_COLORS, (booking as any).channel || 'internal')}>{String((booking as any).channel || 'internal').replace('_',' ')}</span></span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Route</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.routeLabel")}</span>
               <span className={styles.detailValue}>
                 <RouteIcon size={12} /> {booking.trip.route.origin || (booking as any).pickupLocation || "—"} → {booking.trip.route.destination || (booking as any).destinationLocation || "—"}
               </span>
             </div>
             {booking.trip.route.name && (
               <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Route name</span>
+                <span className={styles.detailLabel}>{t("bookings.detail.routeNameLabel")}</span>
                 <span className={styles.detailValue}>{booking.trip.route.name}</span>
               </div>
             )}
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Pickup</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.pickupLabel")}</span>
               <span className={styles.detailValue}>{booking.trip.route.origin || (booking as any).pickupLocation || "—"}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Destination</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.destLabel")}</span>
               <span className={styles.detailValue}>{booking.trip.route.destination || (booking as any).destinationLocation || "—"}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Date</span>
-              <span className={styles.detailValue}><CalendarDays size={12} /> {(booking as any).requestedDate ? fmtDate((booking as any).requestedDate) : fmtDate(booking.trip.scheduledDate)}</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.dateLabel")}</span>
+              <span className={styles.detailValue}><CalendarDays size={12} /> {(booking as any).requestedDate ? formatDate((booking as any).requestedDate, lang) : formatDate(booking.trip.scheduledDate, lang)}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Time</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.timeLabel")}</span>
               <span className={styles.detailValue}><Clock size={12} /> {(booking as any).requestedTime ? (booking as any).requestedTime : fmtTime(booking.trip.scheduledStartTime)}{booking.trip.scheduledEndTime ? ` — ${fmtTime(booking.trip.scheduledEndTime)}` : ""}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Trip type</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.tripTypeLabel")}</span>
               <span className={styles.detailValue}>{booking.trip.tripType || (booking as any).tripTypeRequested || "—"}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>PAX</span>
-              <span className={styles.detailValue}><Armchair size={12} /> {booking.numberOfPassengers} · Seats {(booking.seatNumbers || []).join(", ") || "—"}</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.paxLabel")}</span>
+              <span className={styles.detailValue}><Armchair size={12} /> {formatNumber(booking.numberOfPassengers, lang)} · {t("bookings.detail.seatsLabel")} {(booking.seatNumbers || []).join(", ") || "—"}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Bus</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.busLabel")}</span>
               <span className={styles.detailValue}>
                 <Armchair size={12} /> {booking.trip.busPlate || "—"}
                 {booking.trip.busMake ? ` (${booking.trip.busMake} ${booking.trip.busModel || ""})` : ""}
               </span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Vehicle req.</span>
-              <span className={styles.detailValue}>{booking.trip.busPlate ? `${booking.trip.busMake || ""} ${booking.trip.busModel || ""}`.trim() || booking.trip.busPlate : "To be assigned (planning queue)"}</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.vehicleReq")}</span>
+              <span className={styles.detailValue}>{booking.trip.busPlate ? `${booking.trip.busMake || ""} ${booking.trip.busModel || ""}`.trim() || booking.trip.busPlate : t("bookings.detail.toAssign")}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Trip status</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.tripStatus")}</span>
               <span className={`${styles.detailValue} ${styles.tripStatus}`}>{booking.trip.status || (booking.trip.id ? "—" : "pending_approval")}</span>
             </div>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Seats</span>
+              <span className={styles.detailLabel}>{t("bookings.detail.seatsLabel")}</span>
               <span className={styles.detailValue}>
                 {booking.seatNumbers.length > 0 ? booking.seatNumbers.map((s) => <span key={s} className={styles.seatChip}>#{s}</span>) : "—"}
               </span>
@@ -488,12 +475,12 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       </div>
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Passengers ({booking.passengers?.length || 0})</h2>
+        <h2 className={styles.cardTitle}>{t("bookings.detail.passengersTitle")} ({formatNumber(booking.passengers?.length || 0, lang)})</h2>
         {booking.passengers && booking.passengers.length > 0 ? (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Seat</th><th>Name</th><th>ID Number</th><th>Age</th><th>Special Requirements</th>
+                <th>{t("bookings.new.colSeat")}</th><th>{t("bookings.new.colName")}</th><th>{t("bookings.new.colId")}</th><th>{t("bookings.new.colAge")}</th><th>{t("bookings.new.colSpecial")}</th>
               </tr>
             </thead>
             <tbody>
@@ -509,54 +496,54 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
             </tbody>
           </table>
         ) : (
-          <p className={styles.emptyText}>No passenger details recorded.</p>
+          <p className={styles.emptyText}>{t("bookings.detail.noPassengers")}</p>
         )}
       </section>
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Payment — Quotation & Invoice</h2>
+        <h2 className={styles.cardTitle}>{t("bookings.detail.paymentTitle")}</h2>
         <div className={styles.paymentGrid}>
           <div className={styles.paymentItem}>
-            <span className={styles.paymentLabel}>Quotation / Total</span>
-            <span className={styles.paymentValue}>{fmtMoney(booking.totalAmount)}</span>
+            <span className={styles.paymentLabel}>{t("bookings.detail.quotationTotal")}</span>
+            <span className={styles.paymentValue}>{formatCurrency(booking.totalAmount, lang)}</span>
             {booking.quotationAmount != null && booking.quotationAmount !== booking.totalAmount && (
-              <span style={{ fontSize: 11, color: '#6b7280' }}>Quoted: {fmtMoney(booking.quotationAmount)}</span>
+              <span style={{ fontSize: 11, color: '#6b7280' }}>{t("bookings.detail.quoted")} {formatCurrency(booking.quotationAmount, lang)}</span>
             )}
           </div>
           <div className={styles.paymentItem}>
-            <span className={styles.paymentLabel}>Paid</span>
-            <span className={styles.paymentValue}>{fmtMoney(booking.paidAmount)}</span>
+            <span className={styles.paymentLabel}>{t("bookings.detail.paidLabel")}</span>
+            <span className={styles.paymentValue}>{formatCurrency(booking.paidAmount, lang)}</span>
           </div>
           <div className={`${styles.paymentItem} ${styles.paymentBalance}`}>
-            <span className={styles.paymentLabel}>Balance</span>
-            <span className={styles.paymentValue}>{fmtMoney(booking.balance)}</span>
+            <span className={styles.paymentLabel}>{t("bookings.detail.balanceLabel")}</span>
+            <span className={styles.paymentValue}>{formatCurrency(booking.balance, lang)}</span>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
           <div className={styles.detailRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-            <span className={styles.detailLabel}>Invoice Ref</span>
-            <span className={styles.detailValue}><FileText size={12} /> {booking.invoiceReference || "— not attached —"}</span>
+            <span className={styles.detailLabel}>{t("bookings.detail.invoiceRef")}</span>
+            <span className={styles.detailValue}><FileText size={12} /> {booking.invoiceReference || t("bookings.detail.noInvoice")}</span>
           </div>
           <div className={styles.detailRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-            <span className={styles.detailLabel}>Payment Status</span>
+            <span className={styles.detailLabel}>{t("bookings.detail.paymentStatus")}</span>
             <span className={styles.statusBadge} style={statusStyle(PAYMENT_COLORS, booking.paymentStatus)}>{booking.paymentStatus}</span>
           </div>
         </div>
         {booking.notes && (
           <div className={styles.notes}>
-            <span className={styles.detailLabel}>Notes / Special Requirements</span>
+            <span className={styles.detailLabel}>{t("bookings.detail.notesLabel")}</span>
             <p className={styles.notesText}>{booking.notes}</p>
           </div>
         )}
         {booking.cancelReason && (
           <div className={`${styles.notes} ${styles.cancelNote}`}>
-            <span className={styles.detailLabel}>Cancellation / Rejection reason</span>
+            <span className={styles.detailLabel}>{t("bookings.detail.cancelReasonLabel")}</span>
             <p className={styles.notesText}>{booking.cancelReason}</p>
           </div>
         )}
         {booking.rejectionReason && booking.rejectionReason !== booking.cancelReason && (
           <div className={`${styles.notes} ${styles.cancelNote}`}>
-            <span className={styles.detailLabel}>Rejection reason</span>
+            <span className={styles.detailLabel}>{t("bookings.detail.rejectionLabel")}</span>
             <p className={styles.notesText}>{booking.rejectionReason}</p>
           </div>
         )}
@@ -564,11 +551,11 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
 
       {/* Status timeline — Phase 7.6 */}
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}><History size={14} /> Status Timeline</h2>
+        <h2 className={styles.cardTitle}><History size={14} /> {t("bookings.detail.timelineTitle")}</h2>
         {historyLoading ? (
-          <p className={styles.emptyText}>Loading timeline...</p>
+          <p className={styles.emptyText}>{t("bookings.detail.loadingTimeline")}</p>
         ) : history.length === 0 ? (
-          <p className={styles.emptyText}>No status history yet. Transitions will appear here after submit / approve / reject / confirm.</p>
+          <p className={styles.emptyText}>{t("bookings.detail.noHistory")}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {history.map((h, idx) => (
@@ -582,8 +569,8 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                     <span className={styles.statusBadge} style={statusStyle(STATUS_COLORS, h.fromStatus || '—')}>{h.fromStatus ? h.fromStatus.replace('_', ' ') : '—'}</span>
                     <span style={{ color: '#9ca3af' }}>→</span>
                     <span className={styles.statusBadge} style={statusStyle(STATUS_COLORS, h.toStatus)}>{h.toStatus.replace('_', ' ')}</span>
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>{fmtDateTime(h.changedAt)}</span>
-                    {h.changedByName && <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>by {h.changedByName}</span>}
+                    <span style={{ fontSize: 12, color: '#6b7280' }}>{formatDate(h.changedAt, lang)}</span>
+                    {h.changedByName && <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>{t("bookings.detail.by")} {h.changedByName}</span>}
                   </div>
                   {h.notes && <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#4b5563', background: '#f9fafb', padding: '4px 8px', borderRadius: 6 }}>{h.notes}</p>}
                 </div>
@@ -596,40 +583,40 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       <section className={styles.card}>
         <div className={styles.commHeader}>
           <div>
-            <h2 className={styles.cardTitle}><Send size={14} /> Communication Log</h2>
-            <p className={styles.commSub}>Emails sent to {booking.customer.email || "the customer"} · to: {booking.customer.email || "—"}</p>
+            <h2 className={styles.cardTitle}><Send size={14} /> {t("bookings.detail.commTitle")}</h2>
+            <p className={styles.commSub}>{t("bookings.detail.commSubA")}{booking.customer.email || t("bookings.detail.theCustomer")} {t("bookings.detail.commSubB")} {booking.customer.email || "—"}</p>
           </div>
           <div className={styles.commActions}>
             <button className={styles.actionBtn} onClick={() => sendManual("confirmation")} disabled={!!sendingType}>
-              <MailCheck size={13} /> {sendingType === "confirmation" ? "Sending..." : "Resend confirmation"}
+              <MailCheck size={13} /> {sendingType === "confirmation" ? t("bookings.detail.sending") : t("bookings.detail.resendConfirm")}
             </button>
             <button className={styles.actionBtn} onClick={() => sendManual("receipt")} disabled={!!sendingType}>
-              <Mail size={13} /> {sendingType === "receipt" ? "Sending..." : "Send receipt"}
+              <Mail size={13} /> {sendingType === "receipt" ? t("bookings.detail.sending") : t("bookings.detail.sendReceipt")}
             </button>
             <button className={styles.actionBtn} onClick={() => sendManual("reminder")} disabled={!!sendingType}>
-              <Send size={13} /> {sendingType === "reminder" ? "Sending..." : "Send reminder"}
+              <Send size={13} /> {sendingType === "reminder" ? t("bookings.detail.sending") : t("bookings.detail.sendReminder")}
             </button>
             <button className={styles.actionBtn} onClick={sendManualDelay} disabled={!!sendingType}>
-              <Clock size={13} /> {sendingType === "delay_alert" ? "Sending..." : "Send delay alert"}
+              <Clock size={13} /> {sendingType === "delay_alert" ? t("bookings.detail.sending") : t("bookings.detail.sendDelay")}
             </button>
           </div>
         </div>
 
         {commLoading ? (
-          <p className={styles.emptyText}>Loading communication log...</p>
+          <p className={styles.emptyText}>{t("bookings.detail.loadingComm")}</p>
         ) : communications.length === 0 ? (
-          <p className={styles.emptyText}>No emails sent for this booking yet. Auto-emails: confirmation on booking, receipt on payment, cancellation, and 24h trip reminders.</p>
+          <p className={styles.emptyText}>{t("bookings.detail.noComm")}</p>
         ) : (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Type</th><th>To</th><th>Subject</th><th>Status</th><th>Sent at</th>
+                <th>{t("bookings.detail.colType")}</th><th>{t("bookings.detail.colTo")}</th><th>{t("bookings.detail.colSubject")}</th><th>{t("bookings.detail.colStatus")}</th><th>{t("bookings.detail.colSentAt")}</th>
               </tr>
             </thead>
             <tbody>
               {communications.map((c) => (
                 <tr key={c.id}>
-                  <td className={styles.commType}>{COMM_TYPE_LABELS[c.type] || c.type}</td>
+                  <td className={styles.commType}>{t(COMM_TYPE_KEYS[c.type] || c.type)}</td>
                   <td>{c.recipientEmail}</td>
                   <td className={styles.commSubject}>
                     {c.subject}
@@ -642,7 +629,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                       {c.status === "sent" ? <MailCheck size={12} /> : <MailX size={12} />} {c.status}
                     </span>
                   </td>
-                  <td className={styles.commDate}>{fmtDate(c.createdAt)} {new Date(c.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className={styles.commDate}>{formatDate(c.createdAt, lang)} {new Date(c.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</td>
                 </tr>
               ))}
             </tbody>
@@ -654,19 +641,19 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         <div className={styles.modalOverlay} onClick={() => setCancelOpen(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
-              <h2>Cancel Booking</h2>
+              <h2>{t("bookings.detail.cancelTitle")}</h2>
               <button className={styles.iconBtn} onClick={() => setCancelOpen(false)}><X size={16} /></button>
             </div>
-            <p className={styles.modalText}>Confirm cancellation of <span className={styles.monoInline}>{booking.bookingReference}</span>? A reason is required.</p>
+            <p className={styles.modalText}>{t("bookings.detail.cancelTextA")}<span className={styles.monoInline}>{booking.bookingReference}</span>{t("bookings.detail.cancelTextB")}</p>
             <div className={styles.field}>
-              <label>Reason *</label>
-              <textarea rows={4} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="e.g. Customer request, trip cancelled..." autoFocus />
+              <label>{t("bookings.detail.reasonLabel")}</label>
+              <textarea rows={4} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder={t("bookings.detail.cancelReasonPh")} autoFocus />
             </div>
             {actionError && <div className={styles.error}>{actionError}</div>}
             <div className={styles.formActions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setCancelOpen(false)}>Keep Booking</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setCancelOpen(false)}>{t("bookings.detail.keepBooking")}</button>
               <button type="button" className={`${styles.primaryBtn} ${styles.dangerPrimary}`} onClick={submitCancel} disabled={acting}>
-                {acting ? "Cancelling..." : "Cancel Booking"}
+                {acting ? t("bookings.detail.cancelling") : t("bookings.detail.cancelTitle")}
               </button>
             </div>
           </div>
@@ -677,19 +664,19 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
         <div className={styles.modalOverlay} onClick={() => setRejectOpen(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
-              <h2><AlertTriangle size={16} style={{ color: '#dc2626' }} /> Reject Booking</h2>
+              <h2><AlertTriangle size={16} style={{ color: '#dc2626' }} /> {t("bookings.detail.rejectTitle")}</h2>
               <button className={styles.iconBtn} onClick={() => setRejectOpen(false)}><X size={16} /></button>
             </div>
-            <p className={styles.modalText}>Reject <span className={styles.monoInline}>{booking.bookingReference}</span>? This will cancel the booking and notify the requester. A reason is <strong>required</strong>.</p>
+            <p className={styles.modalText}>{t("bookings.detail.rejectTextA")}<span className={styles.monoInline}>{booking.bookingReference}</span>{t("bookings.detail.rejectTextB")}<strong>{t("bookings.detail.required")}</strong>{t("bookings.detail.rejectTextC")}</p>
             <div className={styles.field}>
-              <label>Rejection reason *</label>
-              <textarea rows={4} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="e.g. Price mismatch, incomplete documents, vehicle unavailable..." autoFocus />
+              <label>{t("bookings.detail.rejectReasonLabel")}</label>
+              <textarea rows={4} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder={t("bookings.detail.rejectReasonPh")} autoFocus />
             </div>
             {actionError && <div className={styles.error}>{actionError}</div>}
             <div className={styles.formActions}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setRejectOpen(false)}>Keep Pending</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setRejectOpen(false)}>{t("bookings.detail.keepPending")}</button>
               <button type="button" className={`${styles.primaryBtn} ${styles.dangerPrimary}`} onClick={submitReject} disabled={acting || !rejectReason.trim()}>
-                {acting ? "Rejecting..." : "Reject Booking"}
+                {acting ? t("bookings.detail.rejecting") : t("bookings.detail.rejectTitle")}
               </button>
             </div>
           </div>

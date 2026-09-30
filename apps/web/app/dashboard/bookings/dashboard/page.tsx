@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CalendarDays, ClipboardList, Clock, DollarSign, Search, TrendingDown, TrendingUp, Users, X, Ticket } from "lucide-react";
 import { bookingService, type BookingDashboard, type Booking } from "@/services/bookings";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -14,21 +15,10 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "#059669",
 };
 
-function fmtMoney(n: number) {
-  if (n == null) return "SAR 0.00";
-  const v = Math.round(n * 100) / 100;
-  return `SAR ${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function fmtShortMoney(n: number) {
   if (n == null) return "0";
   if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(Math.round(n));
-}
-
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" });
 }
 
 function fmtTime(t: string | null) {
@@ -41,6 +31,7 @@ function fmtTime(t: string | null) {
 
 export default function BookingDashboardPage() {
   const router = useRouter();
+  const { lang, t: tr } = useLanguage();
   const [data, setData] = useState<BookingDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,7 +45,7 @@ export default function BookingDashboardPage() {
   useEffect(() => {
     bookingService.dashboard()
       .then(setData)
-      .catch((err) => setError((err as Error).message || "Failed to load dashboard"))
+      .catch((err) => setError((err as Error).message || tr("bookings.dashboard.loadError")))
       .finally(() => setLoading(false));
   }, []);
 
@@ -87,12 +78,12 @@ export default function BookingDashboardPage() {
 
   return (
     <div className={styles.page}>
-      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> Bookings</Link>
+      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> {tr("bookings.dashboard.back")}</Link>
       <div className={styles.header}>
         <div>
-          <h1>Booking Dashboard</h1>
+          <h1>{tr("bookings.dashboard.title")}</h1>
           <p className={styles.subtitle}>
-            {data ? `Overview for ${new Date(data.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}` : "Bookings overview."}
+            {data ? <>{tr("bookings.dashboard.overviewFor")}{new Date(data.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</> : tr("bookings.dashboard.overviewFallback")}
           </p>
         </div>
       </div>
@@ -106,9 +97,9 @@ export default function BookingDashboardPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search bookings by customer name, phone, ID or reference..."
+            placeholder={tr("bookings.dashboard.searchPh")}
           />
-          {searching && <span className={styles.searchHint}>Searching…</span>}
+          {searching && <span className={styles.searchHint}>{tr("bookings.dashboard.searching")}</span>}
           {query && (
             <button type="button" className={styles.clearBtn} onClick={() => { setQuery(""); setResults([]); }}>
               <X size={14} />
@@ -124,7 +115,7 @@ export default function BookingDashboardPage() {
                   <span className={styles.resultText}>
                     <span className={styles.resultName}>{b.customer.name} · <span className={styles.mono}>{b.bookingReference}</span></span>
                     <span className={styles.resultMeta}>
-                      {b.trip.route.origin || "—"} → {b.trip.route.destination || "—"} · {fmtDate(b.trip.scheduledDate)} {fmtTime(b.trip.scheduledStartTime)}
+                      {b.trip.route.origin || "—"} → {b.trip.route.destination || "—"} · {formatDate(b.trip.scheduledDate ? b.trip.scheduledDate + "T00:00:00" : null, lang)} {fmtTime(b.trip.scheduledStartTime)}
                       {b.customer.phone ? ` · ${b.customer.phone}` : ""}
                     </span>
                   </span>
@@ -136,47 +127,47 @@ export default function BookingDashboardPage() {
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading dashboard...</div>
+        <div className={styles.loading}>{tr("bookings.dashboard.loading")}</div>
       ) : data ? (
         <>
           {/* KPI cards */}
           <div className={styles.kpiGrid}>
             <div className={styles.kpiCard}>
               <div className={styles.kpiIcon} style={{ background: "#eff6ff", color: "#2563eb" }}><ClipboardList size={20} /></div>
-              <span className={styles.kpiLabel}>Today's Bookings</span>
-              <span className={styles.kpiValue}>{data.today.total}</span>
+              <span className={styles.kpiLabel}>{tr("bookings.dashboard.todayBookings")}</span>
+              <span className={styles.kpiValue}>{formatNumber(data.today.total, lang)}</span>
               <div className={styles.kpiBreakdown}>
-                <span className={styles.breakItem} style={{ color: "#f59e0b" }}>{data.today.pending} pending</span>
-                <span className={styles.breakItem} style={{ color: "#059669" }}>{data.today.confirmed} confirmed</span>
-                <span className={styles.breakItem} style={{ color: "#dc2626" }}>{data.today.cancelled} cancelled</span>
+                <span className={styles.breakItem} style={{ color: "#f59e0b" }}>{formatNumber(data.today.pending, lang)} {tr("bookings.dashboard.pendingW")}</span>
+                <span className={styles.breakItem} style={{ color: "#059669" }}>{formatNumber(data.today.confirmed, lang)} {tr("bookings.dashboard.confirmedW")}</span>
+                <span className={styles.breakItem} style={{ color: "#dc2626" }}>{formatNumber(data.today.cancelled, lang)} {tr("bookings.dashboard.cancelledW")}</span>
               </div>
-              <span className={styles.kpiSub}><Users size={12} /> {data.today.passengers} passengers</span>
+              <span className={styles.kpiSub}><Users size={12} /> {formatNumber(data.today.passengers, lang)} {tr("bookings.dashboard.passengersW")}</span>
             </div>
 
             <div className={styles.kpiCard}>
               <div className={styles.kpiIcon} style={{ background: "#fef2f2", color: "#dc2626" }}><TrendingDown size={20} /></div>
-              <span className={styles.kpiLabel}>Cancellation Rate</span>
+              <span className={styles.kpiLabel}>{tr("bookings.dashboard.cancelRate")}</span>
               <span className={styles.kpiValue}>{data.cancellationRate.overall}%</span>
               <span className={`${styles.kpiChange} ${data.cancellationRate.today > data.cancellationRate.overall ? styles.kpiDown : styles.kpiUp}`}>
-                Today {data.cancellationRate.today}%
+                {tr("bookings.dashboard.todayW")} {data.cancellationRate.today}%
               </span>
-              <span className={styles.kpiSub}>All-time average</span>
+              <span className={styles.kpiSub}>{tr("bookings.dashboard.allTime")}</span>
             </div>
 
             <div className={styles.kpiCard}>
               <div className={styles.kpiIcon} style={{ background: "#ecfdf5", color: "#059669" }}><DollarSign size={20} /></div>
-              <span className={styles.kpiLabel}>Revenue Today</span>
+              <span className={styles.kpiLabel}>{tr("bookings.dashboard.revenueToday")}</span>
               <span className={styles.kpiValue}>{fmtShortMoney(data.revenue.today)}</span>
-              <span className={`${styles.kpiChange} ${styles.kpiUp}`}><TrendingUp size={12} /> {fmtMoney(data.revenue.todayPaid)} collected</span>
-              <span className={styles.kpiSub}>Booked value</span>
+              <span className={`${styles.kpiChange} ${styles.kpiUp}`}><TrendingUp size={12} /> {formatCurrency(data.revenue.todayPaid, lang)} {tr("bookings.dashboard.collected")}</span>
+              <span className={styles.kpiSub}>{tr("bookings.dashboard.bookedValue")}</span>
             </div>
 
             <div className={styles.kpiCard}>
               <div className={styles.kpiIcon} style={{ background: "#faf5ff", color: "#8b5cf6" }}><CalendarDays size={20} /></div>
-              <span className={styles.kpiLabel}>Revenue</span>
+              <span className={styles.kpiLabel}>{tr("bookings.dashboard.revenue")}</span>
               <span className={styles.kpiValue}>{fmtShortMoney(data.revenue.thisWeek)}</span>
-              <span className={`${styles.kpiChange} ${styles.kpiUp}`}><TrendingUp size={12} /> week · {fmtShortMoney(data.revenue.thisMonth)} month</span>
-              <span className={styles.kpiSub}>This week vs this month</span>
+              <span className={`${styles.kpiChange} ${styles.kpiUp}`}><TrendingUp size={12} /> {tr("bookings.dashboard.weekW")} {fmtShortMoney(data.revenue.thisMonth)} {tr("bookings.dashboard.monthW")}</span>
+              <span className={styles.kpiSub}>{tr("bookings.dashboard.weekVsMonth")}</span>
             </div>
           </div>
 
@@ -185,8 +176,8 @@ export default function BookingDashboardPage() {
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <div>
-                  <h2 className={styles.cardTitle}>Revenue Trend</h2>
-                  <p className={styles.cardSubtext}>Last 14 days · booked value (SAR)</p>
+                  <h2 className={styles.cardTitle}>{tr("bookings.dashboard.revenueTrend")}</h2>
+                  <p className={styles.cardSubtext}>{tr("bookings.dashboard.trendSub")}</p>
                 </div>
               </div>
               {trend.length > 0 && (
@@ -212,26 +203,26 @@ export default function BookingDashboardPage() {
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <div>
-                  <h2 className={styles.cardTitle}>Revenue Snapshot</h2>
-                  <p className={styles.cardSubtext}>Booked value, excluding cancellations</p>
+                  <h2 className={styles.cardTitle}>{tr("bookings.dashboard.snapshot")}</h2>
+                  <p className={styles.cardSubtext}>{tr("bookings.dashboard.snapshotSub")}</p>
                 </div>
               </div>
               <div className={styles.snapshotList}>
                 <div className={styles.snapshotRow}>
-                  <span className={styles.snapshotLabel}>Today</span>
-                  <span className={styles.snapshotValue}>{fmtMoney(data.revenue.today)}</span>
-                  <span className={styles.snapshotMeta}>{fmtMoney(data.revenue.todayPaid)} paid</span>
+                  <span className={styles.snapshotLabel}>{tr("bookings.dashboard.snapToday")}</span>
+                  <span className={styles.snapshotValue}>{formatCurrency(data.revenue.today, lang)}</span>
+                  <span className={styles.snapshotMeta}>{formatCurrency(data.revenue.todayPaid, lang)} {tr("bookings.dashboard.paidW")}</span>
                 </div>
                 <div className={styles.snapshotRow}>
-                  <span className={styles.snapshotLabel}>This week</span>
-                  <span className={styles.snapshotValue}>{fmtMoney(data.revenue.thisWeek)}</span>
+                  <span className={styles.snapshotLabel}>{tr("bookings.dashboard.snapWeek")}</span>
+                  <span className={styles.snapshotValue}>{formatCurrency(data.revenue.thisWeek, lang)}</span>
                 </div>
                 <div className={styles.snapshotRow}>
-                  <span className={styles.snapshotLabel}>This month</span>
-                  <span className={styles.snapshotValue}>{fmtMoney(data.revenue.thisMonth)}</span>
+                  <span className={styles.snapshotLabel}>{tr("bookings.dashboard.snapMonth")}</span>
+                  <span className={styles.snapshotValue}>{formatCurrency(data.revenue.thisMonth, lang)}</span>
                 </div>
               </div>
-              <div className={styles.refreshNote}>Numbers refresh on each page load.</div>
+              <div className={styles.refreshNote}>{tr("bookings.dashboard.refreshNote")}</div>
             </div>
           </div>
 
@@ -239,21 +230,21 @@ export default function BookingDashboardPage() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
-                <h2 className={styles.cardTitle}>Bookings by Channel</h2>
-                <p className={styles.cardSubtext}>All-time count & revenue per intake source</p>
+                <h2 className={styles.cardTitle}>{tr("bookings.dashboard.byChannel")}</h2>
+                <p className={styles.cardSubtext}>{tr("bookings.dashboard.channelSub")}</p>
               </div>
             </div>
             {(!data.channelBreakdown || data.channelBreakdown.length === 0) ? (
-              <div className={styles.empty}>No channel data yet — bookings will appear after first import or creation.</div>
+              <div className={styles.empty}>{tr("bookings.dashboard.noChannel")}</div>
             ) : (
               <div className={styles.tableWrap}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th>Channel</th>
-                      <th>Bookings</th>
-                      <th>Share</th>
-                      <th>Revenue</th>
+                      <th>{tr("bookings.dashboard.colChannel")}</th>
+                      <th>{tr("bookings.dashboard.colBookings")}</th>
+                      <th>{tr("bookings.dashboard.colShare")}</th>
+                      <th>{tr("bookings.dashboard.colRevenue")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -266,12 +257,12 @@ export default function BookingDashboardPage() {
                         return (
                           <tr key={ch.channel}>
                             <td><span className={styles.statusBadge} style={{ color: hex, background: `${hex}18` }}>{ch.channel.replace('_',' ')}</span></td>
-                            <td>{ch.count}</td>
+                            <td>{formatNumber(ch.count, lang)}</td>
                             <td>
                               <div className={styles.occBar}><div className={styles.occFill} style={{ width: `${pct}%`, background: hex }} /></div>
                               <span className={styles.occPct}>{pct}%</span>
                             </td>
-                            <td>{fmtMoney(ch.revenue)}</td>
+                            <td>{formatCurrency(ch.revenue, lang)}</td>
                           </tr>
                         );
                       });
@@ -286,24 +277,24 @@ export default function BookingDashboardPage() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div>
-                <h2 className={styles.cardTitle}>Upcoming Trips</h2>
-                <p className={styles.cardSubtext}>Trips with booking occupancy</p>
+                <h2 className={styles.cardTitle}>{tr("bookings.dashboard.upcoming")}</h2>
+                <p className={styles.cardSubtext}>{tr("bookings.dashboard.upcomingSub")}</p>
               </div>
-              <Link href="/dashboard/trips" className={styles.viewAll}>View all trips</Link>
+              <Link href="/dashboard/trips" className={styles.viewAll}>{tr("bookings.dashboard.viewAllTrips")}</Link>
             </div>
             {data.upcomingTrips.length === 0 ? (
-              <div className={styles.empty}>No upcoming trips scheduled.</div>
+              <div className={styles.empty}>{tr("bookings.dashboard.noUpcoming")}</div>
             ) : (
               <div className={styles.tableWrap}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Route</th>
-                      <th>Time</th>
-                      <th>Bus</th>
-                      <th>Bookings</th>
-                      <th>Occupancy</th>
+                      <th>{tr("bookings.dashboard.colDate")}</th>
+                      <th>{tr("bookings.dashboard.colRoute")}</th>
+                      <th>{tr("bookings.dashboard.colTime")}</th>
+                      <th>{tr("bookings.dashboard.colBus")}</th>
+                      <th>{tr("bookings.dashboard.colBookings")}</th>
+                      <th>{tr("bookings.dashboard.colOcc")}</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -313,7 +304,7 @@ export default function BookingDashboardPage() {
                       const sc = STATUS_COLORS[t.status] || "#6b7280";
                       return (
                         <tr key={t.id}>
-                          <td><span className={styles.tripDate}>{fmtDate(t.scheduledDate)}</span></td>
+                          <td><span className={styles.tripDate}>{formatDate(t.scheduledDate ? t.scheduledDate + "T00:00:00" : null, lang)}</span></td>
                           <td>
                             <span className={styles.routeText}>{t.origin || "—"} → {t.destination || "—"}</span>
                             {t.routeName && <span className={styles.cellSub}>{t.routeName}</span>}
@@ -321,15 +312,15 @@ export default function BookingDashboardPage() {
                           <td><span className={styles.timeCell}><Clock size={12} /> {fmtTime(t.scheduledStartTime)}</span></td>
                           <td>{t.busPlate || <span className={styles.cellSub}>—</span>}</td>
                           <td>
-                            <span className={styles.bookingsCount}>{t.totalBookings}</span>
-                            <span className={styles.cellSub}>{t.bookedSeats} of {t.capacity} seats</span>
+                            <span className={styles.bookingsCount}>{formatNumber(t.totalBookings, lang)}</span>
+                            <span className={styles.cellSub}>{formatNumber(t.bookedSeats, lang)} {tr("bookings.dashboard.ofW")} {formatNumber(t.capacity, lang)} {tr("bookings.dashboard.seatsW")}</span>
                           </td>
                           <td>
                             <div className={styles.occBar}><div className={styles.occFill} style={{ width: `${pct}%`, background: sc }} /></div>
                             <span className={styles.occPct}>{pct}%</span>
                           </td>
                           <td>
-                            <Link href={`/dashboard/trips/${t.id}`} className={styles.viewTripBtn}>View</Link>
+                            <Link href={`/dashboard/trips/${t.id}`} className={styles.viewTripBtn}>{tr("bookings.dashboard.view")}</Link>
                           </td>
                         </tr>
                       );

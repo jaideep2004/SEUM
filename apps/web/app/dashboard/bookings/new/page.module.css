@@ -489,3 +489,8 @@
   .passengerHead span:nth-child(4), .passengerRow input:nth-child(5),
   .passengerHead span:nth-child(3), .passengerRow input:nth-child(4) { display: none; }
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .resultsList li button {
+  text-align: right;
+}

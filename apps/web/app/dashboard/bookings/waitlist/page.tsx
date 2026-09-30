@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowLeft, User, Building2, Clock, Hourglass, RefreshCw, LayoutDashboard } from "lucide-react";
 import { waitlistService, tripService, type WaitlistEntry, type TripSummary } from "@/services/bookings";
+import { useLanguage, formatDate, formatNumber, formatDateTime } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,17 +18,6 @@ function statusColor(status: string) {
   return { color: hex, background: `${hex}18` };
 }
 
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
-function fmtClock(d: string | null | undefined) {
-  if (!d) return "—";
-  const t = new Date(d);
-  return `${fmtDate(d)} · ${t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
-}
-
 function waitTime(createdAt: string) {
   const ms = Date.now() - new Date(createdAt).getTime();
   const mins = Math.floor(ms / 60000);
@@ -38,16 +28,8 @@ function waitTime(createdAt: string) {
   return `${days}d ${hours % 24}h`;
 }
 
-function offerCountdown(expiresAt: string | null) {
-  if (!expiresAt) return null;
-  const remaining = new Date(expiresAt).getTime() - Date.now();
-  if (remaining <= 0) return "expired";
-  const hours = Math.floor(remaining / 3600000);
-  const mins = Math.floor((remaining % 3600000) / 60000);
-  return `${hours}h ${mins}m left`;
-}
-
 export default function WaitlistPage() {
+  const { lang, t: tr } = useLanguage();
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +38,15 @@ export default function WaitlistPage() {
   const [tripId, setTripId] = useState("");
   const [status, setStatus] = useState("");
   const [notice, setNotice] = useState("");
+
+  function offerCountdown(expiresAt: string | null) {
+    if (!expiresAt) return null;
+    const remaining = new Date(expiresAt).getTime() - Date.now();
+    if (remaining <= 0) return tr("bookings.waitlist.offerExpired");
+    const hours = Math.floor(remaining / 3600000);
+    const mins = Math.floor((remaining % 3600000) / 60000);
+    return `${formatNumber(hours, lang)}h ${formatNumber(mins, lang)}m ${tr("bookings.waitlist.leftW")}`;
+  }
 
   useEffect(() => {
     tripService.bookable({ pageSize: "100" })
@@ -86,10 +77,10 @@ export default function WaitlistPage() {
     setNotice("");
     try {
       await waitlistService.expireOffers();
-      setNotice("Stale offers expired.");
+      setNotice(tr("bookings.waitlist.expired"));
       fetchWaitlist();
     } catch (err) {
-      setNotice((err as Error).message || "Failed to expire offers");
+      setNotice((err as Error).message || tr("bookings.waitlist.expireFailed"));
     }
   }
 
@@ -97,16 +88,16 @@ export default function WaitlistPage() {
 
   return (
     <div className={styles.page}>
-      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> Bookings</Link>
+      <Link href="/dashboard/bookings" className={styles.backLink}><ArrowLeft size={14} /> {tr("bookings.waitlist.back")}</Link>
       <div className={styles.header}>
         <div>
-          <h1>Waitlist</h1>
-          <p className={styles.subtitle}>Customers waiting for seats on sold-out trips. Offers auto-expire after 24 hours.</p>
+          <h1>{tr("bookings.waitlist.title")}</h1>
+          <p className={styles.subtitle}>{tr("bookings.waitlist.subtitle")}</p>
         </div>
         <div className={styles.headerActions}>
-          <Link href="/dashboard/bookings/dashboard" className={styles.secondaryBtn}><LayoutDashboard size={14} /> Dashboard</Link>
-          <button className={styles.secondaryBtn} onClick={handleExpireOffers} title="Expire offers older than 24 hours">
-            <RefreshCw size={14} /> Expire stale offers
+          <Link href="/dashboard/bookings/dashboard" className={styles.secondaryBtn}><LayoutDashboard size={14} /> {tr("bookings.waitlist.dashboard")}</Link>
+          <button className={styles.secondaryBtn} onClick={handleExpireOffers} title={tr("bookings.waitlist.expireTitle")}>
+            <RefreshCw size={14} /> {tr("bookings.waitlist.expireBtn")}
           </button>
         </div>
       </div>
@@ -119,7 +110,7 @@ export default function WaitlistPage() {
           value={tripId}
           onChange={(e) => { setTripId(e.target.value); setNotice(""); }}
         >
-          <option value="">All trips</option>
+          <option value="">{tr("bookings.waitlist.allTrips")}</option>
           {trips.map((t) => (
             <option key={t.id} value={t.id}>
               {t.origin || "—"} → {t.destination || "—"} · {t.scheduledDate} {t.scheduledStartTime || ""}
@@ -127,37 +118,37 @@ export default function WaitlistPage() {
           ))}
         </select>
         <select className={styles.filterSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All statuses</option>
-          <option value="waiting">Waiting</option>
-          <option value="offered">Offered</option>
-          <option value="converted">Converted</option>
-          <option value="expired">Expired</option>
+          <option value="">{tr("bookings.list.allStatuses")}</option>
+          <option value="waiting">{tr("bookings.waitlist.stWaiting")}</option>
+          <option value="offered">{tr("bookings.waitlist.stOffered")}</option>
+          <option value="converted">{tr("bookings.waitlist.stConverted")}</option>
+          <option value="expired">{tr("bookings.waitlist.stExpired")}</option>
         </select>
       </div>
 
       {tripsLoading && !tripId ? (
-        <div className={styles.loading}>Loading trips...</div>
+        <div className={styles.loading}>{tr("bookings.waitlist.loadingTrips")}</div>
       ) : loading ? (
-        <div className={styles.loading}>Loading waitlist...</div>
+        <div className={styles.loading}>{tr("bookings.waitlist.loading")}</div>
       ) : entries.length === 0 ? (
         <div className={styles.empty}>
           {tripId
-            ? `No waitlist entries for ${tripsById.get(tripId)?.origin || "—"} → ${tripsById.get(tripId)?.destination || "—"}.`
-            : "No waitlist entries. Join customers to waitlists when trips are sold out."}
+            ? <>{tr("bookings.waitlist.emptyForA")}{tripsById.get(tripId)?.origin || "—"} → {tripsById.get(tripId)?.destination || "—"}{tr("bookings.waitlist.emptyForB")}</>
+            : tr("bookings.waitlist.empty")}
         </div>
       ) : (
         <>
-          <div className={styles.summary}>{total} waitlist entr{total === 1 ? "y" : "ies"}</div>
+          <div className={styles.summary}>{formatNumber(total, lang)} {total === 1 ? tr("bookings.waitlist.entrySingular") : tr("bookings.waitlist.entryPlural")}</div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Trip</th>
-                  <th>Customer</th>
-                  <th>Seats</th>
-                  <th>Wait Time</th>
-                  <th>Status</th>
-                  <th>Offered</th>
+                  <th>{tr("bookings.waitlist.colTrip")}</th>
+                  <th>{tr("bookings.waitlist.colCustomer")}</th>
+                  <th>{tr("bookings.waitlist.colSeats")}</th>
+                  <th>{tr("bookings.waitlist.colWait")}</th>
+                  <th>{tr("bookings.waitlist.colStatus")}</th>
+                  <th>{tr("bookings.waitlist.colOffered")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +159,7 @@ export default function WaitlistPage() {
                       <td>
                         <span className={styles.routeText}>{e.trip.origin || "—"} → {e.trip.destination || "—"}</span>
                         {e.trip.scheduledDate && (
-                          <span className={styles.routeMeta}>{fmtDate(e.trip.scheduledDate)} {e.trip.scheduledStartTime || ""}</span>
+                          <span className={styles.routeMeta}>{formatDate(e.trip.scheduledDate, lang)} {e.trip.scheduledStartTime || ""}</span>
                         )}
                       </td>
                       <td>
@@ -182,13 +173,13 @@ export default function WaitlistPage() {
                           </span>
                         </span>
                       </td>
-                      <td><span className={styles.seatCount}>{e.numberOfPassengers}</span></td>
+                      <td><span className={styles.seatCount}>{formatNumber(e.numberOfPassengers, lang)}</span></td>
                       <td>
                         <span className={styles.waitCell}>
                           <Clock size={12} />
                           {waitTime(e.createdAt)}
                         </span>
-                        <span className={styles.routeMeta}>since {fmtClock(e.createdAt)}</span>
+                        <span className={styles.routeMeta}>{tr("bookings.waitlist.since")} {formatDateTime(e.createdAt, lang)}</span>
                       </td>
                       <td>
                         <span className={styles.badge} style={sc}>{e.status}</span>
@@ -199,9 +190,9 @@ export default function WaitlistPage() {
                         )}
                       </td>
                       <td>
-                        {e.status === "offered" ? fmtClock(e.offeredAt) : e.status === "converted" && e.convertedBookingId ? (
+                        {e.status === "offered" ? formatDateTime(e.offeredAt, lang) : e.status === "converted" && e.convertedBookingId ? (
                           <Link href={`/dashboard/bookings/${e.convertedBookingId}`} className={styles.bookingLink}>
-                            View booking
+                            {tr("bookings.waitlist.viewBooking")}
                           </Link>
                         ) : "—"}
                       </td>

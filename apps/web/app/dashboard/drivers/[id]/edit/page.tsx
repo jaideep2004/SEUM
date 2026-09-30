@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export default function EditDriverPage() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -59,81 +61,81 @@ export default function EditDriverPage() {
         body: JSON.stringify(form),
       });
       const json = await res.json();
-      if (!json.success) { setError(json.error?.message || json.message || "Failed to update"); return; }
+      if (!json.success) { setError(json.error?.message || json.message || t("drivers.edit.failedUpdate")); return; }
       router.push(`/dashboard/drivers/${id}`);
-    } catch { setError("Network error"); } finally { setSaving(false); }
+    } catch { setError(t("drivers.common.networkError")); } finally { setSaving(false); }
   }
 
-  if (loading) return <div className={styles.loading}>Loading...</div>;
+  if (loading) return <div className={styles.loading}>{t("common.loading")}</div>;
 
   return (
     <div className={styles.page}>
-      <Link href={`/dashboard/drivers/${id}`} className={styles.backLink}><ArrowLeft size={14} /> Back to Profile</Link>
-      <h1 className={styles.pageTitle}>Edit Driver</h1>
+      <Link href={`/dashboard/drivers/${id}`} className={styles.backLink}><ArrowLeft size={14} /> {t("drivers.edit.backToProfile")}</Link>
+      <h1 className={styles.pageTitle}>{t("drivers.edit.title")}</h1>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Basic Info</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.edit.secBasic")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>Full Name</label>
+              <label>{t("drivers.edit.fFullName")}</label>
               <input value={form.name} onChange={(e) => update("name", e.target.value)} required />
             </div>
             <div className={styles.field}>
-              <label>Employee Code</label>
+              <label>{t("drivers.profile.fEmpCode")}</label>
               <input value={form.employeeCode} onChange={(e) => update("employeeCode", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Status</label>
+              <label>{t("drivers.profile.fStatus")}</label>
               <select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                <option value="active">Active</option>
-                <option value="suspended">Suspended</option>
-                <option value="terminated">Terminated</option>
-                <option value="on_leave">On Leave</option>
+                <option value="active">{t("drivers.status.active")}</option>
+                <option value="suspended">{t("drivers.status.suspended")}</option>
+                <option value="terminated">{t("drivers.status.terminated")}</option>
+                <option value="on_leave">{t("drivers.status.onLeave")}</option>
               </select>
             </div>
             <div className={styles.field}>
-              <label>Nationality</label>
+              <label>{t("drivers.profile.fNationality")}</label>
               <input value={form.nationality} onChange={(e) => update("nationality", e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>License & Identity</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.profile.secLicense")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>License Number</label>
+              <label>{t("drivers.profile.fLicenseNumber")}</label>
               <input value={form.licenseNumber} onChange={(e) => update("licenseNumber", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>License Expiry</label>
+              <label>{t("drivers.profile.fLicenseExpiry")}</label>
               <input type="date" value={form.licenseExpiry} onChange={(e) => update("licenseExpiry", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>License Category</label>
+              <label>{t("drivers.profile.fLicenseCategory")}</label>
               <input value={form.licenseCategory} onChange={(e) => update("licenseCategory", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Passport Number</label>
+              <label>{t("drivers.profile.fPassportNumber")}</label>
               <input value={form.passportNumber} onChange={(e) => update("passportNumber", e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Personal & Employment</h2>
+          <h2 className={styles.sectionTitle}>{t("drivers.edit.secPersonalEmp")}</h2>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label>Date of Birth</label>
+              <label>{t("drivers.profile.fDob")}</label>
               <input type="date" value={form.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Blood Type</label>
+              <label>{t("drivers.profile.fBloodType")}</label>
               <select value={form.bloodType} onChange={(e) => update("bloodType", e.target.value)}>
-                <option value="">Select</option>
+                <option value="">{t("drivers.edit.bloodSelect")}</option>
                 <option value="A+">A+</option><option value="A-">A-</option>
                 <option value="B+">B+</option><option value="B-">B-</option>
                 <option value="AB+">AB+</option><option value="AB-">AB-</option>
@@ -141,28 +143,28 @@ export default function EditDriverPage() {
               </select>
             </div>
             <div className={styles.field}>
-              <label>Medical Fitness Expiry</label>
+              <label>{t("drivers.profile.fMedicalExpiry")}</label>
               <input type="date" value={form.medicalFitnessExpiry} onChange={(e) => update("medicalFitnessExpiry", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Hire Date</label>
+              <label>{t("drivers.profile.fHireDate")}</label>
               <input type="date" value={form.hireDate} onChange={(e) => update("hireDate", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Emergency Contact Name</label>
+              <label>{t("drivers.edit.fEmergencyName")}</label>
               <input value={form.emergencyContactName} onChange={(e) => update("emergencyContactName", e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label>Emergency Contact Phone</label>
+              <label>{t("drivers.edit.fEmergencyPhone")}</label>
               <input value={form.emergencyContactPhone} onChange={(e) => update("emergencyContactPhone", e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.actions}>
-          <Link href={`/dashboard/drivers/${id}`} className={styles.cancelBtn}>Cancel</Link>
+          <Link href={`/dashboard/drivers/${id}`} className={styles.cancelBtn}>{t("common.cancel")}</Link>
           <button className={styles.saveBtn} disabled={saving}>
-            <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
+            <Save size={14} /> {saving ? t("drivers.common.saving") : t("drivers.edit.saveChanges")}
           </button>
         </div>
       </form>

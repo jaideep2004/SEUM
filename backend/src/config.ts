@@ -56,6 +56,11 @@ export const config = {
 
   auditLogRetentionDays: parseInt(process.env.AUDIT_LOG_RETENTION_DAYS || '90', 10),
 
+  gps: {
+    ingestKey: process.env.GPS_INGEST_KEY || '',
+    defaultSpeedThresholdKmh: parseInt(process.env.GPS_DEFAULT_SPEED_KMH || '100', 10),
+  },
+
   recurringTripsCron: {
     enabled: process.env.RECURRING_TRIPS_AUTO_GENERATE !== 'false',
     intervalMs: parseInt(process.env.RECURRING_TRIPS_CRON_INTERVAL_MS || String(24 * 60 * 60 * 1000), 10),

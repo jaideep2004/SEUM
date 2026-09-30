@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Clock, LogOut, Edit3, RefreshCw } from "lucide-react";
+import { useLanguage, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -15,12 +16,30 @@ const STATUS_COLORS: Record<string, string> = {
   on_trip: "#0891b2",
 };
 
+const STATUS_KEYS: Record<string, string> = {
+  present: "drivers.attendance.badge.present",
+  absent: "drivers.attendance.badge.absent",
+  late: "drivers.attendance.badge.late",
+  half_day: "drivers.attendance.badge.halfDay",
+  on_leave: "drivers.attendance.badge.onLeave",
+  on_trip: "drivers.attendance.badge.onTrip",
+};
+
+const OPT_KEYS: Record<string, string> = {
+  present: "drivers.attendance.opt.present",
+  absent: "drivers.attendance.opt.absent",
+  late: "drivers.attendance.opt.late",
+  half_day: "drivers.attendance.opt.halfDay",
+  on_leave: "drivers.attendance.opt.onLeave",
+};
+
 function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("seum_access_token");
 }
 
 export default function DriverAttendancePage() {
+  const { lang, t } = useLanguage();
   const today = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(today);
   const [records, setRecords] = useState<any[]>([]);
@@ -93,7 +112,7 @@ export default function DriverAttendancePage() {
   }
 
   async function handleAutoDetect() {
-    setAutoResult("Running auto-detection...");
+    setAutoResult(t("drivers.attendance.autoRunning"));
     const token = getToken();
     try {
       const res = await fetch(`${API}/drivers/attendance/auto-detect`, {
@@ -102,7 +121,7 @@ export default function DriverAttendancePage() {
       });
       const data = await res.json();
       if (data.success) {
-        setAutoResult(`Auto-detected ${data.data.autoCheckedIn} driver(s) on trip`);
+        setAutoResult(`${t("drivers.attendance.autoDonePre")} ${data.data.autoCheckedIn} ${t("drivers.attendance.autoDoneMid")}`);
       }
     } catch {}
     setTimeout(() => { setAutoResult(null); fetchData(); }, 3000);
@@ -129,9 +148,14 @@ export default function DriverAttendancePage() {
     const color = STATUS_COLORS[status] || "#6b7280";
     return (
       <span className={styles.statusBadge} style={{ background: color + "20", color }}>
-        {status.replace("_", " ")}
+        {t(STATUS_KEYS[status] || status)}
       </span>
     );
+  };
+
+  const fmtTime = (v: string | null) => {
+    if (!v) return "—";
+    return new Date(v).toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
@@ -139,9 +163,9 @@ export default function DriverAttendancePage() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <Link href="/dashboard/drivers" className={styles.backLink}>
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t("common.back")}
           </Link>
-          <h1>Driver Attendance</h1>
+          <h1>{t("drivers.attendance.title")}</h1>
         </div>
         <div className={styles.controls}>
           <input
@@ -151,7 +175,7 @@ export default function DriverAttendancePage() {
             className={styles.dateInput}
           />
           <button className={`${styles.actionBtn} ${styles.actionBtnOutline}`} onClick={handleAutoDetect}>
-            <RefreshCw size={14} /> Auto-Detect
+            <RefreshCw size={14} /> {t("drivers.attendance.autoDetect")}
           </button>
         </div>
       </div>
@@ -162,27 +186,27 @@ export default function DriverAttendancePage() {
         <div className={styles.summaryCards}>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue}>{summary.totalDrivers}</div>
-            <div className={styles.summaryLabel}>Total Drivers</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumTotal")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#059669" }}>{summary.checkedIn}</div>
-            <div className={styles.summaryLabel}>Checked In</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumCheckedIn")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#d97706" }}>{summary.late}</div>
-            <div className={styles.summaryLabel}>Late</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumLate")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#dc2626" }}>{summary.absentOrLate}</div>
-            <div className={styles.summaryLabel}>Absent/Late</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumAbsentLate")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#6366f1" }}>{summary.onLeave}</div>
-            <div className={styles.summaryLabel}>On Leave</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumOnLeave")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#6b7280" }}>{summary.notRecorded}</div>
-            <div className={styles.summaryLabel}>Not Recorded</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.sumNotRecorded")}</div>
           </div>
         </div>
       )}
@@ -191,41 +215,41 @@ export default function DriverAttendancePage() {
         <div className={styles.summaryCards}>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue}>{monthlySummary.totalRecords}</div>
-            <div className={styles.summaryLabel}>Month Records</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.monthRecords")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#059669" }}>{monthlySummary.present + monthlySummary.onTrip}</div>
-            <div className={styles.summaryLabel}>Month Present</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.monthPresent")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#dc2626" }}>{monthlySummary.absent}</div>
-            <div className={styles.summaryLabel}>Month Absent</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.monthAbsent")}</div>
           </div>
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue} style={{ color: "#d97706" }}>{monthlySummary.late}</div>
-            <div className={styles.summaryLabel}>Month Late</div>
+            <div className={styles.summaryLabel}>{t("drivers.attendance.monthLate")}</div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className={styles.loading}>Loading attendance records...</div>
+        <div className={styles.loading}>{t("drivers.attendance.loading")}</div>
       ) : records.length === 0 ? (
         <div className={styles.emptyState}>
           <Clock size={40} style={{ opacity: 0.3, marginBottom: 8 }} />
-          <p>No attendance records for this date</p>
+          <p>{t("drivers.attendance.empty")}</p>
         </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Driver</th>
-                <th>Status</th>
-                <th>Check In</th>
-                <th>Check Out</th>
-                <th>Late (min)</th>
-                <th>Actions</th>
+                <th>{t("drivers.attendance.colDriver")}</th>
+                <th>{t("drivers.attendance.colStatus")}</th>
+                <th>{t("drivers.attendance.colCheckIn")}</th>
+                <th>{t("drivers.attendance.colCheckOut")}</th>
+                <th>{t("drivers.attendance.colLate")}</th>
+                <th>{t("drivers.attendance.colActions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -241,17 +265,17 @@ export default function DriverAttendancePage() {
                         </div>
                       )}
                       <div className={styles.driverInfo}>
-                        <span className={styles.driverName}>{r.driver?.name || "Unknown"}</span>
+                        <span className={styles.driverName}>{r.driver?.name || t("drivers.common.unknown")}</span>
                         <span className={styles.driverCode}>{r.driver?.employeeCode || r.driverId?.slice(0,8)}</span>
                       </div>
                     </div>
                   </td>
                   <td>{statusBadge(r.status)}</td>
                   <td className={styles.timeCell}>
-                    {r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                    {fmtTime(r.checkInTime)}
                   </td>
                   <td className={styles.timeCell}>
-                    {r.checkOutTime ? new Date(r.checkOutTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                    {fmtTime(r.checkOutTime)}
                   </td>
                   <td>{r.lateMinutes || 0}</td>
                   <td>
@@ -262,7 +286,7 @@ export default function DriverAttendancePage() {
                           onClick={() => handleCheckIn(r.driverId)}
                           disabled={actionLoading === r.driverId}
                         >
-                          <Clock size={12} /> In
+                          <Clock size={12} /> {t("drivers.attendance.btnIn")}
                         </button>
                       )}
                       {date === today && r.checkInTime && !r.checkOutTime && (
@@ -271,7 +295,7 @@ export default function DriverAttendancePage() {
                           onClick={() => handleCheckOut(r.driverId)}
                           disabled={actionLoading === r.driverId}
                         >
-                          <LogOut size={12} /> Out
+                          <LogOut size={12} /> {t("drivers.attendance.btnOut")}
                         </button>
                       )}
                       <button
@@ -286,7 +310,7 @@ export default function DriverAttendancePage() {
                           notes: r.notes || "",
                         })}
                       >
-                        <Edit3 size={12} /> Fix
+                        <Edit3 size={12} /> {t("drivers.attendance.btnFix")}
                       </button>
                     </div>
                   </td>
@@ -300,23 +324,23 @@ export default function DriverAttendancePage() {
       {correctionModal && (
         <div className={styles.overlay} onClick={() => setCorrectionModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>Manual Correction</h2>
+            <h2>{t("drivers.attendance.modalTitle")}</h2>
             <form onSubmit={handleManualCorrection}>
               <div className={styles.field}>
-                <label>Status</label>
+                <label>{t("drivers.attendance.colStatus")}</label>
                 <select
                   value={correctionModal.status}
                   onChange={(e) => setCorrectionModal({ ...correctionModal, status: e.target.value })}
                 >
-                  <option value="present">Present</option>
-                  <option value="absent">Absent</option>
-                  <option value="late">Late</option>
-                  <option value="half_day">Half Day</option>
-                  <option value="on_leave">On Leave</option>
+                  <option value="present">{t("drivers.attendance.opt.present")}</option>
+                  <option value="absent">{t("drivers.attendance.opt.absent")}</option>
+                  <option value="late">{t("drivers.attendance.opt.late")}</option>
+                  <option value="half_day">{t("drivers.attendance.opt.halfDay")}</option>
+                  <option value="on_leave">{t("drivers.attendance.opt.onLeave")}</option>
                 </select>
               </div>
               <div className={styles.field}>
-                <label>Check-In Time</label>
+                <label>{t("drivers.attendance.mCheckIn")}</label>
                 <input
                   type="datetime-local"
                   value={correctionModal.checkInTime ? correctionModal.checkInTime.slice(0, 16) : ""}
@@ -324,7 +348,7 @@ export default function DriverAttendancePage() {
                 />
               </div>
               <div className={styles.field}>
-                <label>Check-Out Time</label>
+                <label>{t("drivers.attendance.mCheckOut")}</label>
                 <input
                   type="datetime-local"
                   value={correctionModal.checkOutTime ? correctionModal.checkOutTime.slice(0, 16) : ""}
@@ -332,7 +356,7 @@ export default function DriverAttendancePage() {
                 />
               </div>
               <div className={styles.field}>
-                <label>Late Minutes</label>
+                <label>{t("drivers.attendance.mLateMin")}</label>
                 <input
                   type="number"
                   min="0"
@@ -341,16 +365,16 @@ export default function DriverAttendancePage() {
                 />
               </div>
               <div className={styles.field}>
-                <label>Notes</label>
+                <label>{t("drivers.attendance.mNotes")}</label>
                 <textarea
                   value={correctionModal.notes}
                   onChange={(e) => setCorrectionModal({ ...correctionModal, notes: e.target.value })}
                 />
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setCorrectionModal(null)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setCorrectionModal(null)}>{t("common.cancel")}</button>
                 <button type="submit" className={styles.saveBtn} disabled={actionLoading === "manual"}>
-                  {actionLoading === "manual" ? "Saving..." : "Save"}
+                  {actionLoading === "manual" ? t("drivers.common.saving") : t("common.save")}
                 </button>
               </div>
             </form>

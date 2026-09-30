@@ -13,6 +13,11 @@ jest.mock("../services/customerCommunicationService", () => ({
   sendTripDelayAlerts: () => Promise.resolve(undefined),
 }));
 
+const mockCreateInvoice = jest.fn();
+jest.mock("../services/invoiceService", () => ({
+  createInvoice: (...args: any[]) => mockCreateInvoice(...args),
+}));
+
 import {
   createTrip, listTrips, getTripById, updateTrip, cancelTrip,
   startTrip, completeTrip, delayTrip,
@@ -66,12 +71,41 @@ describe("createTrip", () => {
       .mockResolvedValueOnce([])               // passengers
       .mockResolvedValueOnce([]);              // legs
 
+    mockCreateInvoice.mockResolvedValue({ id: "INV-1", invoice_number: "INV-2026-0001" });
     const result = await createTrip(TID, UID, {
       routeId: RID, busId: BID, tripType: "single",
       scheduledDate: "2026-07-20", scheduledStartTime: "08:00",
     });
     expect(result.status).toBe("scheduled");
     expect(mockQueryOne).toHaveBeenCalledTimes(4);
+    // allow async auto-invoice to settle, then verify rough draft invoice
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mockCreateInvoice).toHaveBeenCalledTimes(1);
+    const invInput = mockCreateInvoice.mock.calls[0][1];
+    expect(invInput.reference_trip_ids).toHaveLength(1);
+    expect(invInput.line_items[0].trip_id).toBe(invInput.reference_trip_ids[0]);
+    expect(invInput.line_items[0].unit_price).toBe(0);
+  });
+
+  it("still creates the trip when auto-invoice fails", async () => {
+    mockCreateInvoice.mockRejectedValueOnce(new Error("invoice down"));
+    mockQueryOne
+      .mockResolvedValueOnce({ id: RID })
+      .mockResolvedValueOnce({ id: BID })
+      .mockResolvedValueOnce({ status: 'ready' })
+      .mockResolvedValueOnce(makeTripRow());
+    mockQuery
+      .mockResolvedValueOnce([makeTripRow()])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const result = await createTrip(TID, UID, {
+      routeId: RID, busId: BID, tripType: "single",
+      scheduledDate: "2026-07-20", scheduledStartTime: "08:00",
+    });
+    expect(result.status).toBe("scheduled");
+    await new Promise((r) => setTimeout(r, 20));
+    expect(mockCreateInvoice).toHaveBeenCalled();
   });
 
   it("creates a round trip with legs", async () => {

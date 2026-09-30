@@ -494,3 +494,9 @@
 .footerLinks a:hover {
   color: var(--color-text-primary);
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .busCount {
+  margin-left: 0;
+  margin-right: auto;
+}

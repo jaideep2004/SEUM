@@ -201,3 +201,6 @@
 
 .loading { text-align: center; padding: 60px 20px; color: var(--color-text-tertiary); }
 .emptyState { text-align: center; padding: 60px 20px; color: var(--color-text-tertiary); }
+
+/* RTL overrides */
+:global([dir="rtl"]) .leaderboardTable th { text-align: right; }

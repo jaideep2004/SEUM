@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Plus, Trash2, Users, Plane, Hotel } from "lucide-react";
 import Link from "next/link";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
+import { COUNTRIES, HOME_COUNTRY_EN, countryLabel } from "@/lib/countries";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -33,12 +35,17 @@ function emptyFlight() {
   return { flightNo: "", airline: "", from: "", to: "", date: "", time: "", flightType: "" };
 }
 
+function emptyGroup() {
+  return { groupNo: "", groupLeader: "", groupLeaderNo: "", nationality: "", noOfPax: "", nusukRef: "", nusukNotes: "" };
+}
+
 function emptyHotel() {
   return { city: "", hotel: "", from: "", to: "" };
 }
 
 export default function NewTripPage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [routes, setRoutes] = useState<any[]>([]);
   const [buses, setBuses] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -52,8 +59,9 @@ export default function NewTripPage() {
   const [form, setForm] = useState<any>({
     routeId: "", busId: "", driverId: "", tripType: "single",
     scheduledDate: "", scheduledStartTime: "", scheduledEndTime: "", notes: "",
-    tripTitle: "", vehicleType: "", groupLeader: "", groupLeaderNo: "",
-    nationality: "", agent: "", agentId: null, groupNo: "", noOfPax: "",
+    tripTitle: "", vehicleType: "", vehicleCount: "",
+    agent: "", agentId: null,
+    groups: [emptyGroup()],
     legs: [emptyLeg(), emptyLeg()],
     flights: [], hotels: [],
   });
@@ -139,6 +147,24 @@ export default function NewTripPage() {
     setForm((f: any) => ({ ...f, flights: f.flights.map((x: any, i: number) => i === idx ? { ...x, [key]: value } : x) }));
   }
 
+  function setFlightType(idx: number, value: string) {
+    // Arrival = into home country (To = home), Departure = out of home (From = home)
+    setForm((f: any) => ({
+      ...f,
+      flights: f.flights.map((x: any, i: number) => {
+        if (i !== idx) return x;
+        const next: any = { ...x, flightType: value };
+        if (value === "arrival") next.to = HOME_COUNTRY_EN;
+        else if (value === "departure") next.from = HOME_COUNTRY_EN;
+        return next;
+      }),
+    }));
+  }
+
+  function setGroup(idx: number, key: string, value: any) {
+    setForm((f: any) => ({ ...f, groups: f.groups.map((g: any, i: number) => i === idx ? { ...g, [key]: value } : g) }));
+  }
+
   function setHotel(idx: number, key: string, value: any) {
     setForm((f: any) => ({ ...f, hotels: f.hotels.map((x: any, i: number) => i === idx ? { ...x, [key]: value } : x) }));
   }
@@ -148,7 +174,7 @@ export default function NewTripPage() {
     setError("");
     if (form.tripType === "round") {
       const filled = form.legs.filter((l: any) => l.origin && l.destination && l.legDate);
-      if (filled.length < 2) { setError("Round trips need at least 2 legs with origin, destination and date"); return; }
+      if (filled.length < 2) { setError(t("trips.new.roundNeedLegs")); return; }
     }
     setSubmitting(true);
     try {
@@ -171,11 +197,35 @@ export default function NewTripPage() {
         notes: form.notes || undefined,
         legs,
       };
-      ["tripTitle", "vehicleType", "groupLeader", "groupLeaderNo", "nationality", "agent", "groupNo"].forEach(k => {
+      ["tripTitle", "vehicleType", "agent"].forEach(k => {
         if (form[k]) body[k] = form[k];
       });
+      if (form.vehicleCount) body.vehicleCount = Number(form.vehicleCount);
       if (form.agentId) body.agentId = form.agentId;
-      if (form.noOfPax) body.noOfPax = Number(form.noOfPax);
+      // Groups (each with own Nusuk info) + flat fields from first group for legacy readers
+      const filledGroups = (form.groups || []).filter((g: any) =>
+        g.groupNo || g.groupLeader || g.groupLeaderNo || g.nationality || g.noOfPax || g.nusukRef || g.nusukNotes
+      ).map((g: any) => {
+        const grp: any = {
+          groupNo: g.groupNo || undefined,
+          groupLeader: g.groupLeader || undefined,
+          groupLeaderNo: g.groupLeaderNo || undefined,
+          nationality: g.nationality || undefined,
+          noOfPax: g.noOfPax ? Number(g.noOfPax) : undefined,
+        };
+        if (g.nusukRef || g.nusukNotes) grp.nusukInfo = { reference: g.nusukRef || undefined, notes: g.nusukNotes || undefined };
+        return grp;
+      });
+      if (filledGroups.length > 0) {
+        body.groups = filledGroups;
+        const first = filledGroups[0];
+        if (first.groupLeader) body.groupLeader = first.groupLeader;
+        if (first.groupLeaderNo) body.groupLeaderNo = first.groupLeaderNo;
+        if (first.nationality) body.nationality = first.nationality;
+        if (first.groupNo) body.groupNo = first.groupNo;
+        if (first.noOfPax !== undefined) body.noOfPax = first.noOfPax;
+        if (first.nusukInfo) body.nusukInfo = first.nusukInfo;
+      }
       if (form.flights.length > 0) body.flights = form.flights.filter((x: any) => x.flightNo || x.airline || x.from).map((x: any) => ({
         flightNo: x.flightNo, airline: x.airline, from: x.from, to: x.to, date: x.date, time: x.time, flightType: x.flightType || undefined,
       }));
@@ -187,68 +237,116 @@ export default function NewTripPage() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!json.success) { setError(json.error?.message || json.message || "Failed to create trip"); return; }
+      if (!json.success) { setError(json.error?.message || json.message || t("trips.new.failedCreate")); return; }
       router.push(`/dashboard/trips/${json.data.id}`);
-    } catch { setError("Network error"); } finally { setSubmitting(false); }
+    } catch { setError(t("trips.new.networkError")); } finally { setSubmitting(false); }
   }
 
-  if (loadingData) return <div className={styles.page}><p>Loading...</p></div>;
+  if (loadingData) return <div className={styles.page}><p>{t("common.loading")}</p></div>;
 
   const isRound = form.tripType === "round";
 
   return (
     <div className={styles.page}>
       <Link href="/dashboard/trips" className={styles.backLink}>
-        <ArrowLeft size={14} /> Back to Trips
+        <ArrowLeft size={14} /> {t("trips.new.back")}
       </Link>
-      <h1 className={styles.pageTitle}>New Trip</h1>
+      <h1 className={styles.pageTitle}>{t("trips.new.title")}</h1>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <div className={styles.error}>{error}</div>}
 
         {/* 1. TRIP TYPE + VEHICLE TYPE (client: Vehicle Type right after Trip Type) */}
         <div className={styles.field} style={{ marginBottom: 16 }}>
-          <label className={styles.label}>Trip Type *</label>
+          <label className={styles.label}>{t("trips.new.tripType")}</label>
           <div className={styles.typeToggle}>
             {TRIP_TYPES.map(tt => (
               <button key={tt.value} type="button"
                 className={`${styles.typeBtn} ${form.tripType === tt.value ? styles.typeBtnActive : ""}`}
                 onClick={() => setForm((f: any) => ({ ...f, tripType: tt.value }))}>
-                {tt.label}
+                {tt.value === "single" ? t("trips.new.singleTrip") : t("trips.new.roundTrip")}
               </button>
             ))}
           </div>
         </div>
-        <div className={styles.field} style={{ marginBottom: 16 }}>
-          <label className={styles.label}>Vehicle Type</label>
-          <select value={form.vehicleType} onChange={(e) => setForm((f: any) => ({ ...f, vehicleType: e.target.value }))}>
-            <option value="">Select vehicle type</option>
-            {VEHICLE_TYPES.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
+        <div className={styles.formGrid} style={{ marginBottom: 16 }}>
+          <div className={styles.field}>
+            <label className={styles.label}>{t("trips.new.vehicleType")}</label>
+            <select value={form.vehicleType} onChange={(e) => setForm((f: any) => ({ ...f, vehicleType: e.target.value }))}>
+              <option value="">{t("trips.new.selectVehicleType")}</option>
+              {VEHICLE_TYPES.map(v => <option key={v} value={v}>{v === "Bus" ? t("trips.new.vtBus") : v}</option>)}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>{t("trips.new.vehicleCount")}</label>
+            <input type="number" min="1" max="100" value={form.vehicleCount} onChange={(e) => setForm((f: any) => ({ ...f, vehicleCount: e.target.value }))} placeholder={t("trips.new.vehicleCountPh")} />
+          </div>
         </div>
 
         {/* 2. PROGRAM INFORMATION (renamed from Manifest Info) */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}><Users size={14} /> Program Information</h3>
+          <h3 className={styles.sectionTitle}><Users size={14} /> {t("trips.new.programInfo")}</h3>
           <div className={styles.formGrid}>
             <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-              <label className={styles.label}>Trip Title</label>
-              <input value={form.tripTitle} onChange={(e) => setForm((f: any) => ({ ...f, tripTitle: e.target.value }))} placeholder="e.g. Hajj Group 12 - Makkah Package" />
+              <label className={styles.label}>{t("trips.new.tripTitle")}</label>
+              <input value={form.tripTitle} onChange={(e) => setForm((f: any) => ({ ...f, tripTitle: e.target.value }))} placeholder={t("trips.new.tripTitlePh")} />
             </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Group Leader</label>
-              <input value={form.groupLeader} onChange={(e) => setForm((f: any) => ({ ...f, groupLeader: e.target.value }))} />
+            <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+              <label className={styles.label}>{t("trips.new.groupsTitle")}</label>
+              <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{t("trips.new.groupsHint")}</span>
             </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Group Leader No</label>
-              <input value={form.groupLeaderNo} onChange={(e) => setForm((f: any) => ({ ...f, groupLeaderNo: e.target.value }))} />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Nationality</label>
-              <input value={form.nationality} onChange={(e) => setForm((f: any) => ({ ...f, nationality: e.target.value }))} />
+            {form.groups.map((g: any, idx: number) => (
+              <div key={idx} className={styles.section} style={{ gridColumn: "1 / -1", marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ fontSize: 12 }}>{t("trips.new.group")} {idx + 1}{g.groupNo ? ` — ${g.groupNo}` : ''}</strong>
+                  {form.groups.length > 1 && (
+                    <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, groups: f.groups.filter((_: any, i: number) => i !== idx) }))}>
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+                <div className={styles.formGrid}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.groupNo")}</label>
+                    <input value={g.groupNo} onChange={(e) => setGroup(idx, "groupNo", e.target.value)} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.noOfPax")}</label>
+                    <input type="number" min="0" value={g.noOfPax} onChange={(e) => setGroup(idx, "noOfPax", e.target.value)} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.groupLeader")}</label>
+                    <input value={g.groupLeader} onChange={(e) => setGroup(idx, "groupLeader", e.target.value)} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.groupLeaderNo")}</label>
+                    <input value={g.groupLeaderNo} onChange={(e) => setGroup(idx, "groupLeaderNo", e.target.value)} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.nationality")}</label>
+                    <select value={g.nationality} onChange={(e) => setGroup(idx, "nationality", e.target.value)}>
+                      <option value="">{t("trips.new.selectNationality")}</option>
+                      {COUNTRIES.map(c => <option key={c.code} value={c.en}>{countryLabel(c, lang)}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>{t("trips.new.nusukRef")}</label>
+                    <input value={g.nusukRef} onChange={(e) => setGroup(idx, "nusukRef", e.target.value)} placeholder={t("trips.new.nusukRefPh")} />
+                  </div>
+                  <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+                    <label className={styles.label}>{t("trips.new.nusukNotes")}</label>
+                    <input value={g.nusukNotes} onChange={(e) => setGroup(idx, "nusukNotes", e.target.value)} placeholder={t("trips.new.nusukNotesPh")} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+              <button type="button" className={styles.addBtn} onClick={() => setForm((f: any) => ({ ...f, groups: [...f.groups, emptyGroup()] }))}>
+                <Plus size={13} /> {t("trips.new.addGroup")}
+              </button>
             </div>
             <div className={styles.field} style={{ position: 'relative' }}>
-              <label className={styles.label}>Agent <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>— linked to Accounts (company customers)</span></label>
+              <label className={styles.label}>{t("trips.new.agent")} <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t("trips.new.agentSub")}</span></label>
               {form.agentId ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--color-primary)', borderRadius: 'var(--radius-sm)', background: 'var(--color-primary-light, #eff6ff)' }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-primary)' }}>{form.agent || '—'}</span>
@@ -257,8 +355,8 @@ export default function NewTripPage() {
                     return ag?.phone ? <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{ag.phone}</span> : null;
                   })()}
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-                    <Link href={`/dashboard/customers/${form.agentId}`} style={{ fontSize: 11, color: 'var(--color-primary)', textDecoration: 'underline' }} target="_blank">View</Link>
-                    <button type="button" onClick={() => setForm((f: any) => ({ ...f, agentId: null, agent: '' }))} style={{ border: 'none', background: 'transparent', color: 'var(--color-danger, #dc2626)', cursor: 'pointer', fontSize: 11 }}>Clear</button>
+                    <Link href={`/dashboard/customers/${form.agentId}`} style={{ fontSize: 11, color: 'var(--color-primary)', textDecoration: 'underline' }} target="_blank">{t("trips.new.view")}</Link>
+                    <button type="button" onClick={() => setForm((f: any) => ({ ...f, agentId: null, agent: '' }))} style={{ border: 'none', background: 'transparent', color: 'var(--color-danger, #dc2626)', cursor: 'pointer', fontSize: 11 }}>{t("trips.new.clear")}</button>
                   </span>
                 </div>
               ) : (
@@ -275,12 +373,12 @@ export default function NewTripPage() {
                     }}
                     onFocus={() => setShowAgentDropdown(true)}
                     onBlur={() => setTimeout(() => setShowAgentDropdown(false), 180)}
-                    placeholder="Search company agent — type name, company or phone"
+                    placeholder={t("trips.new.agentSearchPh")}
                   />
                   {showAgentDropdown && (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, background: 'var(--color-surface, #fff)', border: '1px solid var(--color-border)', borderTop: 'none', borderRadius: '0 0 var(--radius-sm) var(--radius-sm)', maxHeight: 180, overflowY: 'auto', boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08))' }}>
                       {loadingAgents ? (
-                        <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>Searching...</div>
+                        <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>{t("trips.new.searching")}</div>
                       ) : (
                         <>
                           {agents
@@ -314,12 +412,12 @@ export default function NewTripPage() {
                             return (a.displayName || '').toLowerCase().includes(q) || (a.name || '').toLowerCase().includes(q) || (a.phone || '').includes(q);
                           }).length === 0 && (
                             <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-                              No company agents found. {agentSearch.trim() ? 'You can keep typing to use free-text (legacy).' : 'Create one in Customers → Company.'}
+                              {t("trips.new.noAgentsFound")} {agentSearch.trim() ? t("trips.new.freeTextHint") : t("trips.new.createInCustomers")}
                             </div>
                           )}
                           {agents.length === 0 && !agentSearch.trim() && (
                             <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-                              No company agents yet — <Link href="/dashboard/customers" style={{ color: 'var(--color-primary)' }}>add a company customer</Link> to link.
+                              {t("trips.new.noAgentsYet")} <Link href="/dashboard/customers" style={{ color: 'var(--color-primary)' }}>{t("trips.new.addCompanyCustomer")}</Link> {t("trips.new.toLink")}
                             </div>
                           )}
                         </>
@@ -327,61 +425,64 @@ export default function NewTripPage() {
                     </div>
                   )}
                   {form.agent && !form.agentId && (
-                    <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginTop: 3 }}>Free-text (not linked) — select from dropdown to link to Accounts.</span>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginTop: 3 }}>{t("trips.new.freeTextNote")}</span>
                   )}
                 </>
               )}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Group No</label>
-              <input value={form.groupNo} onChange={(e) => setForm((f: any) => ({ ...f, groupNo: e.target.value }))} />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>No of Pax</label>
-              <input type="number" min="0" value={form.noOfPax} onChange={(e) => setForm((f: any) => ({ ...f, noOfPax: e.target.value }))} />
             </div>
           </div>
         </div>
 
         {/* 3. FLIGHT INFORMATION */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}><Plane size={14} /> Flight Information</h3>
+          <h3 className={styles.sectionTitle}><Plane size={14} /> {t("trips.new.flightInfo")}</h3>
           {form.flights.map((fl: any, idx: number) => (
             <div key={idx} className={styles.legRow}>
               <div className={styles.legNo}>{idx + 1}</div>
               <div className={styles.legFields}>
-                <input placeholder="Flight No" value={fl.flightNo} onChange={(e) => setFlight(idx, "flightNo", e.target.value)} />
-                <input placeholder="Airline" value={fl.airline} onChange={(e) => setFlight(idx, "airline", e.target.value)} />
-                <input placeholder="From" value={fl.from} onChange={(e) => setFlight(idx, "from", e.target.value)} />
-                <input placeholder="To" value={fl.to} onChange={(e) => setFlight(idx, "to", e.target.value)} />
-                <input type="date" title="Date" value={fl.date} onChange={(e) => setFlight(idx, "date", e.target.value)} />
-                <input type="time" title="Time" value={fl.time} onChange={(e) => setFlight(idx, "time", e.target.value)} />
-                <select value={fl.flightType || ""} onChange={(e) => setFlight(idx, "flightType", e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
-                  <option value="">Flight Type</option>
-                  {FLIGHT_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                <input placeholder={t("trips.new.flightNo")} value={fl.flightNo} onChange={(e) => setFlight(idx, "flightNo", e.target.value)} />
+                <input placeholder={t("trips.new.airline")} value={fl.airline} onChange={(e) => setFlight(idx, "airline", e.target.value)} />
+                <select title={`${t("common.from")} (${t("trips.new.flightCountryHint")})`} value={fl.from} onChange={(e) => setFlight(idx, "from", e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
+                  <option value="">{t("common.from")}</option>
+                  {COUNTRIES.map(c => <option key={c.code} value={c.en}>{countryLabel(c, lang)}</option>)}
+                </select>
+                <select title={`${t("common.to")} (${t("trips.new.flightCountryHint")})`} value={fl.to} onChange={(e) => setFlight(idx, "to", e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
+                  <option value="">{t("common.to")}</option>
+                  {COUNTRIES.map(c => <option key={c.code} value={c.en}>{countryLabel(c, lang)}</option>)}
+                </select>
+                <input type="date" title={t("trips.new.ttDate")} value={fl.date} onChange={(e) => setFlight(idx, "date", e.target.value)} />
+                <input type="time" title={t("trips.new.ttTime")} value={fl.time} onChange={(e) => setFlight(idx, "time", e.target.value)} />
+                <select value={fl.flightType || ""} onChange={(e) => setFlightType(idx, e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
+                  <option value="">{t("trips.new.flightType")}</option>
+                  {FLIGHT_TYPES.map(o => <option key={o.value} value={o.value}>{o.value === "arrival" ? t("trips.new.rtArrival") : t("trips.new.rtDeparture")}</option>)}
                 </select>
               </div>
+              {fl.flightType && (
+                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+                  {fl.flightType === "arrival" ? t("trips.new.arrivalHint") : t("trips.new.departureHint")}
+                </div>
+              )}
               <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, flights: f.flights.filter((_: any, i: number) => i !== idx) }))}>
                 <Trash2 size={13} />
               </button>
             </div>
           ))}
           <button type="button" className={styles.addBtn} onClick={() => setForm((f: any) => ({ ...f, flights: [...f.flights, emptyFlight()] }))}>
-            <Plus size={13} /> Add Flight
+            <Plus size={13} /> {t("trips.new.addFlight")}
           </button>
         </div>
 
         {/* 4. HOTEL INFORMATION */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}><Hotel size={14} /> Hotel Information</h3>
+          <h3 className={styles.sectionTitle}><Hotel size={14} /> {t("trips.new.hotelInfo")}</h3>
           {form.hotels.map((ht: any, idx: number) => (
             <div key={idx} className={styles.legRow}>
               <div className={styles.legNo}>{idx + 1}</div>
               <div className={styles.legFields}>
-                <input placeholder="City" value={ht.city} onChange={(e) => setHotel(idx, "city", e.target.value)} />
-                <input placeholder="Hotel" value={ht.hotel} onChange={(e) => setHotel(idx, "hotel", e.target.value)} />
-                <input type="date" title="Check-in" value={ht.from} onChange={(e) => setHotel(idx, "from", e.target.value)} />
-                <input type="date" title="Check-out" value={ht.to} onChange={(e) => setHotel(idx, "to", e.target.value)} />
+                <input placeholder={t("trips.new.city")} value={ht.city} onChange={(e) => setHotel(idx, "city", e.target.value)} />
+                <input placeholder={t("trips.new.hotel")} value={ht.hotel} onChange={(e) => setHotel(idx, "hotel", e.target.value)} />
+                <input type="date" title={t("trips.new.ttCheckIn")} value={ht.from} onChange={(e) => setHotel(idx, "from", e.target.value)} />
+                <input type="date" title={t("trips.new.ttCheckOut")} value={ht.to} onChange={(e) => setHotel(idx, "to", e.target.value)} />
               </div>
               <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, hotels: f.hotels.filter((_: any, i: number) => i !== idx) }))}>
                 <Trash2 size={13} />
@@ -389,50 +490,50 @@ export default function NewTripPage() {
             </div>
           ))}
           <button type="button" className={styles.addBtn} onClick={() => setForm((f: any) => ({ ...f, hotels: [...f.hotels, emptyHotel()] }))}>
-            <Plus size={13} /> Add Hotel
+            <Plus size={13} /> {t("trips.new.addHotel")}
           </button>
         </div>
 
         {/* 5. ROUTE INFORMATION (last per client) */}
         <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>Route Information</h3>
+          <h3 className={styles.sectionTitle}>{t("trips.new.routeInfo")}</h3>
           {!isRound ? (
             <div className={styles.formGrid}>
               <div className={styles.field}>
-                <label className={styles.label}>Route *</label>
+                <label className={styles.label}>{t("trips.new.route")}</label>
                 <select value={form.routeId} onChange={(e) => setForm((f: any) => ({ ...f, routeId: e.target.value }))} required>
-                  <option value="">Select route</option>
+                  <option value="">{t("trips.new.selectRoute")}</option>
                   {routes.map(r => <option key={r.id} value={r.id}>{r.name || r.code}</option>)}
                 </select>
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Bus</label>
+                <label className={styles.label}>{t("trips.new.bus")}</label>
                 <select value={form.busId} onChange={(e) => setForm((f: any) => ({ ...f, busId: e.target.value }))}>
-                  <option value="">Select bus (optional)</option>
+                  <option value="">{t("trips.new.selectBus")}</option>
                   {buses.filter(b => b.status === "active").map(b => (
                     <option key={b.id} value={b.id}>{b.plateNumber || b.id}</option>
                   ))}
                 </select>
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Driver</label>
+                <label className={styles.label}>{t("roles.driver")}</label>
                 <select value={form.driverId} onChange={(e) => setForm((f: any) => ({ ...f, driverId: e.target.value }))}>
-                  <option value="">Select driver (optional)</option>
+                  <option value="">{t("trips.new.selectDriver")}</option>
                   {drivers.map(d => (
                     <option key={d.id} value={d.id}>{d.fullName || d.email || d.id}</option>
                   ))}
                 </select>
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Date *</label>
+                <label className={styles.label}>{t("trips.new.date")}</label>
                 <input type="date" value={form.scheduledDate} onChange={(e) => setForm((f: any) => ({ ...f, scheduledDate: e.target.value }))} required />
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Start Time *</label>
+                <label className={styles.label}>{t("trips.new.startTime")}</label>
                 <input type="time" value={form.scheduledStartTime} onChange={(e) => setForm((f: any) => ({ ...f, scheduledStartTime: e.target.value }))} required />
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>End Time</label>
+                <label className={styles.label}>{t("trips.new.endTime")}</label>
                 <input type="time" value={form.scheduledEndTime} onChange={(e) => setForm((f: any) => ({ ...f, scheduledEndTime: e.target.value }))} />
               </div>
             </div>
@@ -440,60 +541,60 @@ export default function NewTripPage() {
             <>
               <div className={styles.formGrid} style={{ marginBottom: 12 }}>
                 <div className={styles.field}>
-                  <label className={styles.label}>Route (optional for round)</label>
+                  <label className={styles.label}>{t("trips.new.routeOptional")}</label>
                   <select value={form.routeId} onChange={(e) => setForm((f: any) => ({ ...f, routeId: e.target.value }))}>
-                    <option value="">Optional for round trips</option>
+                    <option value="">{t("trips.new.optionalRound")}</option>
                     {routes.map(r => <option key={r.id} value={r.id}>{r.name || r.code}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Bus</label>
+                  <label className={styles.label}>{t("trips.new.bus")}</label>
                   <select value={form.busId} onChange={(e) => setForm((f: any) => ({ ...f, busId: e.target.value }))}>
-                    <option value="">Select bus (optional)</option>
+                    <option value="">{t("trips.new.selectBus")}</option>
                     {buses.filter(b => b.status === "active").map(b => (
                       <option key={b.id} value={b.id}>{b.plateNumber || b.id}</option>
                     ))}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Driver</label>
+                  <label className={styles.label}>{t("roles.driver")}</label>
                   <select value={form.driverId} onChange={(e) => setForm((f: any) => ({ ...f, driverId: e.target.value }))}>
-                    <option value="">Select driver (optional)</option>
+                    <option value="">{t("trips.new.selectDriver")}</option>
                     {drivers.map(d => (
                       <option key={d.id} value={d.id}>{d.fullName || d.email || d.id}</option>
                     ))}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Departure Date *</label>
+                  <label className={styles.label}>{t("trips.new.departureDate")}</label>
                   <input type="date" value={form.scheduledDate} onChange={(e) => setForm((f: any) => ({ ...f, scheduledDate: e.target.value }))} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Departure Time *</label>
+                  <label className={styles.label}>{t("trips.new.departureTime")}</label>
                   <input type="time" value={form.scheduledStartTime} onChange={(e) => setForm((f: any) => ({ ...f, scheduledStartTime: e.target.value }))} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>End Time</label>
+                  <label className={styles.label}>{t("trips.new.endTime")}</label>
                   <input type="time" value={form.scheduledEndTime} onChange={(e) => setForm((f: any) => ({ ...f, scheduledEndTime: e.target.value }))} />
                 </div>
               </div>
-              <h4 className={styles.label} style={{ marginBottom: 8 }}>Trip Legs (stops with dates)</h4>
+              <h4 className={styles.label} style={{ marginBottom: 8 }}>{t("trips.new.legsTitle")}</h4>
               {form.legs.map((leg: any, idx: number) => (
                 <div key={idx} className={styles.legRow}>
                   <div className={styles.legNo}>{idx + 1}</div>
                   <div className={styles.legFields}>
-                    <input placeholder="From" value={leg.origin} onChange={(e) => setLeg(idx, "origin", e.target.value)} />
-                    <input placeholder="To" value={leg.destination} onChange={(e) => setLeg(idx, "destination", e.target.value)} />
-                    <input type="date" title="Date" value={leg.legDate} onChange={(e) => setLeg(idx, "legDate", e.target.value)} />
-                    <input type="time" title="Departure" value={leg.departureTime} onChange={(e) => setLeg(idx, "departureTime", e.target.value)} />
-                    <input type="time" title="Arrival" value={leg.arrivalTime} onChange={(e) => setLeg(idx, "arrivalTime", e.target.value)} />
+                    <input placeholder={t("common.from")} value={leg.origin} onChange={(e) => setLeg(idx, "origin", e.target.value)} />
+                    <input placeholder={t("common.to")} value={leg.destination} onChange={(e) => setLeg(idx, "destination", e.target.value)} />
+                    <input type="date" title={t("trips.new.ttDate")} value={leg.legDate} onChange={(e) => setLeg(idx, "legDate", e.target.value)} />
+                    <input type="time" title={t("trips.new.ttDeparture")} value={leg.departureTime} onChange={(e) => setLeg(idx, "departureTime", e.target.value)} />
+                    <input type="time" title={t("trips.new.ttArrival")} value={leg.arrivalTime} onChange={(e) => setLeg(idx, "arrivalTime", e.target.value)} />
                     <select value={leg.routeType || ""} onChange={(e) => setLeg(idx, "routeType", e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
-                      <option value="">Route Type</option>
-                      {ROUTE_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      <option value="">{t("trips.new.routeType")}</option>
+                      {ROUTE_TYPES.map(o => <option key={o.value} value={o.value}>{o.value === "arrival" ? t("trips.new.rtArrival") : o.value === "departure" ? t("trips.new.rtDeparture") : o.value === "intercity" ? t("trips.new.rtIntercity") : t("trips.new.rtIntracity")}</option>)}
                     </select>
                     <label className={styles.overnightLabel}>
                       <input type="checkbox" checked={leg.overnight} onChange={(e) => setLeg(idx, "overnight", e.target.checked)} />
-                      Overnight
+                      {t("trips.new.overnight")}
                     </label>
                   </div>
                   <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, legs: f.legs.filter((_: any, i: number) => i !== idx) }))} disabled={form.legs.length <= 2}>
@@ -502,20 +603,20 @@ export default function NewTripPage() {
                 </div>
               ))}
               <button type="button" className={styles.addBtn} onClick={() => setForm((f: any) => ({ ...f, legs: [...f.legs, emptyLeg()] }))}>
-                <Plus size={13} /> Add Leg
+                <Plus size={13} /> {t("trips.new.addLeg")}
               </button>
             </>
           )}
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Notes</label>
+          <label className={styles.label}>{t("common.notes")}</label>
           <textarea value={form.notes} onChange={(e) => setForm((f: any) => ({ ...f, notes: e.target.value }))} rows={3} />
         </div>
 
         <div className={styles.formActions}>
           <button type="submit" className={styles.submitBtn} disabled={submitting || !form.scheduledDate || !form.scheduledStartTime}>
-            <Save size={14} /> {submitting ? "Creating..." : "Create Trip"}
+            <Save size={14} /> {submitting ? t("trips.new.creating") : t("trips.new.createTrip")}
           </button>
         </div>
       </form>

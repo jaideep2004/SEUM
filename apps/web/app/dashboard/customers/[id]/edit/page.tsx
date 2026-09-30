@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "../page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -12,6 +13,7 @@ function getToken() {
 }
 
 export default function EditCustomerPage({ params }: { params: { id: string } }) {
+  const { lang, t } = useLanguage();
   const [form, setForm] = useState({
     name: "", phone: "", email: "", id_number: "", nationality: "",
     address: "", is_company: false, company_name: "", notes: "",
@@ -36,9 +38,9 @@ export default function EditCustomerPage({ params }: { params: { id: string } })
             is_company: c.isCompany, company_name: c.companyName || "", notes: c.notes || "",
           });
         } else {
-          setError(data.error?.message || "Customer not found");
+          setError(data.error?.message || t("customers.profile.notFound"));
         }
-      } catch { setError("Network error"); }
+      } catch { setError(t("customers.list.networkError")); }
       setLoading(false);
     })();
   }, [params.id]);
@@ -47,8 +49,8 @@ export default function EditCustomerPage({ params }: { params: { id: string } })
     e.preventDefault();
     setSubmitError("");
     setSaved(false);
-    if (!form.name.trim()) { setSubmitError("Customer name is required"); return; }
-    if (form.is_company && !form.company_name.trim()) { setSubmitError("Company name is required for company customers"); return; }
+    if (!form.name.trim()) { setSubmitError(t("customers.list.nameRequired")); return; }
+    if (form.is_company && !form.company_name.trim()) { setSubmitError(t("customers.list.companyRequired")); return; }
     setSubmitting(true);
     const token = getToken();
     try {
@@ -68,22 +70,22 @@ export default function EditCustomerPage({ params }: { params: { id: string } })
       const data = await res.json();
       if (!data.success) {
         const detail = data.error?.details?.[0]?.message;
-        setSubmitError(detail || data.error?.message || "Failed to update customer");
+        setSubmitError(detail || data.error?.message || t("customers.edit.updateFailed"));
         return;
       }
       setSaved(true);
-    } catch { setSubmitError("Network error"); }
+    } catch { setSubmitError(t("customers.list.networkError")); }
     setSubmitting(false);
   }
 
-  if (loading) return <div className={styles.page}><div className={styles.loading}>Loading customer...</div></div>;
+  if (loading) return <div className={styles.page}><div className={styles.loading}>{t("customers.profile.loading")}</div></div>;
 
   if (error) {
     return (
       <div className={styles.page}>
         <div className={styles.errorBox}>
           <p>{error}</p>
-          <Link href="/dashboard/customers" className={styles.backBtn}><ArrowLeft size={14} /> Back to Customers</Link>
+          <Link href="/dashboard/customers" className={styles.backBtn}><ArrowLeft size={14} /> {t("customers.profile.backTo")}</Link>
         </div>
       </div>
     );
@@ -91,64 +93,64 @@ export default function EditCustomerPage({ params }: { params: { id: string } })
 
   return (
     <div className={styles.page}>
-      <Link href={`/dashboard/customers/${params.id}`} className={styles.backLink}><ArrowLeft size={14} /> Back to profile</Link>
+      <Link href={`/dashboard/customers/${params.id}`} className={styles.backLink}><ArrowLeft size={14} /> {t("customers.edit.backProfile")}</Link>
       <div className={styles.header}>
         <div>
-          <h1>Edit Customer</h1>
-          <p className={styles.subtitle}>Update customer details.</p>
+          <h1>{t("customers.edit.title")}</h1>
+          <p className={styles.subtitle}>{t("customers.edit.subtitle")}</p>
         </div>
       </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {submitError && <div className={styles.error}>{submitError}</div>}
-        {saved && <div className={styles.success}>Customer updated successfully.</div>}
+        {saved && <div className={styles.success}>{t("customers.edit.saved")}</div>}
         <div className={styles.formRow}>
           <div className={styles.field}>
-            <label>Name *</label>
+            <label>{t("customers.list.nameLabel")}</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className={styles.field}>
-            <label>Type</label>
+            <label>{t("customers.list.typeLabel")}</label>
             <select value={form.is_company ? "company" : "individual"} onChange={(e) => setForm({ ...form, is_company: e.target.value === "company" })}>
-              <option value="individual">Individual</option>
-              <option value="company">Company</option>
+              <option value="individual">{t("customers.list.individual")}</option>
+              <option value="company">{t("customers.list.company")}</option>
             </select>
           </div>
           {form.is_company && (
             <div className={styles.field}>
-              <label>Company Name *</label>
+              <label>{t("customers.list.companyNameLabel")}</label>
               <input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} />
             </div>
           )}
           <div className={styles.field}>
-            <label>Phone</label>
+            <label>{t("customers.list.phoneLabel")}</label>
             <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className={styles.field}>
-            <label>Email</label>
+            <label>{t("customers.list.emailLabel")}</label>
             <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
           <div className={styles.field}>
-            <label>ID Number</label>
+            <label>{t("customers.list.idLabel")}</label>
             <input value={form.id_number} onChange={(e) => setForm({ ...form, id_number: e.target.value })} />
           </div>
           <div className={styles.field}>
-            <label>Nationality</label>
+            <label>{t("customers.list.natLabel")}</label>
             <input value={form.nationality} onChange={(e) => setForm({ ...form, nationality: e.target.value })} />
           </div>
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <label>Address</label>
+            <label>{t("customers.list.addrLabel")}</label>
             <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
           <div className={`${styles.field} ${styles.fieldFull}`}>
-            <label>Notes</label>
+            <label>{t("customers.list.notesLabel")}</label>
             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
           </div>
         </div>
         <div className={styles.formActions}>
-          <Link href={`/dashboard/customers/${params.id}`} className={styles.cancelBtn}>Cancel</Link>
+          <Link href={`/dashboard/customers/${params.id}`} className={styles.cancelBtn}>{t("customers.list.cancel")}</Link>
           <button type="submit" className={styles.primaryBtn} disabled={submitting}>
-            {submitting ? "Saving..." : "Save Changes"}
+            {submitting ? t("customers.list.saving") : t("customers.list.saveChanges")}
           </button>
         </div>
       </form>

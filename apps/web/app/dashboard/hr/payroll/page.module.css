@@ -413,3 +413,8 @@
   justify-content: flex-end;
   margin-top: 10px;
 }
+
+/* ─── RTL (Arabic) — mirrors physical left alignment when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}

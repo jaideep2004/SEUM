@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import {
   Package,
   CheckCircle2,
@@ -56,6 +57,7 @@ const tierColors: Record<string, { bg: string; text: string; border: string }> =
 };
 
 export default function PlansPage() {
+  const { lang, t } = useLanguage();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -171,19 +173,30 @@ export default function PlansPage() {
     }
   };
 
-  if (loading) return <div className={styles.page}><div className={styles.empty}>Loading plans...</div></div>;
+  if (loading) return <div className={styles.page}><div className={styles.empty}>{t("companies.plans.loading")}</div></div>;
+
+  const tierLabel = (tier: string | null | undefined) => {
+    if (!tier) return "—";
+    const map: Record<string, string> = {
+      starter: t("companies.tierStarter"),
+      professional: t("companies.tierProfessional"),
+      enterprise: t("companies.tierEnterprise"),
+      custom: t("companies.tierCustom"),
+    };
+    return map[tier] || tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <Package size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Subscription Plans</h1>
-          <p className={styles.headerSub}>{plans.length} plan{plans.length !== 1 ? "s" : ""} configured</p>
+          <h1 className={styles.headerTitle}>{t("companies.plans.title")}</h1>
+          <p className={styles.headerSub}>{plans.length} {t("companies.plans.planWord")}{plans.length !== 1 ? t("companies.plans.pluralS") : ""} {t("companies.plans.configuredWord")}</p>
         </div>
         <button className={styles.addBtn} onClick={openAdd}>
           <Plus size={16} />
-          Add Plan
+          {t("companies.plans.add")}
         </button>
       </div>
 
@@ -198,7 +211,7 @@ export default function PlansPage() {
               className={styles.planCard}
               style={{ borderColor: tc.border }}
             >
-              {isPopular && <div className={styles.popularBadge}>Most Popular</div>}
+              {isPopular && <div className={styles.popularBadge}>{t("companies.plans.popular")}</div>}
 
               <div className={styles.planHeader}>
                 <div className={styles.planIcon} style={{ background: tc.bg, color: tc.text }}>
@@ -206,19 +219,19 @@ export default function PlansPage() {
                 </div>
                 <h2 className={styles.planName}>{plan.name}</h2>
                 <span className={styles.planTier} style={{ background: tc.bg, color: tc.text }}>
-                  {plan.tier ? plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1) : "—"}
+                  {tierLabel(plan.tier)}
                 </span>
               </div>
 
               <div className={styles.planPrice}>
-                <span className={styles.priceAmount}>SAR {plan.priceMonthly?.toLocaleString()}</span>
-                <span className={styles.pricePeriod}>/month</span>
+                <span className={styles.priceAmount}>{t("companies.plans.sar")} {plan.priceMonthly?.toLocaleString()}</span>
+                <span className={styles.pricePeriod}>{t("companies.plans.perMonth")}</span>
               </div>
               {plan.priceYearly && (
                 <div className={styles.priceYearly}>
-                  SAR {plan.priceYearly.toLocaleString()}/year
+                  {t("companies.plans.sar")} {plan.priceYearly.toLocaleString()}{t("companies.plans.perYear")}
                   <span className={styles.savings}>
-                    (save {Math.round((1 - plan.priceYearly / (plan.priceMonthly * 12)) * 100)}%)
+                    ({t("companies.plans.save")} {Math.round((1 - plan.priceYearly / (plan.priceMonthly * 12)) * 100)}%)
                   </span>
                 </div>
               )}
@@ -226,20 +239,20 @@ export default function PlansPage() {
               <div className={styles.planLimits}>
                 <div className={styles.limitItem}>
                   <Users size={14} />
-                  <span>Up to <strong>{plan.maxUsers}</strong> users</span>
+                  <span>{t("companies.plans.upTo")} <strong>{plan.maxUsers}</strong> {t("companies.plans.users")}</span>
                 </div>
                 <div className={styles.limitItem}>
                   <Truck size={14} />
-                  <span>Up to <strong>{plan.maxVehicles}</strong> vehicles</span>
+                  <span>{t("companies.plans.upTo")} <strong>{plan.maxVehicles}</strong> {t("companies.plans.vehicles")}</span>
                 </div>
                 <div className={styles.limitItem}>
                   <BarChart3 size={14} />
-                  <span><strong>{plan.maxStorageGb}GB</strong> storage</span>
+                  <span><strong>{plan.maxStorageGb}GB</strong> {t("companies.plans.storage")}</span>
                 </div>
               </div>
 
               <div className={styles.planFeatures}>
-                <h4 className={styles.featuresTitle}>Features</h4>
+                <h4 className={styles.featuresTitle}>{t("companies.plans.features")}</h4>
                 {plan.features?.map((feat, i) => (
                   <div key={i} className={styles.featureRow}>
                     <CheckCircle2 size={14} className={styles.featureCheck} />
@@ -251,17 +264,17 @@ export default function PlansPage() {
               <div className={styles.planFooter}>
                 {!plan.isActive && (
                   <span className={styles.inactiveBadge}>
-                    <XCircle size={12} /> Inactive
+                    <XCircle size={12} /> {t("companies.plans.inactive")}
                   </span>
                 )}
                 <div className={styles.planActions}>
                   <button className={styles.editPlanBtn} onClick={() => openEdit(plan)}>
                     <Edit3 size={14} />
-                    Edit
+                    {t("companies.plans.edit")}
                   </button>
                   <button className={styles.deletePlanBtn} onClick={() => { setDeletingPlan(plan); setShowDeleteModal(true); }}>
                     <Trash2 size={14} />
-                    Delete
+                    {t("companies.plans.delete")}
                   </button>
                 </div>
               </div>
@@ -271,7 +284,7 @@ export default function PlansPage() {
       </div>
 
       {plans.length === 0 && (
-        <div className={styles.empty}>No subscription plans configured</div>
+        <div className={styles.empty}>{t("companies.plans.noPlans")}</div>
       )}
 
       {showDeleteModal && deletingPlan && (
@@ -280,14 +293,14 @@ export default function PlansPage() {
             <div className={styles.modalIconDanger}>
               <AlertTriangle size={24} />
             </div>
-            <h3 className={styles.modalTitle} style={{ textAlign: "center" }}>Delete Plan</h3>
+            <h3 className={styles.modalTitle} style={{ textAlign: "center" }}>{t("companies.plans.deleteTitle")}</h3>
             <p className={styles.modalText} style={{ textAlign: "center", marginBottom: 24 }}>
-              Are you sure you want to delete <strong>{deletingPlan.name}</strong>? This will deactivate the plan and it will no longer appear in active listings.
+              {t("companies.plans.deleteTextA")} <strong>{deletingPlan.name}</strong>{t("companies.plans.deleteTextB")}
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button className={styles.cancelBtn} onClick={() => setShowDeleteModal(false)}>{t("companies.plans.cancel")}</button>
               <button className={styles.deleteConfirmBtn} onClick={handleDeletePlan} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete Plan"}
+                {deleting ? t("companies.plans.deleting") : t("companies.plans.deletePlan")}
               </button>
             </div>
           </div>
@@ -298,7 +311,7 @@ export default function PlansPage() {
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>{editingPlan ? "Edit Plan" : "Add Plan"}</h2>
+              <h2 className={styles.modalTitle}>{editingPlan ? t("companies.plans.editTitle") : t("companies.plans.addTitle")}</h2>
               <button className={styles.modalClose} onClick={() => setShowModal(false)}>
                 <X size={18} />
               </button>
@@ -306,43 +319,43 @@ export default function PlansPage() {
             <form className={styles.modalBody} onSubmit={handleSubmit}>
               <div className={styles.modalGrid}>
                 <div className={styles.field}>
-                  <label className={styles.label}>Plan Name *</label>
-                  <input className={styles.input} name="name" value={formData.name} onChange={handleChange} required placeholder="e.g. Starter" />
+                  <label className={styles.label}>{t("companies.plans.planName")} *</label>
+                  <input className={styles.input} name="name" value={formData.name} onChange={handleChange} required placeholder={t("companies.plans.planNamePh")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Tier *</label>
+                  <label className={styles.label}>{t("companies.plans.tier")} *</label>
                   <select className={styles.select} name="tier" value={formData.tier} onChange={handleChange}>
-                    <option value="starter">Starter</option>
-                    <option value="professional">Professional</option>
-                    <option value="enterprise">Enterprise</option>
-                    <option value="custom">Custom</option>
+                    <option value="starter">{t("companies.tierStarter")}</option>
+                    <option value="professional">{t("companies.tierProfessional")}</option>
+                    <option value="enterprise">{t("companies.tierEnterprise")}</option>
+                    <option value="custom">{t("companies.tierCustom")}</option>
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Price (Monthly) *</label>
+                  <label className={styles.label}>{t("companies.plans.priceMonthly")} *</label>
                   <input className={styles.input} name="priceMonthly" type="number" min="0" step="0.01" value={formData.priceMonthly} onChange={handleChange} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Price (Yearly)</label>
+                  <label className={styles.label}>{t("companies.plans.priceYearly")}</label>
                   <input className={styles.input} name="priceYearly" type="number" min="0" step="0.01" value={formData.priceYearly} onChange={handleChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Max Users *</label>
+                  <label className={styles.label}>{t("companies.plans.maxUsers")} *</label>
                   <input className={styles.input} name="maxUsers" type="number" min="1" value={formData.maxUsers} onChange={handleChange} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Max Vehicles *</label>
+                  <label className={styles.label}>{t("companies.plans.maxVehicles")} *</label>
                   <input className={styles.input} name="maxVehicles" type="number" min="1" value={formData.maxVehicles} onChange={handleChange} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Max Storage (GB)</label>
+                  <label className={styles.label}>{t("companies.plans.maxStorage")}</label>
                   <input className={styles.input} name="maxStorageGb" type="number" min="0" value={formData.maxStorageGb} onChange={handleChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Features</label>
+                  <label className={styles.label}>{t("companies.plans.featuresLabel")}</label>
                   <div className={styles.featureInputRow}>
-                    <input className={styles.input} value={featureInput} onChange={(e) => setFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFeature(); } }} placeholder="Add feature..." />
-                    <button type="button" className={styles.addFeatureBtn} onClick={addFeature}>Add</button>
+                    <input className={styles.input} value={featureInput} onChange={(e) => setFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFeature(); } }} placeholder={t("companies.plans.featurePh")} />
+                    <button type="button" className={styles.addFeatureBtn} onClick={addFeature}>{t("companies.plans.addFeature")}</button>
                   </div>
                   <div className={styles.featureChips}>
                     {formData.features.map((f, i) => (
@@ -359,7 +372,7 @@ export default function PlansPage() {
                 <div className={styles.field} style={{ marginTop: 14 }}>
                   <label className={styles.checkLabel}>
                     <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} />
-                    <span>Active</span>
+                    <span>{t("companies.plans.active")}</span>
                   </label>
                 </div>
               )}
@@ -372,9 +385,9 @@ export default function PlansPage() {
               )}
 
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>{t("companies.plans.cancel")}</button>
                 <button type="submit" className={styles.submitBtn} disabled={saving}>
-                  {saving ? "Saving..." : editingPlan ? "Update Plan" : "Create Plan"}
+                  {saving ? t("companies.plans.saving") : editingPlan ? t("companies.plans.update") : t("companies.plans.create")}
                 </button>
               </div>
             </form>

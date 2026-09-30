@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { createNotification, emailChannelEnabled } from './notificationService';
 import { checkBusReadiness } from './fleetService';
 import { createProfitJournalEntry } from './tripProfitabilityService';
+import { emitToTenant, REALTIME_EVENTS } from '../realtime/socket';
 import { sendTripDelayAlerts } from './customerCommunicationService';
 import type { CreateTripInput, UpdateTripInput, DelayTripInput, CancelTripInput, TripQuery, AddPassengerInput } from '../validators/operations';
 
@@ -23,9 +24,10 @@ interface TripRow {
   driver_confirmation_status: string;
   created_by: string | null; approved_by: string | null;
   trip_title: string | null; vehicle_type: string | null;
+  vehicle_count: number | null;
   group_leader: string | null; group_leader_no: string | null;
-  nationality: string | null; agent: string | null; agent_id: string | null; group_no: string | null;
-  no_of_pax: number | null; nusuk_info: any; flights: any; hotels: any;
+  nationality: string | null; agent: string | null; group_no: string | null;
+  no_of_pax: number | null; nusuk_info: any; groups: any; flights: any; hotels: any;
   created_at: string; updated_at: string; deleted_at: string | null;
 }
 
@@ -56,9 +58,11 @@ function mapLeg(row: TripLegRow) {
 function mapManifest(row: TripRow) {
   return {
     tripTitle: row.trip_title, vehicleType: row.vehicle_type,
+    vehicleCount: row.vehicle_count,
     groupLeader: row.group_leader, groupLeaderNo: row.group_leader_no,
-    nationality: row.nationality, agent: row.agent, agentId: (row as any).agent_id || null, groupNo: row.group_no,
+    nationality: row.nationality, agent: row.agent, groupNo: row.group_no,
     noOfPax: row.no_of_pax, nusukInfo: row.nusuk_info,
+    groups: row.groups || [],
     flights: row.flights, hotels: row.hotels,
   };
 }
@@ -152,20 +156,31 @@ export async function createTrip(tenantId: string, userId: string, input: Create
   const tripId = uuid();
   const tripType = input.tripType || 'single';
 
+  // Flat manifest fallback from first group (legacy readers use flat columns)
+  const firstGroup = (Array.isArray((input as any).groups) && (input as any).groups.length > 0)
+    ? (input as any).groups[0] : null;
+  const effGroupLeader = input.groupLeader || firstGroup?.groupLeader || null;
+  const effGroupLeaderNo = input.groupLeaderNo || firstGroup?.groupLeaderNo || null;
+  const effNationality = input.nationality || firstGroup?.nationality || null;
+  const effGroupNo = input.groupNo || firstGroup?.groupNo || null;
+  const effNoOfPax = input.noOfPax ?? firstGroup?.noOfPax ?? null;
+  const effNusukInfo = (input as any).nusukInfo || firstGroup?.nusukInfo || null;
+
   await transaction(async (client) => {
     const res = await client.query(
       `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type, scheduled_date,
         scheduled_start_time, scheduled_end_time, notes, created_by,
-        trip_title, vehicle_type, group_leader, group_leader_no, nationality,
-        agent, agent_id, group_no, no_of_pax, nusuk_info, flights, hotels)
+        trip_title, vehicle_type, vehicle_count, group_leader, group_leader_no, nationality,
+        agent, agent_id, group_no, no_of_pax, nusuk_info, groups, flights, hotels)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23) RETURNING *`,
+               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
       [tripId, tenantId, input.routeId || null, input.busId || null, input.driverId || null,
        tripType, input.scheduledDate, input.scheduledStartTime, input.scheduledEndTime || null,
        input.notes || null, userId,
-       input.tripTitle || null, input.vehicleType || null, input.groupLeader || null,
-       input.groupLeaderNo || null, input.nationality || null, resolvedAgentDisplay || null,
-       resolvedAgentId, input.groupNo || null, input.noOfPax ?? null, input.nusukInfo || null,
+       input.tripTitle || null, input.vehicleType || null, (input as any).vehicleCount ?? null,
+       effGroupLeader, effGroupLeaderNo, effNationality, resolvedAgentDisplay || null,
+       resolvedAgentId, effGroupNo, effNoOfPax, effNusukInfo ? JSON.stringify(effNusukInfo) : null,
+       (input as any).groups ? JSON.stringify((input as any).groups) : null,
        input.flights ? JSON.stringify(input.flights) : null,
        input.hotels ? JSON.stringify(input.hotels) : null]
     );
@@ -187,7 +202,82 @@ export async function createTrip(tenantId: string, userId: string, input: Create
     }
   });
 
-  return getTripById(tenantId, tripId);
+  const created = await getTripById(tenantId, tripId);
+
+  // Auto-generate rough draft invoice + notify company admin & finance.
+  // Best-effort and AFTER the read above (keeps DB-call ordering deterministic):
+  // invoice failure must never break trip creation.
+  void autoDraftInvoiceForTrip(tenantId, tripId, {
+    tripTitle: input.tripTitle || null,
+    tripType, scheduledDate: input.scheduledDate,
+    scheduledStartTime: input.scheduledStartTime,
+    vehicleType: input.vehicleType || null,
+    vehicleCount: (input as any).vehicleCount ?? null,
+    noOfPax: effNoOfPax,
+    agentName: resolvedAgentDisplay,
+    groupLeader: effGroupLeader,
+  }).catch((err) => logger.warn({ err, tripId }, 'Auto draft invoice failed'));
+
+  return created;
+}
+
+/**
+ * Client requirement: when a trip is created, a rough total invoice is
+ * generated (draft, amount 0 pending finance pricing via supervisor review)
+ * and sent to company admin + finance. Manual trips only — pattern
+ * auto-generation skips this to avoid invoice spam.
+ */
+async function autoDraftInvoiceForTrip(
+  tenantId: string,
+  tripId: string,
+  info: {
+    tripTitle: string | null; tripType: string; scheduledDate: string;
+    scheduledStartTime: string; vehicleType: string | null;
+    vehicleCount: number | null; noOfPax: number | null;
+    agentName: string | null; groupLeader: string | null;
+  },
+): Promise<void> {
+  const { createInvoice } = await import('./invoiceService');
+  const today = new Date().toISOString().slice(0, 10);
+  const due = new Date(Date.now() + 15 * 864e5).toISOString().slice(0, 10);
+  const customer = info.agentName || info.groupLeader || info.tripTitle || 'Trip customer';
+  const scopeBits = [
+    info.tripTitle || info.tripType,
+    `${info.scheduledDate}${info.scheduledStartTime ? ' ' + info.scheduledStartTime : ''}`,
+    `${info.noOfPax ?? 0} pax`,
+    `${info.vehicleCount ?? 1}x ${info.vehicleType || 'vehicle'}`,
+  ];
+  const invoice: any = await createInvoice(tenantId, {
+    customer_name: customer,
+    invoice_date: today,
+    due_date: due,
+    notes: 'Auto-generated rough invoice on trip creation — amount pending finance pricing (supervisor review).',
+    reference_trip_ids: [tripId],
+    line_items: [{
+      description: `Trip service — ${scopeBits.join(' — ')}`,
+      quantity: info.vehicleCount ?? 1,
+      unit_price: 0,
+      trip_id: tripId,
+    }],
+  }, undefined);
+  const invNo = (invoice as any)?.invoiceNumber || (invoice as any)?.invoice_number
+    || (invoice as any)?.id || tripId.slice(0, 8);
+  const staff = await query<{ id: string }>(
+    `SELECT DISTINCT u.id FROM users u
+      JOIN user_roles ur ON ur.user_id = u.id
+      JOIN roles r ON r.id = ur.role_id
+     WHERE u.tenant_id = $1 AND u.is_active = true
+       AND r.name IN ('company_admin', 'finance_accountant')`,
+    [tenantId],
+  );
+  for (const s of staff) {
+    await createNotification({
+      tenantId, userId: s.id, type: 'trip_invoice_draft',
+      title: 'Rough invoice generated',
+      message: `Draft invoice ${invNo} created for trip "${info.tripTitle || tripId.slice(0, 8)}" — needs finance pricing.`,
+      resource: 'invoice', resourceId: invoice?.id || null,
+    });
+  }
 }
 
 export async function listTrips(tenantId: string, queryParams: TripQuery) {
@@ -246,6 +336,7 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
       busPlate: r.plate_number, driverName: r.driver_name,
       tripTitle: r.trip_title, groupLeader: r.group_leader, groupNo: r.group_no,
       noOfPax: r.no_of_pax, legCount: r.leg_count || 0,
+      vehicleType: r.vehicle_type, vehicleCount: r.vehicle_count,
       agent: r.agent, agentId: r.agent_id, agentName: r.agent_name,
       agentCompanyName: r.agent_company_name, agentPhone: r.agent_phone, agentEmail: r.agent_email,
     })),
@@ -345,9 +436,10 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
     scheduledStartTime: 'scheduled_start_time', scheduledEndTime: 'scheduled_end_time',
     notes: 'notes', driverId: 'driver_id',
     tripTitle: 'trip_title', vehicleType: 'vehicle_type',
+    vehicleCount: 'vehicle_count',
     groupLeader: 'group_leader', groupLeaderNo: 'group_leader_no',
     nationality: 'nationality', agent: 'agent', groupNo: 'group_no',
-    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info',
+    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info', groups: 'groups',
   };
   const fields: string[] = [];
   const params: any[] = [];
@@ -356,7 +448,7 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
     if ((input as any)[key] !== undefined) {
       fields.push(`${col} = $${idx++}`);
       const val = (input as any)[key];
-      if (col === 'nusuk_info') params.push(val ? JSON.stringify(val) : null);
+      if (col === 'nusuk_info' || col === 'groups') params.push(val ? JSON.stringify(val) : null);
       else params.push(val);
     }
   }
@@ -409,7 +501,11 @@ export async function cancelTrip(tenantId: string, tripId: string, input: Cancel
     `UPDATE trips SET status = 'cancelled', rejection_reason = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
     [input.rejectionReason, tripId, tenantId]
   );
-  return getTripById(tenantId, tripId);
+  const cancelled = await getTripById(tenantId, tripId);
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_STATUS_CHANGED, {
+    tenantId, tripId, status: cancelled.status, rejectionReason: input.rejectionReason,
+  });
+  return cancelled;
 }
 
 // ─── Status Transitions ───
@@ -425,7 +521,11 @@ export async function startTrip(tenantId: string, tripId: string) {
     `UPDATE trips SET status = 'en_route', actual_start_time = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2`,
     [tripId, tenantId]
   );
-  return getTripById(tenantId, tripId);
+  const started = await getTripById(tenantId, tripId);
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_STATUS_CHANGED, {
+    tenantId, tripId, status: started.status, actualStartTime: started.actualStartTime,
+  });
+  return started;
 }
 
 export async function completeTrip(tenantId: string, tripId: string) {
@@ -443,7 +543,11 @@ export async function completeTrip(tenantId: string, tripId: string) {
   // Auto-create journal entry for trip revenue
   createProfitJournalEntry(tenantId, tripId).catch(() => {});
 
-  return getTripById(tenantId, tripId);
+  const completed = await getTripById(tenantId, tripId);
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_STATUS_CHANGED, {
+    tenantId, tripId, status: completed.status, actualEndTime: completed.actualEndTime,
+  });
+  return completed;
 }
 
 export async function delayTrip(tenantId: string, tripId: string, input: DelayTripInput) {
@@ -460,7 +564,16 @@ export async function delayTrip(tenantId: string, tripId: string, input: DelayTr
     [input.delayMinutes, input.delayReason, tripId, tenantId]
   );
   sendTripDelayAlerts(tenantId, tripId, input.delayMinutes, input.delayReason).catch(() => {});
-  return getTripById(tenantId, tripId);
+  const delayed = await getTripById(tenantId, tripId);
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_STATUS_CHANGED, {
+    tenantId, tripId, status: delayed.status,
+    delayMinutes: input.delayMinutes, delayReason: input.delayReason,
+  });
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_DELAYED, {
+    tenantId, tripId, status: delayed.status,
+    delayMinutes: input.delayMinutes, delayReason: input.delayReason,
+  });
+  return delayed;
 }
 
 // ─── Passengers ───
@@ -629,7 +742,12 @@ export async function driverConfirmTrip(tenantId: string, tripId: string, status
     `UPDATE trips SET driver_confirmation_status = $1, rejection_reason = $2, updated_at = NOW() WHERE id = $3 AND tenant_id = $4`,
     [status, rejectionReason || null, tripId, tenantId]
   );
-  return getTripById(tenantId, tripId);
+  const confirmed = await getTripById(tenantId, tripId);
+  emitToTenant(tenantId, REALTIME_EVENTS.TRIP_STATUS_CHANGED, {
+    tenantId, tripId, status: confirmed.status,
+    driverConfirmationStatus: status, rejectionReason: rejectionReason || null,
+  });
+  return confirmed;
 }
 
 export async function getDriverSchedule(tenantId: string, driverId: string, startDate?: string, endDate?: string) {

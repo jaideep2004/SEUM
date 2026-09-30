@@ -600,3 +600,19 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .switch::after {
+  left: auto;
+  right: 3px;
+}
+:global([dir="rtl"]) .switch:checked::after {
+  transform: translateX(-18px);
+}
+:global([dir="rtl"]) .customerItemSelected {
+  border-left: none;
+  border-right: 3px solid #1d4ed8;
+}

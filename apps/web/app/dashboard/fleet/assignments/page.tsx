@@ -11,22 +11,20 @@ import {
   AlertTriangle,
   Pencil,
 } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  scheduled: { label: "Scheduled", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
-  active: { label: "Active", color: "#10b981", bg: "rgba(16,185,129,0.12)" },
-  completed: { label: "Completed", color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
-  cancelled: { label: "Cancelled", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+  scheduled: { label: "fleet.assignments.st.scheduled", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  active: { label: "fleet.assignments.st.active", color: "#10b981", bg: "rgba(16,185,129,0.12)" },
+  completed: { label: "fleet.assignments.st.completed", color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+  cancelled: { label: "fleet.assignments.st.cancelled", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
 };
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
 export default function AssignmentsPage() {
+  const { lang, t } = useLanguage();
   const [assignments, setAssignments] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -136,20 +134,20 @@ export default function AssignmentsPage() {
         setEditing(null);
         fetchAssignments();
       } else {
-        setError(data.error?.message || "Failed to save assignment");
+        setError(data.error?.message || t("fleet.assignments.saveFailed"));
       }
-    } catch { setError("Network error"); }
+    } catch { setError(t("fleet.assignments.networkError")); }
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Assignments</h1>
-          <p className={styles.pageDesc}>Bus route and driver scheduling</p>
+          <h1 className={styles.pageTitle}>{t("fleet.assignments.title")}</h1>
+          <p className={styles.pageDesc}>{t("fleet.assignments.desc")}</p>
         </div>
         <button className={styles.addBtn} onClick={openCreate}>
-          <Plus size={14} /> New Assignment
+          <Plus size={14} /> {t("fleet.assignments.new")}
         </button>
       </div>
 
@@ -158,42 +156,42 @@ export default function AssignmentsPage() {
         <div className={styles.filterGroup}>
           <select className={styles.filterInput} value={busFilter}
             onChange={(e) => { setBusFilter(e.target.value); setPage(1); }}>
-            <option value="">All buses</option>
+            <option value="">{t("fleet.assignments.allBuses")}</option>
             {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
           </select>
           <select className={styles.filterInput} value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-            <option value="">All Statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">{t("fleet.assignments.allStatuses")}</option>
+            <option value="scheduled">{t("fleet.assignments.st.scheduled")}</option>
+            <option value="active">{t("fleet.assignments.st.active")}</option>
+            <option value="completed">{t("fleet.assignments.st.completed")}</option>
+            <option value="cancelled">{t("fleet.assignments.st.cancelled")}</option>
           </select>
         </div>
-        <span className={styles.totalLabel}>{total} assignments</span>
+        <span className={styles.totalLabel}>{total} {t("fleet.assignments.count")}</span>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className={styles.loadingState}><div className={styles.spinner} /> Loading assignments...</div>
+        <div className={styles.loadingState}><div className={styles.spinner} /> {t("fleet.assignments.loading")}</div>
       ) : assignments.length === 0 ? (
         <div className={styles.emptyState}>
           <CalendarDays size={48} style={{ opacity: 0.3 }} />
-          <p>No assignments found.</p>
+          <p>{t("fleet.assignments.empty")}</p>
         </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Bus</th>
-                <th>Route</th>
-                <th>Depot</th>
-                <th>Driver</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
-                <th>Notes</th>
+                <th>{t("fleet.assignments.colBus")}</th>
+                <th>{t("fleet.assignments.colRoute")}</th>
+                <th>{t("fleet.assignments.colDepot")}</th>
+                <th>{t("fleet.assignments.colDriver")}</th>
+                <th>{t("fleet.assignments.colStart")}</th>
+                <th>{t("fleet.assignments.colEnd")}</th>
+                <th>{t("fleet.assignments.colStatus")}</th>
+                <th>{t("fleet.assignments.colNotes")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -211,11 +209,11 @@ export default function AssignmentsPage() {
                     <td>{a.routeName || "—"}</td>
                     <td>{a.depotName || "—"}</td>
                     <td>{a.driverName || a.driverId?.slice(0, 8) || "—"}</td>
-                    <td>{formatDate(a.startDate)}</td>
-                    <td>{a.endDate ? formatDate(a.endDate) : "—"}</td>
+                    <td>{formatDate(a.startDate, lang)}</td>
+                    <td>{a.endDate ? formatDate(a.endDate, lang) : "—"}</td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: cfg.bg, color: cfg.color }}>
-                        {cfg.label}
+                        {t(cfg.label)}
                       </span>
                     </td>
                     <td className={styles.notesCell}>{a.notes || "—"}</td>
@@ -235,7 +233,7 @@ export default function AssignmentsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <span>{total} records — Page {page} of {totalPages}</span>
+          <span>{total} {t("fleet.assignments.records")} — {t("fleet.assignments.page")} {page} {t("fleet.assignments.of")} {totalPages}</span>
           <div className={styles.paginationBtns}>
             <button className={styles.pageBtn} disabled={page <= 1} onClick={() => setPage(page - 1)}>
               <ChevronLeft size={16} />
@@ -252,7 +250,7 @@ export default function AssignmentsPage() {
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>{editing ? "Edit Assignment" : "New Assignment"}</h3>
+              <h3>{editing ? t("fleet.assignments.editTitle") : t("fleet.assignments.newTitle")}</h3>
               <button className={styles.modalClose} onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -260,28 +258,28 @@ export default function AssignmentsPage() {
                 {error && <div className={styles.formError}><AlertTriangle size={14} />{error}</div>}
                 <div className={styles.formGrid}>
                   <label className={styles.formFieldFull}>
-                    <span>Bus *</span>
+                    <span>{t("fleet.assignments.fBus")}</span>
                     <select required value={form.busId} disabled={!!editing}
                       onChange={(e) => setForm({ ...form, busId: e.target.value })}>
-                      <option value="">Select bus...</option>
+                      <option value="">{t("fleet.assignments.selectBus")}</option>
                       {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
                     </select>
                   </label>
                   <label className={styles.formField}>
-                    <span>Route Name</span>
+                    <span>{t("fleet.assignments.fRoute")}</span>
                     <input value={form.routeName} onChange={(e) => setForm({ ...form, routeName: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Depot Name</span>
+                    <span>{t("fleet.assignments.fDepot")}</span>
                     <input value={form.depotName} onChange={(e) => setForm({ ...form, depotName: e.target.value })} />
                   </label>
                   <label className={styles.formFieldFull}>
-                    <span>Driver</span>
+                    <span>{t("fleet.assignments.fDriver")}</span>
                     <select value={form.driverId} onChange={(e) => {
                       const dv = drivers.find((x: any) => x.id === e.target.value);
                       setForm({ ...form, driverId: e.target.value, driverName: dv?.name || "" });
                     }}>
-                      <option value="">No driver assigned</option>
+                      <option value="">{t("fleet.assignments.noDriver")}</option>
                       {editing && form.driverId && !drivers.some((x: any) => x.id === form.driverId) && (
                         <option value={form.driverId}>{form.driverName || form.driverId.slice(0, 8)}</option>
                       )}
@@ -289,34 +287,34 @@ export default function AssignmentsPage() {
                     </select>
                   </label>
                   <label className={styles.formField}>
-                    <span>Start Date *</span>
+                    <span>{t("fleet.assignments.fStart")}</span>
                     <input type="date" required value={form.startDate}
                       onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>End Date</span>
+                    <span>{t("fleet.assignments.fEnd")}</span>
                     <input type="date" value={form.endDate}
                       onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Status</span>
+                    <span>{t("fleet.assignments.fStatus")}</span>
                     <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as any })}>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="active">Active</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
+                      <option value="scheduled">{t("fleet.assignments.st.scheduled")}</option>
+                      <option value="active">{t("fleet.assignments.st.active")}</option>
+                      <option value="completed">{t("fleet.assignments.st.completed")}</option>
+                      <option value="cancelled">{t("fleet.assignments.st.cancelled")}</option>
                     </select>
                   </label>
                   <label className={styles.formFieldFull}>
-                    <span>Notes</span>
+                    <span>{t("fleet.assignments.fNotes")}</span>
                     <textarea rows={2} value={form.notes}
                       onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                   </label>
                 </div>
               </div>
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.saveBtn}>{editing ? "Update" : "Create"} Assignment</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>{t("common.cancel")}</button>
+                <button type="submit" className={styles.saveBtn}>{editing ? t("fleet.assignments.updateBtn") : t("fleet.assignments.createBtn")}</button>
               </div>
             </form>
           </div>

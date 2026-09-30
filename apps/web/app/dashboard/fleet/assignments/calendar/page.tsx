@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Bus } from "lucide-react";
+import { useLanguage, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS = [
+  "fleet.assignCalendar.days.sun",
+  "fleet.assignCalendar.days.mon",
+  "fleet.assignCalendar.days.tue",
+  "fleet.assignCalendar.days.wed",
+  "fleet.assignCalendar.days.thu",
+  "fleet.assignCalendar.days.fri",
+  "fleet.assignCalendar.days.sat",
+];
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "#3b82f6",
@@ -25,6 +33,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 export default function CalendarPage() {
+  const { lang, t } = useLanguage();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -78,22 +87,22 @@ export default function CalendarPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Bus Calendar</h1>
-          <p className={styles.pageDesc}>Monthly view of bus assignments</p>
+          <h1 className={styles.pageTitle}>{t("fleet.assignCalendar.title")}</h1>
+          <p className={styles.pageDesc}>{t("fleet.assignCalendar.desc")}</p>
         </div>
         <div className={styles.monthNav}>
           <button className={styles.navBtn} onClick={prevMonth}><ChevronLeft size={18} /></button>
-          <span className={styles.monthLabel}>{MONTHS[month - 1]} {year}</span>
+          <span className={styles.monthLabel}>{new Date(year, month - 1, 1).toLocaleDateString(localeOf(lang), { month: "short", year: "numeric" })}</span>
           <button className={styles.navBtn} onClick={nextMonth}><ChevronRight size={18} /></button>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.loadingState}><div className={styles.spinner} /> Loading calendar...</div>
+        <div className={styles.loadingState}><div className={styles.spinner} /> {t("fleet.assignCalendar.loading")}</div>
       ) : busEntries.length === 0 ? (
         <div className={styles.emptyState}>
           <CalendarDays size={48} style={{ opacity: 0.3 }} />
-          <p>No assignments for this month.</p>
+          <p>{t("fleet.assignCalendar.empty")}</p>
         </div>
       ) : (
         <div className={styles.calendarWrap}>
@@ -102,7 +111,7 @@ export default function CalendarPage() {
             <div className={styles.busLabelCol} />
             {Array.from({ length: daysInMonth }, (_, i) => (
               <div key={i} className={styles.dayHeader}>
-                <span className={styles.dayName}>{DAYS[(firstDay + i) % 7]}</span>
+                <span className={styles.dayName}>{t(DAY_KEYS[(firstDay + i) % 7])}</span>
                 <span className={styles.dayNum}>{i + 1}</span>
               </div>
             ))}
@@ -132,7 +141,7 @@ export default function CalendarPage() {
                           key={a.id}
                           className={styles.tripBlock}
                           style={{ background: STATUS_COLORS[a.status] || "#3b82f6" }}
-                          title={`${a.routeName || "No route"} (${a.status})`}
+                          title={`${a.routeName || t("fleet.assignCalendar.noRoute")} (${a.status})`}
                         >
                           {a.routeName || "—"}
                         </div>

@@ -531,3 +531,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .langSwitcher {
+  right: auto;
+  left: 24px;
+}
+:global([dir="rtl"]) .inputIcon {
+  left: auto;
+  right: 14px;
+}
+:global([dir="rtl"]) .input {
+  padding: 0 44px 0 14px;
+}
+:global([dir="rtl"]) .eyeBtn {
+  right: auto;
+  left: 12px;
+}

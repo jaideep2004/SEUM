@@ -14,16 +14,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { API_URL } from "@/services/api";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const FUEL_TYPES = ["diesel", "petrol", "electric", "hybrid", "cng"];
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
 export default function FuelLogsPage() {
+  const { lang, t } = useLanguage();
   const [logs, setLogs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -103,20 +100,20 @@ export default function FuelLogsPage() {
         setForm({ busId: "", liters: "", costPerLiter: "", totalCost: "", date: new Date().toISOString().split("T")[0], odometerReading: "", stationName: "", fuelType: "diesel", receiptUrl: "" });
         fetchLogs();
       } else {
-        setError(data.error?.message || "Failed to create fuel log");
+        setError(data.error?.message || t("fleet.fuel.createFailed"));
       }
-    } catch { setError("Network error"); }
+    } catch { setError(t("fleet.fuel.networkError")); }
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Fuel Logs</h1>
-          <p className={styles.pageDesc}>Track fuel consumption and costs</p>
+          <h1 className={styles.pageTitle}>{t("fleet.fuel.title")}</h1>
+          <p className={styles.pageDesc}>{t("fleet.fuel.desc")}</p>
         </div>
         <button className={styles.addBtn} onClick={() => setShowModal(true)}>
-          <Plus size={14} /> Log Fuel Fill
+          <Plus size={14} /> {t("fleet.fuel.logFill")}
         </button>
       </div>
 
@@ -125,7 +122,7 @@ export default function FuelLogsPage() {
         <div className={styles.filterGroup}>
           <select className={styles.filterInput} value={busFilter}
             onChange={(e) => { setBusFilter(e.target.value); setPage(1); }}>
-            <option value="">All buses</option>
+            <option value="">{t("fleet.fuel.allBuses")}</option>
             {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
           </select>
           <input
@@ -137,50 +134,50 @@ export default function FuelLogsPage() {
             value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
           />
         </div>
-        <span className={styles.totalLabel}>{total} records</span>
+        <span className={styles.totalLabel}>{total} {t("fleet.fuel.records")}</span>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className={styles.loadingState}>
-          <div className={styles.spinner} /> Loading fuel logs...
+          <div className={styles.spinner} /> {t("fleet.fuel.loading")}
         </div>
       ) : logs.length === 0 ? (
         <div className={styles.emptyState}>
           <Fuel size={48} style={{ opacity: 0.3 }} />
-          <p>No fuel logs found.</p>
+          <p>{t("fleet.fuel.empty")}</p>
         </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Bus ID</th>
-                <th>Liters</th>
-                <th>Cost/L</th>
-                <th>Total Cost</th>
-                <th>Odometer</th>
-                <th>Station</th>
-                <th>Fuel Type</th>
-                <th>Receipt</th>
+                <th>{t("fleet.fuel.colDate")}</th>
+                <th>{t("fleet.fuel.colBus")}</th>
+                <th>{t("fleet.fuel.colLiters")}</th>
+                <th>{t("fleet.fuel.colCostL")}</th>
+                <th>{t("fleet.fuel.colTotal")}</th>
+                <th>{t("fleet.fuel.colOdometer")}</th>
+                <th>{t("fleet.fuel.colStation")}</th>
+                <th>{t("fleet.fuel.colFuelType")}</th>
+                <th>{t("fleet.fuel.colReceipt")}</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log: any) => (
                 <tr key={log.id}>
-                  <td>{formatDate(log.date)}</td>
+                  <td>{formatDate(log.date, lang)}</td>
                   <td><span className={styles.busId}>{buses.find((b: any) => b.id === log.busId)?.plateNumber || log.busId.slice(0, 8)}</span></td>
-                  <td>{log.liters} L</td>
-                  <td>SAR {log.costPerLiter}</td>
-                  <td><strong>SAR {log.totalCost}</strong></td>
+                  <td>{log.liters} {t("fleet.fuel.litersUnit")}</td>
+                  <td>{t("fleet.fuel.sar")} {log.costPerLiter}</td>
+                  <td><strong>{t("fleet.fuel.sar")} {log.totalCost}</strong></td>
                   <td>{log.odometerReading?.toLocaleString() || "—"}</td>
                   <td>{log.stationName || "—"}</td>
                   <td><span className={styles.fuelTypeBadge}>{log.fuelType}</span></td>
                   <td>
                     {log.receiptUrl ? (
                       <button className={styles.receiptBtn} onClick={() => setPreviewUrl(log.receiptUrl)}>
-                        <Image size={14} /> View
+                        <Image size={14} /> {t("fleet.fuel.view")}
                       </button>
                     ) : "—"}
                   </td>
@@ -194,7 +191,7 @@ export default function FuelLogsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <span>{total} records — Page {page} of {totalPages}</span>
+          <span>{total} {t("fleet.fuel.records")} — {t("fleet.fuel.page")} {page} {t("fleet.fuel.of")} {totalPages}</span>
           <div className={styles.paginationBtns}>
             <button className={styles.pageBtn} disabled={page <= 1} onClick={() => setPage(page - 1)}>
               <ChevronLeft size={16} />
@@ -211,7 +208,7 @@ export default function FuelLogsPage() {
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>Log Fuel Fill</h3>
+              <h3>{t("fleet.fuel.logFill")}</h3>
               <button className={styles.modalClose} onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -219,51 +216,51 @@ export default function FuelLogsPage() {
                 {error && <div className={styles.formError}><AlertTriangle size={14} />{error}</div>}
                 <div className={styles.formGrid}>
                   <label className={styles.formField}>
-                    <span>Bus *</span>
+                    <span>{t("fleet.fuel.fBus")}</span>
                     <select required value={form.busId} onChange={(e) => setForm({ ...form, busId: e.target.value })}>
-                      <option value="">Select bus...</option>
+                      <option value="">{t("fleet.fuel.selectBus")}</option>
                       {buses.map((b: any) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
                     </select>
                   </label>
                   <label className={styles.formField}>
-                    <span>Date</span>
+                    <span>{t("fleet.fuel.fDate")}</span>
                     <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Liters *</span>
+                    <span>{t("fleet.fuel.fLiters")}</span>
                     <input type="number" step="0.01" min="0" required value={form.liters} onChange={(e) => setForm({ ...form, liters: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Cost/Liter *</span>
+                    <span>{t("fleet.fuel.fCostL")}</span>
                     <input type="number" step="0.01" min="0" required value={form.costPerLiter} onChange={(e) => setForm({ ...form, costPerLiter: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Total Cost *</span>
+                    <span>{t("fleet.fuel.fTotal")}</span>
                     <input type="number" step="0.01" min="0" required value={form.totalCost} onChange={(e) => setForm({ ...form, totalCost: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Odometer (km)</span>
+                    <span>{t("fleet.fuel.fOdometer")}</span>
                     <input type="number" min="0" value={form.odometerReading} onChange={(e) => setForm({ ...form, odometerReading: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Station Name</span>
+                    <span>{t("fleet.fuel.fStation")}</span>
                     <input value={form.stationName} onChange={(e) => setForm({ ...form, stationName: e.target.value })} />
                   </label>
                   <label className={styles.formField}>
-                    <span>Fuel Type</span>
+                    <span>{t("fleet.fuel.fType")}</span>
                     <select value={form.fuelType} onChange={(e) => setForm({ ...form, fuelType: e.target.value })}>
                       {FUEL_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </label>
                   <label className={styles.formField}>
-                    <span>Receipt URL</span>
+                    <span>{t("fleet.fuel.fReceipt")}</span>
                     <input type="url" value={form.receiptUrl} onChange={(e) => setForm({ ...form, receiptUrl: e.target.value })} />
                   </label>
                 </div>
               </div>
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className={styles.saveBtn}>Save Fuel Log</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>{t("common.cancel")}</button>
+                <button type="submit" className={styles.saveBtn}>{t("fleet.fuel.save")}</button>
               </div>
             </form>
           </div>
@@ -275,17 +272,17 @@ export default function FuelLogsPage() {
         <div className={styles.modalOverlay} onClick={() => setPreviewUrl(null)}>
           <div className={styles.receiptModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>Receipt Preview</h3>
+              <h3>{t("fleet.fuel.receiptTitle")}</h3>
               <button className={styles.modalClose} onClick={() => setPreviewUrl(null)}><X size={18} /></button>
             </div>
             <div className={styles.receiptBody}>
-              <img src={previewUrl} alt="Receipt" className={styles.receiptImg} />
+              <img src={previewUrl} alt={t("fleet.fuel.receiptAlt")} className={styles.receiptImg} />
               <div className={styles.receiptActions}>
                 <a href={previewUrl} target="_blank" rel="noopener noreferrer" className={styles.receiptActionBtn}>
-                  <ExternalLink size={14} /> Open
+                  <ExternalLink size={14} /> {t("fleet.fuel.open")}
                 </a>
                 <a href={previewUrl} download className={styles.receiptActionBtn}>
-                  <Download size={14} /> Download
+                  <Download size={14} /> {t("fleet.fuel.download")}
                 </a>
               </div>
             </div>

@@ -586,3 +586,24 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .addBtn {
+  margin-left: 0;
+  margin-right: auto;
+}
+:global([dir="rtl"]) .searchIcon {
+  left: auto;
+  right: 12px;
+}
+:global([dir="rtl"]) .searchInput {
+  padding-left: 12px;
+  padding-right: 36px;
+}
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .pwToggle {
+  right: auto;
+  left: 8px;
+}

@@ -10,9 +10,11 @@ import {
   Gauge,
 } from "lucide-react";
 import { API_URL } from "@/services/api";
+import { useLanguage, formatDate, formatCurrency, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 export default function FuelAnalyticsPage() {
+  const { lang, t } = useLanguage();
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{ dropped: boolean; message: string | null }>({ dropped: false, message: null });
@@ -38,7 +40,7 @@ export default function FuelAnalyticsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.loadingState}>
-          <div className={styles.spinner} /> Loading analytics...
+          <div className={styles.spinner} /> {t("fleet.fuelAnalytics.loading")}
         </div>
       </div>
     );
@@ -49,7 +51,7 @@ export default function FuelAnalyticsPage() {
       <div className={styles.page}>
         <div className={styles.emptyState}>
           <BarChart3 size={48} style={{ opacity: 0.3 }} />
-          <p>No fuel data available for analytics.</p>
+          <p>{t("fleet.fuelAnalytics.empty")}</p>
         </div>
       </div>
     );
@@ -61,8 +63,8 @@ export default function FuelAnalyticsPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Fuel Analytics</h1>
-          <p className={styles.pageDesc}>Efficiency trends and cost analysis</p>
+          <h1 className={styles.pageTitle}>{t("fleet.fuelAnalytics.title")}</h1>
+          <p className={styles.pageDesc}>{t("fleet.fuelAnalytics.desc")}</p>
         </div>
       </div>
 
@@ -80,43 +82,43 @@ export default function FuelAnalyticsPage() {
           <div className={styles.kpiIcon} style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
             <Fuel size={20} />
           </div>
-          <span className={styles.kpiLabel}>Total Fills</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.fills")}</span>
           <span className={styles.kpiValue}>{summary.totalFills}</span>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiIcon} style={{ background: "rgba(59,130,246,0.12)", color: "#3b82f6" }}>
             <Fuel size={20} />
           </div>
-          <span className={styles.kpiLabel}>Total Liters</span>
-          <span className={styles.kpiValue}>{summary.totalLiters.toLocaleString()} L</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.liters")}</span>
+          <span className={styles.kpiValue}>{summary.totalLiters.toLocaleString()} {t("fleet.fuelAnalytics.litersUnit")}</span>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiIcon} style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b" }}>
             <DollarSign size={20} />
           </div>
-          <span className={styles.kpiLabel}>Total Cost</span>
-          <span className={styles.kpiValue}>SAR {summary.totalCost.toLocaleString()}</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.cost")}</span>
+          <span className={styles.kpiValue}>{formatCurrency(summary.totalCost, lang, 0)}</span>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiIcon} style={{ background: "rgba(139,92,246,0.12)", color: "#8b5cf6" }}>
             <DollarSign size={20} />
           </div>
-          <span className={styles.kpiLabel}>Avg Cost/Liter</span>
-          <span className={styles.kpiValue}>SAR {summary.avgCostPerLiter.toFixed(2)}</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.avgCostL")}</span>
+          <span className={styles.kpiValue}>{formatCurrency(summary.avgCostPerLiter, lang)}</span>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiIcon} style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
             <Gauge size={20} />
           </div>
-          <span className={styles.kpiLabel}>Avg Efficiency</span>
-          <span className={styles.kpiValue}>{avgKmPerLiter ?? "—"} km/L</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.avgEff")}</span>
+          <span className={styles.kpiValue}>{avgKmPerLiter ?? "—"} {t("fleet.fuelAnalytics.kmPerL")}</span>
         </div>
         <div className={styles.kpiCard}>
           <div className={styles.kpiIcon} style={{ background: "rgba(239,68,68,0.12)", color: "#ef4444" }}>
             <TrendingDown size={20} />
           </div>
-          <span className={styles.kpiLabel}>Avg Cost/km</span>
-          <span className={styles.kpiValue}>SAR {avgCostPerKm ?? "—"}</span>
+          <span className={styles.kpiLabel}>{t("fleet.fuelAnalytics.avgCostKm")}</span>
+          <span className={styles.kpiValue}>{t("fleet.fuelAnalytics.sar")} {avgCostPerKm ?? "—"}</span>
         </div>
       </div>
 
@@ -124,7 +126,7 @@ export default function FuelAnalyticsPage() {
       {efficiencyTrend && efficiencyTrend.length > 0 && (
         <div className={styles.chartCard}>
           <div className={styles.chartHeader}>
-            <h2 className={styles.chartTitle}>Efficiency Trend (km/L)</h2>
+            <h2 className={styles.chartTitle}>{t("fleet.fuelAnalytics.trend")}</h2>
           </div>
           <div className={styles.chartBody}>
             <svg viewBox={`0 0 ${Math.max(efficiencyTrend.length * 60, 300)} 200`} className={styles.chartSvg}>
@@ -168,7 +170,7 @@ export default function FuelAnalyticsPage() {
                   <g key={i}>
                     <circle cx={x} cy={y} r="4" fill="#10b981" stroke="#fff" strokeWidth="2" />
                     <text x={x} y={190} textAnchor="middle" fill="var(--color-text-tertiary)" fontSize="8">
-                      {new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                      {new Date(d.date).toLocaleDateString(localeOf(lang), { day: "2-digit", month: "short" })}
                     </text>
                   </g>
                 );
@@ -182,27 +184,27 @@ export default function FuelAnalyticsPage() {
       {efficiencyTrend && efficiencyTrend.length > 0 && (
         <div className={styles.dataCard}>
           <div className={styles.chartHeader}>
-            <h2 className={styles.chartTitle}>Efficiency Data</h2>
+            <h2 className={styles.chartTitle}>{t("fleet.fuelAnalytics.dataTitle")}</h2>
           </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Bus</th>
-                  <th>km/L</th>
-                  <th>SAR/km</th>
-                  <th>Liters</th>
+                  <th>{t("fleet.fuelAnalytics.colDate")}</th>
+                  <th>{t("fleet.fuelAnalytics.colBus")}</th>
+                  <th>{t("fleet.fuelAnalytics.colKmL")}</th>
+                  <th>{t("fleet.fuelAnalytics.colSarKm")}</th>
+                  <th>{t("fleet.fuelAnalytics.colLiters")}</th>
                 </tr>
               </thead>
               <tbody>
                 {efficiencyTrend.slice().reverse().map((d: any, i: number) => (
                   <tr key={i}>
-                    <td>{new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                    <td>{formatDate(d.date, lang)}</td>
                     <td>{d.plateNumber || "—"}</td>
                     <td><strong>{d.kmPerLiter}</strong></td>
-                    <td>SAR {d.costPerKm}</td>
-                    <td>{d.liters} L</td>
+                    <td>{t("fleet.fuelAnalytics.sar")} {d.costPerKm}</td>
+                    <td>{d.liters} {t("fleet.fuelAnalytics.litersUnit")}</td>
                   </tr>
                 ))}
               </tbody>

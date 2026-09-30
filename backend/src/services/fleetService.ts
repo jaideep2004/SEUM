@@ -3,6 +3,7 @@ import { query, queryOne } from '../db';
 import { ConflictError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { createDocumentExpiryNotifications } from './notificationService';
+import { emitToTenant, REALTIME_EVENTS } from '../realtime/socket';
 import type { CreateBusInput, UpdateBusInput, ListBusesQuery, CreateDocumentInput, UpdateDocumentInput, UpdateReadinessInput, CreateFuelLogInput, FuelLogQuery, CreateAssignmentInput, UpdateAssignmentInput, AssignmentQuery } from '../validators/fleet';
 
 interface BusRow {
@@ -220,7 +221,13 @@ export async function updateBus(tenantId: string, busId: string, input: UpdateBu
     values
   );
 
-  return mapBus(row!);
+  const updated = mapBus(row!);
+  if (input.status !== undefined && input.status !== existing.status) {
+    emitToTenant(existing.tenant_id, REALTIME_EVENTS.BUS_STATUS_CHANGED, {
+      tenantId: existing.tenant_id, busId, status: updated.status, previousStatus: existing.status,
+    });
+  }
+  return updated;
 }
 
 export async function softDeleteBus(tenantId: string, busId: string, isSuperAdmin: boolean) {
@@ -547,7 +554,11 @@ export async function updateReadiness(busId: string, tenantId: string, userId: s
         [busId, tenantId, input.status, input.notes || null, userId, now, input.nextScheduledMaintenanceKm || null, input.nextScheduledMaintenanceDate || null]
       );
 
-  return mapReadiness(row!);
+  const readiness = mapReadiness(row!);
+  emitToTenant(tenantId, REALTIME_EVENTS.BUS_STATUS_CHANGED, {
+    tenantId, busId, status: readiness.status, checkedBy: readiness.checkedBy,
+  });
+  return readiness;
 }
 
 export async function checkBusReadiness(busId: string, tenantId: string): Promise<void> {

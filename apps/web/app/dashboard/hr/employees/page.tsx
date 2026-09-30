@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserPlus, Search, Users, ExternalLink, Briefcase } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -12,23 +13,28 @@ const STATUS_COLORS: Record<string, string> = {
   active: "#10b981", suspended: "#f59e0b", terminated: "#ef4444", on_leave: "#3b82f6",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Active", suspended: "Suspended", terminated: "Terminated", on_leave: "On Leave",
+const STATUS_KEYS: Record<string, string> = {
+  active: "hr.status.active",
+  suspended: "hr.status.suspended",
+  terminated: "hr.status.terminated",
+  on_leave: "hr.status.onLeave",
 };
 
-const DEPARTMENTS = [
-  { value: "", label: "All Departments" },
-  { value: "operations", label: "Operations" },
-  { value: "finance", label: "Finance" },
-  { value: "hr", label: "HR" },
-  { value: "fleet", label: "Fleet" },
-  { value: "maintenance", label: "Maintenance" },
-  { value: "customer_service", label: "Customer Service" },
-  { value: "executive", label: "Executive" },
-  { value: "admin", label: "Admin" },
-];
+const DEPARTMENT_KEYS: Record<string, string> = {
+  operations: "hr.dept.operations",
+  finance: "hr.dept.finance",
+  hr: "hr.dept.hr",
+  fleet: "hr.dept.fleet",
+  maintenance: "hr.dept.maintenance",
+  customer_service: "hr.dept.customerService",
+  executive: "hr.dept.executive",
+  admin: "hr.dept.admin",
+};
 
 export default function EmployeesListPage() {
+  const { lang, t } = useLanguage();
+  void formatDate;
+  void formatCurrency;
   const router = useRouter();
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,12 +71,12 @@ export default function EmployeesListPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Employees</h1>
-          <p className={styles.pageDesc}>Manage non-driver staff profiles, departments, and employment details</p>
+          <h1 className={styles.pageTitle}>{t("hr.employees.title")}</h1>
+          <p className={styles.pageDesc}>{t("hr.employees.desc")}</p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/dashboard/hr/employees/new" className={styles.addBtn}>
-            <UserPlus size={14} /> Add Employee
+            <UserPlus size={14} /> {t("hr.employees.add")}
           </Link>
         </div>
       </div>
@@ -78,30 +84,31 @@ export default function EmployeesListPage() {
       <div className={styles.filters}>
         <div className={styles.searchWrap}>
           <Search size={13} className={styles.searchIcon} />
-          <input className={styles.searchInput} placeholder="Search name, email, employee code, designation..." value={search}
+          <input className={styles.searchInput} placeholder={t("hr.employees.searchPh")} value={search}
             onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
         </div>
         <select className={styles.statusSelect} value={departmentFilter} onChange={(e) => { setDepartmentFilter(e.target.value); setPage(1); }}>
-          {DEPARTMENTS.map((d) => <option key={d.value || "all"} value={d.value}>{d.label}</option>)}
+          <option value="">{t("hr.dept.all")}</option>
+          {Object.entries(DEPARTMENT_KEYS).map(([v, k]) => <option key={v} value={v}>{t(k)}</option>)}
         </select>
         <select className={styles.statusSelect} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="terminated">Terminated</option>
-          <option value="on_leave">On Leave</option>
+          <option value="">{t("hr.employees.allStatus")}</option>
+          <option value="active">{t("hr.status.active")}</option>
+          <option value="suspended">{t("hr.status.suspended")}</option>
+          <option value="terminated">{t("hr.status.terminated")}</option>
+          <option value="on_leave">{t("hr.status.onLeave")}</option>
         </select>
       </div>
 
       {loading ? (
-        <p className={styles.loading}>Loading employees...</p>
+        <p className={styles.loading}>{t("hr.employees.loading")}</p>
       ) : employees.length === 0 ? (
         <div className={styles.emptyState}>
           <Users size={48} className={styles.emptyIcon} />
-          <h3>No Employees Found</h3>
-          <p>{search || statusFilter || departmentFilter ? "Try different search criteria" : "Add your first employee to get started"}</p>
+          <h3>{t("hr.employees.emptyTitle")}</h3>
+          <p>{search || statusFilter || departmentFilter ? t("hr.employees.emptyFiltered") : t("hr.employees.emptyHint")}</p>
           {!search && !statusFilter && !departmentFilter && (
-            <Link href="/dashboard/hr/employees/new" className={styles.emptyAddBtn}>Add Employee</Link>
+            <Link href="/dashboard/hr/employees/new" className={styles.emptyAddBtn}>{t("hr.employees.add")}</Link>
           )}
         </div>
       ) : (
@@ -110,13 +117,13 @@ export default function EmployeesListPage() {
             <thead>
               <tr>
                 <th style={{ width: 44 }}></th>
-                <th>Name / Email</th>
-                <th>Employee Code</th>
-                <th>Department</th>
-                <th>Designation</th>
-                <th>Phone</th>
-                <th>Nationality</th>
-                <th>Status</th>
+                <th>{t("hr.employees.colName")}</th>
+                <th>{t("hr.employees.colCode")}</th>
+                <th>{t("hr.employees.colDept")}</th>
+                <th>{t("hr.employees.colDesignation")}</th>
+                <th>{t("hr.employees.colPhone")}</th>
+                <th>{t("hr.employees.colNationality")}</th>
+                <th>{t("hr.employees.colStatus")}</th>
                 <th style={{ width: 40 }}></th>
               </tr>
             </thead>
@@ -141,7 +148,7 @@ export default function EmployeesListPage() {
                   <td>{e.nationality || "—"}</td>
                   <td>
                     <span className={styles.statusBadge} style={{ background: (STATUS_COLORS[e.status] || "#6b7280") + "18", color: STATUS_COLORS[e.status] || "#6b7280" }}>
-                      {STATUS_LABELS[e.status] || e.status}
+                      {t(STATUS_KEYS[e.status] || e.status)}
                     </span>
                   </td>
                   <td>
@@ -158,9 +165,9 @@ export default function EmployeesListPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{t("hr.employees.prev")}</button>
+          <span>{t("hr.employees.pageWord")} {formatNumber(page, lang)} {t("hr.employees.ofWord")} {formatNumber(totalPages, lang)}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>{t("hr.employees.next")}</button>
         </div>
       )}
     </div>

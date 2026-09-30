@@ -235,3 +235,18 @@
   border-radius: 4px;
   font-size: 11.5px;
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .colList li {
+  padding-left: 0;
+  padding-right: 8px;
+  border-left: none;
+  border-right: 2px solid #e2e8f0;
+}
+:global([dir="rtl"]) .infoList {
+  padding-left: 0;
+  padding-right: 18px;
+}

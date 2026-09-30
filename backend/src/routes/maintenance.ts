@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as maintenanceController from '../controllers/maintenanceController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-const MAINT_WRITE = ['super_admin', 'company_admin', 'fleet_manager'];
-const MAINT_READ = [...MAINT_WRITE, 'operations_manager'];
+const MAINT_WRITE = CAP.maintenanceWrite;
+const MAINT_READ = CAP.maintenanceRead;
 
 router.post('/tasks', authenticate, requireRole(...MAINT_WRITE), maintenanceController.createTask);
 router.get('/tasks', authenticate, requireRole(...MAINT_READ), maintenanceController.listTasks);

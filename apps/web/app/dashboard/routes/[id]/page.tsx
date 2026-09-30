@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Clock, Ruler, Plus, Trash2, AlertTriangle } from "lucide-react";
 import RouteMap from "@/components/RouteMap";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -11,6 +12,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 export default function RouteDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [route, setRoute] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stopName, setStopName] = useState("");
@@ -56,7 +58,7 @@ export default function RouteDetailPage() {
   }
 
   async function handleRemoveStop(stopId: string) {
-    if (!confirm("Remove this stop?")) return;
+    if (!confirm(t("routes.detail.confirmRemove"))) return;
     try {
       const token = localStorage.getItem("seum_access_token");
       await fetch(`${API}/operations/routes/${id}/stops/${stopId}`, {
@@ -70,7 +72,7 @@ export default function RouteDetailPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loadingState}><div className={styles.spinner} /> Loading route...</div>
+        <div className={styles.loadingState}><div className={styles.spinner} /> {t("routes.detail.loading")}</div>
       </div>
     );
   }
@@ -80,8 +82,8 @@ export default function RouteDetailPage() {
       <div className={styles.page}>
         <div className={styles.emptyState}>
           <MapPin size={48} style={{ opacity: 0.3 }} />
-          <p>Route not found.</p>
-          <button className={styles.backBtn} onClick={() => router.push("/dashboard/routes")}>Back to Routes</button>
+          <p>{t("routes.detail.notFound")}</p>
+          <button className={styles.backBtn} onClick={() => router.push("/dashboard/routes")}>{t("routes.detail.backToRoutes")}</button>
         </div>
       </div>
     );
@@ -91,10 +93,10 @@ export default function RouteDetailPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <button className={styles.backBtn} onClick={() => router.push("/dashboard/routes")}>
-          <ArrowLeft size={14} /> Routes
+          <ArrowLeft size={14} /> {t("routes.detail.back")}
         </button>
         <div className={styles.headerActions}>
-          <button className={styles.editBtn} onClick={() => router.push(`/dashboard/routes/${id}/edit`)}>Edit Route</button>
+          <button className={styles.editBtn} onClick={() => router.push(`/dashboard/routes/${id}/edit`)}>{t("routes.detail.editRoute")}</button>
         </div>
       </div>
 
@@ -110,12 +112,12 @@ export default function RouteDetailPage() {
           </div>
           {route.distanceKm && (
             <div className={styles.metaItem}>
-              <Ruler size={14} /> {route.distanceKm} km
+              <Ruler size={14} /> {route.distanceKm} {t("routes.detail.km")}
             </div>
           )}
           {route.estimatedDurationMinutes && (
             <div className={styles.metaItem}>
-              <Clock size={14} /> {route.estimatedDurationMinutes} min
+              <Clock size={14} /> {route.estimatedDurationMinutes} {t("routes.detail.min")}
             </div>
           )}
         </div>
@@ -124,7 +126,7 @@ export default function RouteDetailPage() {
 
       {/* Map */}
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Route Map</h3>
+        <h3 className={styles.cardTitle}>{t("routes.detail.mapTitle")}</h3>
         <RouteMap
           origin={route.origin}
           destination={route.destination}
@@ -134,23 +136,23 @@ export default function RouteDetailPage() {
 
       {/* Stops Management */}
       <div className={styles.card}>
-        <h3 className={styles.cardTitle}>Stops</h3>
+        <h3 className={styles.cardTitle}>{t("routes.detail.stopsTitle")}</h3>
         <div className={styles.stopsGrid}>
           {/* Current stops */}
           <div className={styles.stopList}>
             <div className={styles.stopItem}>
               <span className={styles.stopIndex}>O</span>
               <span className={styles.stopName}>{route.origin}</span>
-              <span className={styles.stopEta}>Start</span>
+              <span className={styles.stopEta}>{t("routes.detail.start")}</span>
             </div>
             {(route.stops || []).map((s: any) => (
               <div key={s.id} className={styles.stopItem}>
                 <span className={styles.stopIndex}>{s.stopOrder}</span>
                 <span className={styles.stopName}>{s.stopName}</span>
                 <span className={styles.stopEta}>
-                  {s.estimatedArrivalMinutes ? `${s.estimatedArrivalMinutes} min` : "—"}
+                  {s.estimatedArrivalMinutes ? `${s.estimatedArrivalMinutes} ${t("routes.detail.min")}` : "—"}
                 </span>
-                <button className={styles.removeBtn} onClick={() => handleRemoveStop(s.id)} title="Remove stop">
+                <button className={styles.removeBtn} onClick={() => handleRemoveStop(s.id)} title={t("routes.detail.removeTitle")}>
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -158,36 +160,36 @@ export default function RouteDetailPage() {
             <div className={styles.stopItem}>
               <span className={styles.stopIndex} style={{ background: "var(--color-danger)" }}>D</span>
               <span className={styles.stopName}>{route.destination}</span>
-              <span className={styles.stopEta}>End</span>
+              <span className={styles.stopEta}>{t("routes.detail.end")}</span>
             </div>
           </div>
 
           {/* Add stop form */}
           <form className={styles.addStopForm} onSubmit={handleAddStop}>
-            <h4 className={styles.formTitle}><Plus size={14} /> Add Stop</h4>
+            <h4 className={styles.formTitle}><Plus size={14} /> {t("routes.detail.addStopTitle")}</h4>
             <div className={styles.formRow}>
-              <label>Stop Name</label>
-              <input value={stopName} onChange={(e) => setStopName(e.target.value)} required placeholder="e.g. Jeddah Junction" />
+              <label>{t("routes.detail.stopNameLabel")}</label>
+              <input value={stopName} onChange={(e) => setStopName(e.target.value)} required placeholder={t("routes.detail.stopNamePh")} />
             </div>
             <div className={styles.formRow}>
-              <label>Order</label>
+              <label>{t("routes.detail.orderLabel")}</label>
               <input type="number" value={stopOrder} onChange={(e) => setStopOrder(parseInt(e.target.value))} required min={0} />
             </div>
             <div className={styles.formRow2}>
               <div className={styles.formRow}>
-                <label>Latitude</label>
+                <label>{t("routes.detail.latLabel")}</label>
                 <input value={stopLat} onChange={(e) => setStopLat(e.target.value)} placeholder="21.4858" />
               </div>
               <div className={styles.formRow}>
-                <label>Longitude</label>
+                <label>{t("routes.detail.lngLabel")}</label>
                 <input value={stopLng} onChange={(e) => setStopLng(e.target.value)} placeholder="39.1925" />
               </div>
             </div>
             <div className={styles.formRow}>
-              <label>ETA (min)</label>
+              <label>{t("routes.detail.etaLabel")}</label>
               <input type="number" value={stopEta} onChange={(e) => setStopEta(e.target.value)} min={1} />
             </div>
-            <button type="submit" className={styles.addBtn}>Add Stop</button>
+            <button type="submit" className={styles.addBtn}>{t("routes.detail.addStopBtn")}</button>
           </form>
         </div>
       </div>

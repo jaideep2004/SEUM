@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { useLanguage } from "@/lib/i18n";
 import { ArrowLeft, Truck, Save, AlertTriangle } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -46,6 +47,7 @@ const initialForm: BusFormData = {
 };
 
 export default function BusEditPage() {
+  const { lang, t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const busId = params.id as string;
@@ -78,7 +80,7 @@ export default function BusEditPage() {
           assignedDepot: data.assignedDepot || "",
         });
       } catch (err: any) {
-        setError(err.message || "Failed to load bus");
+        setError(err.message || t("fleet.vehicleEdit.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -99,11 +101,11 @@ export default function BusEditPage() {
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
-    if (!form.plateNumber.trim()) next.plateNumber = "Plate number is required";
-    if (!form.make.trim()) next.make = "Make is required";
-    if (!form.model.trim()) next.model = "Model is required";
-    if (!form.year || Number(form.year) < 1900) next.year = "Valid year is required";
-    if (!form.capacitySeated || Number(form.capacitySeated) < 1) next.capacitySeated = "Seated capacity is required";
+    if (!form.plateNumber.trim()) next.plateNumber = t("fleet.vehicleEdit.reqPlate");
+    if (!form.make.trim()) next.make = t("fleet.vehicleEdit.reqMake");
+    if (!form.model.trim()) next.model = t("fleet.vehicleEdit.reqModel");
+    if (!form.year || Number(form.year) < 1900) next.year = t("fleet.vehicleEdit.reqYear");
+    if (!form.capacitySeated || Number(form.capacitySeated) < 1) next.capacitySeated = t("fleet.vehicleEdit.reqCap");
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -129,7 +131,7 @@ export default function BusEditPage() {
       });
       router.push(`/dashboard/fleet/vehicles/${busId}`);
     } catch (err: any) {
-      setError(err.message || "Failed to update bus");
+      setError(err.message || t("fleet.vehicleEdit.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -138,7 +140,7 @@ export default function BusEditPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>Loading bus data...</div>
+        <div className={styles.loading}>{t("fleet.vehicleEdit.loading")}</div>
       </div>
     );
   }
@@ -150,7 +152,7 @@ export default function BusEditPage() {
           <AlertTriangle size={20} />
           <span>{error}</span>
           <button className={styles.backBtn} onClick={() => router.push("/dashboard/fleet/vehicles")}>
-            Back to Vehicles
+            {t("fleet.vehicleDetail.backToVehicles")}
           </button>
         </div>
       </div>
@@ -166,8 +168,8 @@ export default function BusEditPage() {
           <ArrowLeft size={18} />
         </button>
         <div className={styles.headerInfo}>
-          <h1 className={styles.headerTitle}>Edit Vehicle</h1>
-          <p className={styles.headerSub}>{form.plateNumber || "Bus"} &middot; Update vehicle details</p>
+          <h1 className={styles.headerTitle}>{t("fleet.vehicleEdit.title")}</h1>
+          <p className={styles.headerSub}>{form.plateNumber || t("fleet.vehicleEdit.busFallback")} &middot; {t("fleet.vehicleEdit.sub")}</p>
         </div>
       </div>
 
@@ -175,55 +177,55 @@ export default function BusEditPage() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <Truck size={16} />
-            <h2 className={styles.cardTitle}>Basic Information</h2>
+            <h2 className={styles.cardTitle}>{t("fleet.vehicleEdit.basic")}</h2>
           </div>
 
           <div className={styles.grid}>
             <div className={styles.field}>
               <label className={styles.label}>
-                Plate Number <span className={styles.required}>*</span>
+                {t("fleet.vehicleEdit.plateNumber")} <span className={styles.required}>*</span>
               </label>
               <input
                 className={`${styles.input} ${fieldError("plateNumber")}`}
                 name="plateNumber"
                 value={form.plateNumber}
                 onChange={handleChange}
-                placeholder="e.g. 1234 KSA"
+                placeholder={t("fleet.vehicleEdit.phPlate")}
               />
               {errors.plateNumber && <span className={styles.fieldErr}>{errors.plateNumber}</span>}
             </div>
 
             <div className={styles.field}>
               <label className={styles.label}>
-                Make <span className={styles.required}>*</span>
+                {t("fleet.vehicleEdit.make")} <span className={styles.required}>*</span>
               </label>
               <input
                 className={`${styles.input} ${fieldError("make")}`}
                 name="make"
                 value={form.make}
                 onChange={handleChange}
-                placeholder="e.g. Yutong"
+                placeholder={t("fleet.vehicleEdit.phMake")}
               />
               {errors.make && <span className={styles.fieldErr}>{errors.make}</span>}
             </div>
 
             <div className={styles.field}>
               <label className={styles.label}>
-                Model <span className={styles.required}>*</span>
+                {t("fleet.vehicleEdit.model")} <span className={styles.required}>*</span>
               </label>
               <input
                 className={`${styles.input} ${fieldError("model")}`}
                 name="model"
                 value={form.model}
                 onChange={handleChange}
-                placeholder="e.g. 55 Seater"
+                placeholder={t("fleet.vehicleEdit.phModel")}
               />
               {errors.model && <span className={styles.fieldErr}>{errors.model}</span>}
             </div>
 
             <div className={styles.field}>
               <label className={styles.label}>
-                Year <span className={styles.required}>*</span>
+                {t("fleet.vehicleEdit.year")} <span className={styles.required}>*</span>
               </label>
               <input
                 className={`${styles.input} ${fieldError("year")}`}
@@ -231,14 +233,14 @@ export default function BusEditPage() {
                 type="number"
                 value={form.year}
                 onChange={handleChange}
-                placeholder="e.g. 2024"
+                placeholder={t("fleet.vehicleEdit.phYear")}
               />
               {errors.year && <span className={styles.fieldErr}>{errors.year}</span>}
             </div>
 
             <div className={styles.field}>
               <label className={styles.label}>
-                Seated Capacity <span className={styles.required}>*</span>
+                {t("fleet.vehicleEdit.seated")} <span className={styles.required}>*</span>
               </label>
               <input
                 className={`${styles.input} ${fieldError("capacitySeated")}`}
@@ -246,36 +248,36 @@ export default function BusEditPage() {
                 type="number"
                 value={form.capacitySeated}
                 onChange={handleChange}
-                placeholder="e.g. 55"
+                placeholder={t("fleet.vehicleEdit.phSeated")}
               />
               {errors.capacitySeated && <span className={styles.fieldErr}>{errors.capacitySeated}</span>}
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Standing Capacity</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.standing")}</label>
               <input
                 className={styles.input}
                 name="capacityStanding"
                 type="number"
                 value={form.capacityStanding}
                 onChange={handleChange}
-                placeholder="e.g. 20"
+                placeholder={t("fleet.vehicleEdit.phStanding")}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Color</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.color")}</label>
               <input
                 className={styles.input}
                 name="color"
                 value={form.color}
                 onChange={handleChange}
-                placeholder="e.g. White"
+                placeholder={t("fleet.vehicles.phColor")}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Fuel Type</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.fuelType")}</label>
               <select className={styles.select} name="fuelType" value={form.fuelType} onChange={handleChange}>
                 {fuelTypes.map((t) => (
                   <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
@@ -284,7 +286,7 @@ export default function BusEditPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Status</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.status")}</label>
               <select className={styles.select} name="status" value={form.status} onChange={handleChange}>
                 {statusOptions.map((s) => (
                   <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -293,13 +295,13 @@ export default function BusEditPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Assigned Depot</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.depot")}</label>
               <input
                 className={styles.input}
                 name="assignedDepot"
                 value={form.assignedDepot}
                 onChange={handleChange}
-                placeholder="e.g. Makkah Main"
+                placeholder={t("fleet.vehicleEdit.phDepot")}
               />
             </div>
           </div>
@@ -308,45 +310,45 @@ export default function BusEditPage() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <Truck size={16} />
-            <h2 className={styles.cardTitle}>Identification & Purchase</h2>
+            <h2 className={styles.cardTitle}>{t("fleet.vehicleEdit.idTitle")}</h2>
           </div>
 
           <div className={styles.grid}>
             <div className={styles.field}>
-              <label className={styles.label}>Chassis Number</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.chassis")}</label>
               <input
                 className={styles.input}
                 name="chassisNumber"
                 value={form.chassisNumber}
                 onChange={handleChange}
-                placeholder="Chassis number"
+                placeholder={t("fleet.vehicleEdit.phChassis")}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>VIN</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.vin")}</label>
               <input
                 className={styles.input}
                 name="vin"
                 value={form.vin}
                 onChange={handleChange}
-                placeholder="Vehicle identification number"
+                placeholder={t("fleet.vehicleEdit.phVin")}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Engine Number</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.engine")}</label>
               <input
                 className={styles.input}
                 name="engineNumber"
                 value={form.engineNumber}
                 onChange={handleChange}
-                placeholder="Engine number"
+                placeholder={t("fleet.vehicleEdit.phEngine")}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Purchase Date</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.purchaseDate")}</label>
               <input
                 className={styles.input}
                 name="purchaseDate"
@@ -357,14 +359,14 @@ export default function BusEditPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Purchase Price (SAR)</label>
+              <label className={styles.label}>{t("fleet.vehicleEdit.price")}</label>
               <input
                 className={styles.input}
                 name="purchasePrice"
                 type="number"
                 value={form.purchasePrice}
                 onChange={handleChange}
-                placeholder="e.g. 450000"
+                placeholder={t("fleet.vehicleEdit.phPrice")}
               />
             </div>
           </div>
@@ -379,11 +381,11 @@ export default function BusEditPage() {
 
         <div className={styles.actions}>
           <button type="button" className={styles.cancelBtn} onClick={() => router.push(`/dashboard/fleet/vehicles/${busId}`)}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" className={styles.submitBtn} disabled={saving}>
             <Save size={15} />
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? t("fleet.vehicleEdit.saving") : t("fleet.vehicleEdit.save")}
           </button>
         </div>
       </form>

@@ -281,6 +281,12 @@ Client clarification: exactly **2 trip types**:
   - ✅ Per-leg `route_type` (`arrival | departure | intercity | intracity`) added: `validators/operations.ts:38-46` + `trip_legs.route_type` column (migration `migrate-phase2.8.ts`) + `tripService.ts` + `recurringTripService.ts`; UI select in legs grid
   - ✅ Per-flight `flightType` (`arrival | departure`) added: `flightSchema` + JSONB `flights[]` in `trips`; UI select in flights grid
   - ✅ Full page reorder to client order `1 Trip Type 2 Program Info 3 Flights 4 Hotels 5 Route Info` (forms + validation unchanged for Single)
+- ✅ **Client feedback Sep 2026 — trip form v2 (within Phase 0-8 scope):**
+  - ✅ `vehicle_count` on trips + patterns (migration `migrate-phase2.9.ts`): number of vehicles required next to Vehicle Type dropdown
+  - ✅ Per-group Nusuk info: `groups` JSONB on trips + patterns (groupNo, leader, nationality, pax, nusukInfo {reference, notes}); flat legacy columns backfilled from first group; recurring generation copies both
+  - ✅ Nationality country dropdown (EN+AR, ~250 countries in `apps/web/lib/countries.ts`); flight From/To are country selects
+  - ✅ Dynamic flights: flightType `arrival` auto-sets To = Saudi Arabia (home), `departure` auto-sets From = Saudi Arabia (editable after)
+  - ✅ Auto rough draft invoice on manual trip creation (amount 0 pending finance pricing, references trip) + in-app notifications to `company_admin` + `finance_accountant` (`tripService.autoDraftInvoiceForTrip`, failure-isolated; pattern auto-generation skips to avoid invoice spam)
 
 ---
 
@@ -855,90 +861,90 @@ Client clarification: exactly **2 trip types**:
 ## PHASE 9: Real-Time Layer & GPS Integration (Software Side)
 
 ### 9.1 WebSocket Infrastructure
-- [ ] Socket.IO server on Express
-- [ ] Redis adapter for horizontal scaling (multiple instances)
-- [ ] Socket authentication middleware (JWT)
-- [ ] Client Socket.IO provider (React context)
-- [ ] Connection management (join room by tenant_id, user_id)
+- ✅ Socket.IO server on Express
+- ✅ Redis adapter for horizontal scaling (multiple instances) — `@socket.io/redis-adapter` + `ioredis` wired in `realtime/socket.ts:initSocketIO`, active when `REDIS_URL` is set (production VPS), single-instance otherwise
+- ✅ Socket authentication middleware (JWT)
+- ✅ Client Socket.IO provider (React context)
+- ✅ Connection management (join room by tenant_id, user_id)
 - **Frontend pages:**
-  - [ ] (Infrastructure — no direct page, consumed by all real-time components)
+  - ✅ (Infrastructure — no direct page, consumed by all real-time components)
 
 ### 9.2 Real-Time Events
-- [ ] `trip:status_changed` — push to ops dashboard
-- [ ] `trip:delayed` — push to all concerned
-- [ ] `trip:position_updated` — push to monitoring room
-- [ ] `bus:status_changed` — push to fleet dashboard
-- [ ] `alert:ai_event` — push to monitoring room
-- [ ] `notification:new` — push to specific user
+- ✅ `trip:status_changed` — push to ops dashboard
+- ✅ `trip:delayed` — push to all concerned
+- ✅ `trip:position_updated` — push to monitoring room
+- ✅ `bus:status_changed` — push to fleet dashboard
+- ✅ `alert:ai_event` — push to monitoring room
+- ✅ `notification:new` — push to specific user
 - **Frontend pages:**
-  - [ ] (Consumed by dashboards — live-updating trip cards, bus markers, notification badge)
+  - ✅ (Consumed by dashboards — live-updating trip cards, bus markers, notification badge)
 
 ### 9.3 GPS Data Ingestion (Software)
-- [ ] `gps_positions` table: tenant_id, bus_id, device_id, latitude, longitude, speed, heading, altitude, timestamp, ignition_status, odometer_reading
-- [ ] `POST /api/gps/ingest` — endpoint for GPS devices to push data (rate-limited)
-- [ ] `GET /api/gps/current-positions` — latest position for all buses
-- [ ] `GET /api/gps/trip-history` — historical positions for a specific trip
-- [ ] GPS data processing pipeline:
-  - [ ] Receive raw data
-  - [ ] Validate and sanitize
-  - [ ] Associate with current trip
-  - [ ] Store in time-series efficient format
-  - [ ] Emit real-time event
-  - [ ] Check geofence rules
-  - [ ] Calculate distance from route
+- ✅ `gps_positions` table: tenant_id, bus_id, device_id, latitude, longitude, speed, heading, altitude, timestamp, ignition_status, odometer_reading
+- ✅ `POST /api/gps/ingest` — endpoint for GPS devices to push data (rate-limited)
+- ✅ `GET /api/gps/current-positions` — latest position for all buses
+- ✅ `GET /api/gps/trip-history` — historical positions for a specific trip
+- ✅ GPS data processing pipeline:
+  - ✅ Receive raw data
+  - ✅ Validate and sanitize
+  - ✅ Associate with current trip
+  - ✅ Store in time-series efficient format
+  - ✅ Emit real-time event
+  - ✅ Check geofence rules
+  - ✅ Calculate distance from route
 - **Frontend pages:**
-  - [ ] (Backend/infrastructure — consumed by live map and reports)
+  - ✅ (Backend/infrastructure — consumed by live map and reports)
 
 ### 9.4 Geofencing
-- [ ] `geofences` table: tenant_id, name, type (depot, terminal, checkpoint, restricted, holy_site), coordinates (polygon), radius_meters (for circle), rules[]
-- [ ] `POST /api/gps/geofences` — create
-- [ ] `GET /api/gps/geofences` — list
-- [ ] Geofence trigger events:
-  - [ ] Bus entered geofence
-  - [ ] Bus exited geofence
-  - [ ] Bus stayed beyond allowed time
-  - [ ] Unauthorized entry to restricted zone
-- [ ] Event → notification pipeline
+- ✅ `geofences` table: tenant_id, name, type (depot, terminal, checkpoint, restricted, holy_site), coordinates (polygon), radius_meters (for circle), rules[]
+- ✅ `POST /api/gps/geofences` — create
+- ✅ `GET /api/gps/geofences` — list
+- ✅ Geofence trigger events:
+  - ✅ Bus entered geofence
+  - ✅ Bus exited geofence
+  - ✅ Bus stayed beyond allowed time
+  - ✅ Unauthorized entry to restricted zone
+- ✅ Event → notification pipeline
 - **Frontend pages:**
-  - [ ] Geofences list page (table: name, type, coordinates summary, rules)
-  - [ ] Geofence create/edit form (map-based polygon drawing tool, type selector)
-  - [ ] Geofence map overlay (polygons displayed on live map, color-coded by type)
+  - ✅ Geofences list page (table: name, type, coordinates summary, rules)
+  - ✅ Geofence create/edit form (map-based polygon drawing tool, type selector)
+  - ✅ Geofence map overlay (polygons displayed on live map, color-coded by type)
 
 ### 9.5 Route Deviation Detection
-- [ ] `route_corridor` per route (buffer zone around route path)
-- [ ] On each GPS position, check: is bus within route corridor?
-- [ ] If outside → generate deviation event
-- [ ] Deviation alert (monitoring room → ops manager)
-- [ ] Deviation tolerance configurable (meters, minutes)
+- ✅ `route_corridor` per route (buffer zone around route path)
+- ✅ On each GPS position, check: is bus within route corridor?
+- ✅ If outside → generate deviation event
+- ✅ Deviation alert (monitoring room → ops manager)
+- ✅ Deviation tolerance configurable (meters, minutes)
 - **Frontend pages:**
-  - [ ] Deviation alerts feed in monitoring dashboard (real-time)
-  - [ ] Deviation tolerance settings form (meters, minutes per route)
+  - ✅ Deviation alerts feed in monitoring dashboard (real-time)
+  - ✅ Deviation tolerance settings form (meters, minutes per route)
 
 ### 9.6 Live Map Dashboard
-- [ ] Map component (Google Maps API or Mapbox)
-- [ ] Bus markers with real-time position updates
-- [ ] Bus popup: plate, speed, driver, trip, status
-- [ ] Color-coded markers (green = on_time, yellow = delayed, red = stopped, gray = offline)
-- [ ] Trip route polyline on map
-- [ ] Geofence polygons on map
-- [ ] Playback feature (replay a trip's GPS trail)
-- [ ] Filter: show all buses / only active / only delayed
+- ✅ Map component (Google Maps API or Mapbox)
+- ✅ Bus markers with real-time position updates
+- ✅ Bus popup: plate, speed, driver, trip, status
+- ✅ Color-coded markers (green = on_time, yellow = delayed, red = stopped, gray = offline)
+- ✅ Trip route polyline on map
+- ✅ Geofence polygons on map
+- ✅ Playback feature (replay a trip's GPS trail)
+- ✅ Filter: show all buses / only active / only delayed
 - **Frontend pages:**
-  - [ ] Live map dashboard page (full-screen map, bus markers, filter controls)
-  - [ ] Bus popup component (plate, speed, driver name, trip status)
-  - [ ] Route polyline layer (trip route highlighted on map)
-  - [ ] Playback controls (play/pause/scrub bar for replaying trip trail)
-  - [ ] Layer toggle panel (buses, routes, geofences, heat map)
+  - ✅ Live map dashboard page (full-screen map, bus markers, filter controls)
+  - ✅ Bus popup component (plate, speed, driver name, trip status)
+  - ✅ Route polyline layer (trip route highlighted on map)
+  - ✅ Playback controls (play/pause/scrub bar for replaying trip trail)
+  - ✅ Layer toggle panel (buses, routes, geofences, heat map)
 
 ### 9.7 Speed Monitoring
-- [ ] Speed threshold per bus/route (configurable)
-- [ ] Overspeed detection on each GPS update
-- [ ] Overspeed event generation
-- [ ] Cumulative overspeed report per driver/per trip
+- ✅ Speed threshold per bus/route (configurable)
+- ✅ Overspeed detection on each GPS update
+- ✅ Overspeed event generation
+- ✅ Cumulative overspeed report per driver/per trip
 - **Frontend pages:**
-  - [ ] Speed thresholds settings page (per bus or per route)
-  - [ ] Overspeed report page (table: driver, trip, overspeed count, max speed, duration)
-  - [ ] Speed alert feed (real-time overspeed events in monitoring sidebar)
+  - ✅ Speed thresholds settings page (per bus or per route)
+  - ✅ Overspeed report page (table: driver, trip, overspeed count, max speed, duration)
+  - ✅ Speed alert feed (real-time overspeed events in monitoring sidebar)
 
 ---
 
@@ -1316,6 +1322,7 @@ Client clarification: exactly **2 trip types**:
   - Language (Arabic / English)
   - Trip auto-completion rules
   - Notification preferences
+- [x] Frontend language toggle (Arabic / English) — done Sep 2026, ahead of backend setting: `apps/web/lib/i18n` (dictionaries + provider + ar-SA formatters), topbar EN/عربي button, `dir=rtl` shell + per-page overrides, all dashboard + auth pages translated
 - [ ] `GET /api/settings` — get tenant settings
 - [ ] `PATCH /api/settings` — update settings
 - [ ] Tenant-scoped `vehicle_types` config: default list `Bus, Coaster, Hiace, Staria, GMC, Sedan` + company can add/edit/delete custom types (stored in `system_config` or dedicated `vehicle_types` table: tenant_id, name, is_default)

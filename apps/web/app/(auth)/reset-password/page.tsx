@@ -5,9 +5,11 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Lock, ArrowLeft, CheckCircle, AlertCircle, Bus, Eye, EyeOff } from "lucide-react";
 import { API_URL } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 function ResetForm() {
+  const { lang, t } = useLanguage();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -28,17 +30,17 @@ function ResetForm() {
     setError("");
 
     if (!hasMinLength || !hasUpper || !hasNumber) {
-      setError("Password does not meet requirements.");
+      setError(t("auth.reset.weak"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.reset.mismatch"));
       return;
     }
 
     if (!token) {
-      setError("Invalid or missing reset token.");
+      setError(t("auth.reset.noToken"));
       return;
     }
 
@@ -54,13 +56,13 @@ function ResetForm() {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.message || "Reset failed");
+        setError(data.message || t("auth.reset.failed"));
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      setError(t("auth.login.connectError"));
     } finally {
       setLoading(false);
     }
@@ -75,9 +77,9 @@ function ResetForm() {
               <div className={styles.logoBox}><Bus size={20} /></div>
               <span className={styles.logoText}>SEUM</span>
             </div>
-            <div className={styles.brandText}>Intelligent Transportation</div>
-            <h1 className={styles.headline}>Invalid reset link</h1>
-            <p className={styles.subhead}>This link is invalid or expired.</p>
+            <div className={styles.brandText}>{t("auth.forgot.brand")}</div>
+            <h1 className={styles.headline}>{t("auth.reset.invalidHeadline")}</h1>
+            <p className={styles.subhead}>{t("auth.reset.invalidSub")}</p>
           </div>
         </div>
         <div className={styles.rightPanel}>
@@ -86,13 +88,13 @@ function ResetForm() {
               <div className={styles.cardLogoBox}><Bus size={18} /></div>
               <span className={styles.cardLogoText}>SEUM</span>
             </div>
-            <div className={styles.cardTitle}>Invalid link</div>
+            <div className={styles.cardTitle}>{t("auth.reset.invalidTitle")}</div>
             <div className={styles.cardDesc}>
-              This password reset link is invalid or has expired. Please request a new one.
+              {t("auth.reset.invalidDesc")}
             </div>
             <Link href="/forgot-password" className={styles.backLink}>
               <ArrowLeft size={14} />
-              Request new reset link
+              {t("auth.reset.requestNew")}
             </Link>
           </div>
         </div>
@@ -108,10 +110,10 @@ function ResetForm() {
             <div className={styles.logoBox}><Bus size={20} /></div>
             <span className={styles.logoText}>SEUM</span>
           </div>
-          <div className={styles.brandText}>Intelligent Transportation</div>
-          <h1 className={styles.headline}>Choose a new password</h1>
+          <div className={styles.brandText}>{t("auth.forgot.brand")}</div>
+          <h1 className={styles.headline}>{t("auth.reset.headline")}</h1>
           <p className={styles.subhead}>
-            Make it strong — at least 8 characters with uppercase letters and numbers.
+            {t("auth.reset.subhead")}
           </p>
         </div>
       </div>
@@ -125,24 +127,23 @@ function ResetForm() {
 
           {success ? (
             <>
-              <div className={styles.cardTitle}>Password changed</div>
+              <div className={styles.cardTitle}>{t("auth.reset.changed")}</div>
               <div className={styles.successBox}>
                 <CheckCircle size={20} />
                 <div className={styles.successText}>
-                  Your password has been reset successfully. You can now log in with your
-                  new password.
+                  {t("auth.reset.changedDesc")}
                 </div>
               </div>
               <Link href="/login" className={styles.backLink}>
                 <ArrowLeft size={14} />
-                Back to login
+                {t("auth.forgot.backLogin")}
               </Link>
             </>
           ) : (
             <>
-              <div className={styles.cardTitle}>Reset password</div>
+              <div className={styles.cardTitle}>{t("auth.forgot.resetTitle")}</div>
               <div className={styles.cardDesc}>
-                Enter your new password below.
+                {t("auth.reset.cardDesc")}
               </div>
 
               {error && (
@@ -154,12 +155,12 @@ function ResetForm() {
 
               <form onSubmit={handleSubmit}>
                 <div className={styles.field}>
-                  <label className={styles.label}>New Password</label>
+                  <label className={styles.label}>{t("auth.reset.newLabel")}</label>
                   <div className={styles.inputWrapper}>
                     <input
                       className={styles.input}
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter new password"
+                      placeholder={t("auth.reset.newPh")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -169,12 +170,12 @@ function ResetForm() {
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>Confirm Password</label>
+                  <label className={styles.label}>{t("auth.reset.confirmLabel")}</label>
                   <div className={styles.inputWrapper}>
                     <input
                       className={styles.input}
                       type={showPassword ? "text" : "password"}
-                      placeholder="Confirm new password"
+                      placeholder={t("auth.reset.confirmPh")}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
@@ -186,19 +187,19 @@ function ResetForm() {
                 <ul className={styles.requirements}>
                   <li className={hasMinLength ? styles.met : ""}>
                     {hasMinLength ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
-                    At least 8 characters
+                    {t("auth.reset.reqLength")}
                   </li>
                   <li className={hasUpper ? styles.met : ""}>
                     {hasUpper ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
-                    One uppercase letter
+                    {t("auth.reset.reqUpper")}
                   </li>
                   <li className={hasNumber ? styles.met : ""}>
                     {hasNumber ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
-                    One number
+                    {t("auth.reset.reqNumber")}
                   </li>
                   <li className={passwordsMatch ? styles.met : ""}>
                     {passwordsMatch ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
-                    Passwords match
+                    {t("auth.reset.reqMatch")}
                   </li>
                 </ul>
 
@@ -208,13 +209,13 @@ function ResetForm() {
                   ) : (
                     <Lock size={16} />
                   )}
-                  {loading ? "Resetting..." : "Reset Password"}
+                  {loading ? t("auth.reset.resetting") : t("auth.reset.submit")}
                 </button>
               </form>
 
               <Link href="/login" className={styles.backLink}>
                 <ArrowLeft size={14} />
-                Back to login
+                {t("auth.forgot.backLogin")}
               </Link>
             </>
           )}

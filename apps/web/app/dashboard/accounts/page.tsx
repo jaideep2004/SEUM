@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ChevronRight, ChevronDown, Plus, X, Edit3 } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -17,6 +18,14 @@ function getToken() {
 }
 
 function TreeNode({ node, depth, onSelect, onEdit }: { node: any; depth: number; onSelect: (a: any) => void; onEdit: (a: any) => void }) {
+  const { t } = useLanguage();
+  const TYPE_LABELS: Record<string, string> = {
+    asset: t("finance.accounts.typeAsset"),
+    liability: t("finance.accounts.typeLiability"),
+    equity: t("finance.accounts.typeEquity"),
+    revenue: t("finance.accounts.typeRevenue"),
+    expense: t("finance.accounts.typeExpense"),
+  };
   const [open, setOpen] = useState(depth < 2);
   const hasChildren = node.children?.length > 0;
 
@@ -32,10 +41,10 @@ function TreeNode({ node, depth, onSelect, onEdit }: { node: any; depth: number;
           <span className={styles.accountName}>{node.name}</span>
           {node.description && <span className={styles.accountDesc}>{node.description}</span>}
           <span className={styles.typeBadge} style={{ background: (TYPE_COLORS[node.type] || "#6b7280") + "20", color: TYPE_COLORS[node.type] || "#6b7280" }}>
-            {node.type}
+            {TYPE_LABELS[node.type] || node.type}
           </span>
         </div>
-        <button className={styles.expandBtn} onClick={e => { e.stopPropagation(); onEdit(node); }} title="Edit">
+        <button className={styles.expandBtn} onClick={e => { e.stopPropagation(); onEdit(node); }} title={t("finance.accounts.editBtn")}>
           <Edit3 size={13} />
         </button>
       </div>
@@ -51,6 +60,21 @@ function TreeNode({ node, depth, onSelect, onEdit }: { node: any; depth: number;
 }
 
 export default function ChartOfAccountsPage() {
+  const { lang, t } = useLanguage();
+  const TYPE_LABELS: Record<string, string> = {
+    asset: t("finance.accounts.typeAsset"),
+    liability: t("finance.accounts.typeLiability"),
+    equity: t("finance.accounts.typeEquity"),
+    revenue: t("finance.accounts.typeRevenue"),
+    expense: t("finance.accounts.typeExpense"),
+  };
+  const TYPE_CAP_LABELS: Record<string, string> = {
+    asset: t("finance.accounts.typeAssetCap"),
+    liability: t("finance.accounts.typeLiabilityCap"),
+    equity: t("finance.accounts.typeEquityCap"),
+    revenue: t("finance.accounts.typeRevenueCap"),
+    expense: t("finance.accounts.typeExpenseCap"),
+  };
   const [tree, setTree] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -130,16 +154,16 @@ export default function ChartOfAccountsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div className={styles.headerLeft}><h1>Chart of Accounts</h1></div>
+        <div className={styles.headerLeft}><h1>{t("finance.accounts.title")}</h1></div>
         <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => openCreate()}>
-          <Plus size={14} /> New Account
+          <Plus size={14} /> {t("finance.accounts.new")}
         </button>
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading accounts...</div>
+        <div className={styles.loading}>{t("finance.accounts.loading")}</div>
       ) : tree.length === 0 ? (
-        <div className={styles.loading}>No accounts found</div>
+        <div className={styles.loading}>{t("finance.accounts.empty")}</div>
       ) : (
         <div className={styles.treeWrap}>
           {tree.map((node: any) => (
@@ -152,39 +176,39 @@ export default function ChartOfAccountsPage() {
       {createOpen && (
         <div className={styles.overlay} onClick={() => { setCreateOpen(false); setEditTarget(null); }}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2>{editTarget ? "Edit Account" : "New Account"}</h2>
+            <h2>{editTarget ? t("finance.accounts.editTitle") : t("finance.accounts.createTitle")}</h2>
             <form onSubmit={handleSave}>
               <div className={styles.field}>
-                <label>Code *</label>
-                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="e.g. 1200" required />
+                <label>{t("finance.accounts.fCode")}</label>
+                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder={t("finance.accounts.codePh")} required />
               </div>
               <div className={styles.field}>
-                <label>Name *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Accounts Receivable" required />
+                <label>{t("finance.accounts.fName")}</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={t("finance.accounts.namePh")} required />
               </div>
               <div className={styles.field}>
-                <label>Type *</label>
+                <label>{t("finance.accounts.fType")}</label>
                 <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
-                  {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  {ACCOUNT_TYPES.map(tp => <option key={tp} value={tp}>{TYPE_CAP_LABELS[tp]}</option>)}
                 </select>
               </div>
               <div className={styles.field}>
-                <label>Parent Account</label>
+                <label>{t("finance.accounts.fParent")}</label>
                 <select value={form.parent_account_id} onChange={e => setForm({ ...form, parent_account_id: e.target.value })}>
-                  <option value="">None (Root)</option>
+                  <option value="">{t("finance.accounts.parentNone")}</option>
                   {flattenAccounts(tree).filter((a: any) => a.id !== editTarget?.id).map((a: any) => (
                     <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
                   ))}
                 </select>
               </div>
               <div className={styles.field}>
-                <label>Description</label>
+                <label>{t("finance.accounts.fDescription")}</label>
                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => { setCreateOpen(false); setEditTarget(null); }}>Cancel</button>
+                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => { setCreateOpen(false); setEditTarget(null); }}>{t("finance.accounts.cancel")}</button>
                 <button type="submit" className={`${styles.actionBtn} ${styles.primaryBtn}`} disabled={actionLoading}>
-                  {actionLoading ? "Saving..." : editTarget ? "Update" : "Create"}
+                  {actionLoading ? t("finance.accounts.saving") : editTarget ? t("finance.accounts.update") : t("finance.accounts.create")}
                 </button>
               </div>
             </form>
@@ -201,39 +225,39 @@ export default function ChartOfAccountsPage() {
               <button className={styles.closeBtn} onClick={() => setDetailTarget(null)}><X size={18} /></button>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Code</span>
+              <span className={styles.infoLabel}>{t("finance.accounts.infoCode")}</span>
               <span className={styles.infoValue}>{detailTarget.code}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Name</span>
+              <span className={styles.infoLabel}>{t("finance.accounts.infoName")}</span>
               <span className={styles.infoValue}>{detailTarget.name}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Type</span>
-              <span className={styles.infoValue}>{detailTarget.type}</span>
+              <span className={styles.infoLabel}>{t("finance.accounts.infoType")}</span>
+              <span className={styles.infoValue}>{TYPE_LABELS[detailTarget.type] || detailTarget.type}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Status</span>
-              <span className={styles.infoValue}>{detailTarget.isActive ? "Active" : "Inactive"}</span>
+              <span className={styles.infoLabel}>{t("finance.accounts.infoStatus")}</span>
+              <span className={styles.infoValue}>{detailTarget.isActive ? t("finance.accounts.active") : t("finance.accounts.inactive")}</span>
             </div>
             {detailTarget.description && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Description</span>
+                <span className={styles.infoLabel}>{t("finance.accounts.infoDescription")}</span>
                 <span className={styles.infoValue}>{detailTarget.description}</span>
               </div>
             )}
             {detailTarget.parentCode && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Parent</span>
+                <span className={styles.infoLabel}>{t("finance.accounts.infoParent")}</span>
                 <span className={styles.infoValue}>{detailTarget.parentCode} — {detailTarget.parentName}</span>
               </div>
             )}
             <div style={{ marginTop: 24 }}>
-              <div className={styles.infoLabel} style={{ marginBottom: 8 }}>Child Accounts ({detailTarget.childCount || 0})</div>
+              <div className={styles.infoLabel} style={{ marginBottom: 8 }}>{t("finance.accounts.childAccounts")} ({detailTarget.childCount || 0})</div>
               {detailTarget.childCount === 0 ? (
-                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>No child accounts</p>
+                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{t("finance.accounts.noChildren")}</p>
               ) : (
-                <p style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Expand in tree view to see children</p>
+                <p style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{t("finance.accounts.expandHint")}</p>
               )}
             </div>
           </div>

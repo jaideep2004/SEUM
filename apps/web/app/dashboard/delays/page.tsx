@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Clock, Bus, MapPin, User, Search, ArrowLeft, ExternalLink } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -16,6 +17,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 export default function DelaysPage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [delays, setDelays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -46,22 +48,22 @@ export default function DelaysPage() {
   return (
     <div className={styles.page}>
       <Link href="/dashboard/monitoring" className={styles.backLink}>
-        <ArrowLeft size={14} /> Back to Monitoring
+        <ArrowLeft size={14} /> {t("tracking.delays.back")}
       </Link>
 
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Delay Dashboard</h1>
+          <h1 className={styles.pageTitle}>{t("tracking.delays.title")}</h1>
           <p className={styles.pageDesc}>
-            All delayed trips with reason and estimated resolution
-            {total > 0 && <span className={styles.count}>({total} total)</span>}
+            {t("tracking.delays.desc")}
+            {total > 0 && <span className={styles.count}>({total} {t("tracking.delays.totalWord")})</span>}
           </p>
         </div>
         <div className={styles.searchWrap}>
           <Search size={13} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Search by route, bus, reason..."
+            placeholder={t("tracking.delays.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -70,25 +72,25 @@ export default function DelaysPage() {
       </div>
 
       {loading ? (
-        <p className={styles.loading}>Loading delays...</p>
+        <p className={styles.loading}>{t("tracking.delays.loading")}</p>
       ) : delays.length === 0 ? (
         <div className={styles.emptyState}>
           <CheckCircle size={48} className={styles.emptyIcon} />
-          <h3>No Delayed Trips</h3>
-          <p>All trips are running on schedule</p>
+          <h3>{t("tracking.delays.emptyTitle")}</h3>
+          <p>{t("tracking.delays.emptyDesc")}</p>
         </div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Route</th>
-                <th>Bus</th>
-                <th>Driver</th>
-                <th>Scheduled</th>
-                <th>Delay</th>
-                <th>Reason</th>
-                <th>Est. Resolution</th>
+                <th>{t("tracking.delays.colRoute")}</th>
+                <th>{t("tracking.delays.colBus")}</th>
+                <th>{t("tracking.delays.colDriver")}</th>
+                <th>{t("tracking.delays.colScheduled")}</th>
+                <th>{t("tracking.delays.colDelay")}</th>
+                <th>{t("tracking.delays.colReason")}</th>
+                <th>{t("tracking.delays.colEstResolution")}</th>
                 <th style={{ width: 40 }}></th>
               </tr>
             </thead>
@@ -109,12 +111,12 @@ export default function DelaysPage() {
                   </td>
                   <td className={styles.timeCell}>
                     <Clock size={11} />
-                    {d.scheduledDate ? new Date(d.scheduledDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) : "—"}
+                    {d.scheduledDate ? formatDate(d.scheduledDate, lang) : "—"}
                     <span className={styles.time}>{d.scheduledStartTime?.slice(0, 5)}</span>
                   </td>
                   <td>
                     <span className={styles.delayBadge} data-severity={getSeverity(d.delayMinutes)}>
-                      {d.delayMinutes || "?"} min
+                      {d.delayMinutes || "?"} {t("tracking.delays.min")}
                     </span>
                   </td>
                   <td className={styles.reasonCell}>{d.delayReason || "—"}</td>
@@ -124,7 +126,7 @@ export default function DelaysPage() {
                         {new Date(d.estimatedResolutionTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     ) : (
-                      <span className={styles.muted}>Not set</span>
+                      <span className={styles.muted}>{t("tracking.delays.notSet")}</span>
                     )}
                   </td>
                   <td>
@@ -141,9 +143,9 @@ export default function DelaysPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{t("tracking.delays.prev")}</button>
+          <span>{t("tracking.delays.page")} {page} {t("tracking.delays.of")} {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>{t("tracking.delays.next")}</button>
         </div>
       )}
     </div>

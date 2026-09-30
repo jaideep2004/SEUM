@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, BarChart3, Trophy, Shield, Star, Award } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -15,9 +16,8 @@ function scoreColor(s: number) {
   return s >= 90 ? "#059669" : s >= 75 ? "#f59e0b" : s >= 50 ? "#f97316" : "#dc2626";
 }
 
-function RadarChart({ scores: { safety, punctuality, customer, fuel } }: { scores: { safety: number; punctuality: number; customer: number; fuel: number } }) {
+function RadarChart({ scores: { safety, punctuality, customer, fuel }, labels }: { scores: { safety: number; punctuality: number; customer: number; fuel: number }; labels: string[] }) {
   const cx = 140, cy = 140, r = 100;
-  const labels = ["Safety", "Punctuality", "Customer", "Fuel"];
   const values = [safety / 100, punctuality / 100, customer / 100, fuel / 100];
   const angles = [0, 90, 180, 270].map(d => (d - 90) * Math.PI / 180);
 
@@ -52,6 +52,7 @@ function RadarChart({ scores: { safety, punctuality, customer, fuel } }: { score
 }
 
 export default function DriverScoresPage() {
+  const { lang, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"history" | "leaderboard">("history");
 
   // History state
@@ -114,21 +115,23 @@ export default function DriverScoresPage() {
     return <span style={{ color: s, fontWeight: 700 }}>{score}</span>;
   };
 
+  const radarLabels = [t("drivers.scores.cardSafety"), t("drivers.scores.cardPunctuality"), t("drivers.scores.cardCustomer"), t("drivers.scores.radarFuel")];
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> Back</Link>
-          <h1>Performance Scores</h1>
+          <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> {t("common.back")}</Link>
+          <h1>{t("drivers.scores.title")}</h1>
         </div>
       </div>
 
       <div className={styles.tabs}>
         <button className={`${styles.tab} ${activeTab === "history" ? styles.tabActive : ""}`} onClick={() => setActiveTab("history")}>
-          <BarChart3 size={14} /> Score History
+          <BarChart3 size={14} /> {t("drivers.scores.tabHistory")}
         </button>
         <button className={`${styles.tab} ${activeTab === "leaderboard" ? styles.tabActive : ""}`} onClick={() => setActiveTab("leaderboard")}>
-          <Trophy size={14} /> Leaderboard
+          <Trophy size={14} /> {t("drivers.scores.tabBoard")}
         </button>
       </div>
 
@@ -137,11 +140,11 @@ export default function DriverScoresPage() {
         <div>
           <div className={styles.searchRow}>
             <select className={styles.searchInput} value={driverId} onChange={(e) => { setDriverId(e.target.value); if (e.target.value) fetchHistory(); }}>
-              <option value="">Select a driver...</option>
+              <option value="">{t("drivers.scores.selectDriver")}</option>
               {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
             </select>
             <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={fetchHistory}>
-              <BarChart3 size={14} /> Load
+              <BarChart3 size={14} /> {t("drivers.scores.loadBtn")}
             </button>
           </div>
 
@@ -153,32 +156,32 @@ export default function DriverScoresPage() {
                     <Award size={24} />
                   </div>
                   <div className={styles.recommendationContent}>
-                    <div className={styles.recommendationTitle}>{latestScore.recommendation.tier.toUpperCase()} Tier — Incentive Eligible</div>
+                    <div className={styles.recommendationTitle}>{latestScore.recommendation.tier.toUpperCase()} {t("drivers.scores.tierEligible")}</div>
                     <div className={styles.recommendationDesc}>
-                      Score {latestScore.overallScore} ≥ threshold. Recommended: {latestScore.recommendation.bonus}
+                      {t("drivers.scores.recScoreWord")} {latestScore.overallScore} {t("drivers.scores.recThreshold")} {latestScore.recommendation.bonus}
                     </div>
                   </div>
                 </div>
               )}
               <div className={styles.scoreCards}>
                 <div className={styles.scoreCard}>
-                  <div className={styles.scoreCardLabel}>Overall</div>
+                  <div className={styles.scoreCardLabel}>{t("drivers.scores.cardOverall")}</div>
                   <div className={styles.scoreCardValue} style={{ color: scoreColor(latestScore.overallScore) }}>{latestScore.overallScore}</div>
                 </div>
                 <div className={styles.scoreCard}>
-                  <div className={styles.scoreCardLabel}>Safety</div>
+                  <div className={styles.scoreCardLabel}>{t("drivers.scores.cardSafety")}</div>
                   <div className={styles.scoreCardValue} style={{ color: "#3b82f6" }}>{latestScore.safetyScore}</div>
                 </div>
                 <div className={styles.scoreCard}>
-                  <div className={styles.scoreCardLabel}>Punctuality</div>
+                  <div className={styles.scoreCardLabel}>{t("drivers.scores.cardPunctuality")}</div>
                   <div className={styles.scoreCardValue} style={{ color: "#f59e0b" }}>{latestScore.punctualityScore}</div>
                 </div>
                 <div className={styles.scoreCard}>
-                  <div className={styles.scoreCardLabel}>Customer</div>
+                  <div className={styles.scoreCardLabel}>{t("drivers.scores.cardCustomer")}</div>
                   <div className={styles.scoreCardValue} style={{ color: "#ec4899" }}>{latestScore.customerScore}</div>
                 </div>
                 <div className={styles.scoreCard}>
-                  <div className={styles.scoreCardLabel}>Fuel Efficiency</div>
+                  <div className={styles.scoreCardLabel}>{t("drivers.scores.cardFuel")}</div>
                   <div className={styles.scoreCardValue} style={{ color: "#8b5cf6" }}>{latestScore.fuelEfficiencyScore}</div>
                 </div>
               </div>
@@ -189,13 +192,13 @@ export default function DriverScoresPage() {
                   punctuality: latestScore.punctualityScore,
                   customer: latestScore.customerScore,
                   fuel: latestScore.fuelEfficiencyScore,
-                }} />
+                }} labels={radarLabels} />
               </div>
             </>
           )}
 
           {loading ? (
-            <div className={styles.loading}>Loading scores...</div>
+            <div className={styles.loading}>{t("drivers.scores.loadingScores")}</div>
           ) : historyData.length > 0 ? (
             <div className={styles.chartWrap}>
               <div className={styles.chart}>
@@ -206,7 +209,7 @@ export default function DriverScoresPage() {
                       height: `${s.overallScore}px`,
                       background: scoreColor(s.overallScore),
                     }} />
-                    <div className={styles.barLabel}>{s.periodStart?.slice(5)}</div>
+                    <div className={styles.barLabel}>{s.periodStart ? formatDate(s.periodStart, lang) : ""}</div>
                   </div>
                 ))}
               </div>
@@ -214,7 +217,7 @@ export default function DriverScoresPage() {
           ) : driverId && !loading ? (
             <div className={styles.emptyState}>
               <BarChart3 size={40} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <p>No score records found. Compute a score first.</p>
+              <p>{t("drivers.scores.emptyScores")}</p>
             </div>
           ) : null}
         </div>
@@ -226,40 +229,40 @@ export default function DriverScoresPage() {
           <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
             <select className={styles.searchInput} style={{ width: "auto", padding: "6px 10px" }}
               value={lbPeriod} onChange={e => setLbPeriod(e.target.value as any)}>
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
+              <option value="month">{t("drivers.scores.periodMonth")}</option>
+              <option value="quarter">{t("drivers.scores.periodQuarter")}</option>
+              <option value="year">{t("drivers.scores.periodYear")}</option>
             </select>
             <div className={styles.topTabs}>
               <button className={`${styles.topTab} ${leaderTab === "top" ? styles.topTabActive : ""}`} onClick={() => setLeaderTab("top")}>
-                <Trophy size={12} style={{ display: "inline", marginRight: 4 }} />Top
+                <Trophy size={12} style={{ display: "inline", marginRight: 4 }} />{t("drivers.scores.topTab")}
               </button>
               <button className={`${styles.topTab} ${leaderTab === "bottom" ? styles.topTabActive : ""}`} onClick={() => setLeaderTab("bottom")}>
-                Bottom
+                {t("drivers.scores.bottomTab")}
               </button>
             </div>
           </div>
 
           {loading ? (
-            <div className={styles.loading}>Loading leaderboard...</div>
+            <div className={styles.loading}>{t("drivers.scores.loadingBoard")}</div>
           ) : leaderboardData.length === 0 ? (
             <div className={styles.emptyState}>
               <Trophy size={40} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <p>No scores computed yet for this period</p>
+              <p>{t("drivers.scores.emptyBoard")}</p>
             </div>
           ) : (
             <div className={styles.leaderboardWrap}>
               <table className={styles.leaderboardTable}>
                 <thead>
                   <tr>
-                    <th>Rank</th>
-                    <th>Driver</th>
-                    <th>Overall</th>
-                    <th>Safety</th>
-                    <th>Punctuality</th>
-                    <th>Customer</th>
-                    <th>Fuel</th>
-                    <th>Score Bar</th>
+                    <th>{t("drivers.scores.lbRank")}</th>
+                    <th>{t("drivers.attendance.colDriver")}</th>
+                    <th>{t("drivers.scores.cardOverall")}</th>
+                    <th>{t("drivers.scores.cardSafety")}</th>
+                    <th>{t("drivers.scores.cardPunctuality")}</th>
+                    <th>{t("drivers.scores.cardCustomer")}</th>
+                    <th>{t("drivers.scores.radarFuel")}</th>
+                    <th>{t("drivers.scores.lbScoreBar")}</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as journalController from '../controllers/journalEntryController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-router.post('/', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant'), journalController.create);
-router.get('/', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), journalController.list);
-router.get('/:id', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant', 'operations_manager'), journalController.detail);
-router.post('/:id/post', authenticate, requireRole('super_admin', 'company_admin', 'finance_accountant'), journalController.post);
+router.post('/', authenticate, requireRole(...CAP.financeWrite), journalController.create);
+router.get('/', authenticate, requireRole(...CAP.financeRead), journalController.list);
+router.get('/:id', authenticate, requireRole(...CAP.financeRead), journalController.detail);
+router.post('/:id/post', authenticate, requireRole(...CAP.financeWrite), journalController.post);
 
 export default router;

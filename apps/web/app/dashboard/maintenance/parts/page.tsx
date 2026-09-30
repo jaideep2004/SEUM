@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Package, Plus, History, AlertTriangle, Wrench, ArrowDownToLine, ArrowUpFromLine, PenLine, Truck } from "lucide-react";
+import { useLanguage, formatDate, formatDateTime, formatNumber } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -10,18 +11,17 @@ function getToken() {
   return localStorage.getItem("seum_access_token");
 }
 
-function fmtDateTime(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
-const TASK_TYPES: Record<string, string> = {
-  oil_change: "Oil Change", tire_replacement: "Tire Replacement", brake_inspection: "Brake Inspection",
-  engine_service: "Engine Service", ac_service: "AC Service", electrical: "Electrical",
-  body_repair: "Body Repair", general_service: "General Service", other: "Other",
+const TASK_KEYS: Record<string, string> = {
+  oil_change: "maintenance.taskTypes.oilChange", tire_replacement: "maintenance.taskTypes.tireReplacement", brake_inspection: "maintenance.taskTypes.brakeInspection",
+  engine_service: "maintenance.taskTypes.engineService", ac_service: "maintenance.taskTypes.acService", electrical: "maintenance.taskTypes.electrical",
+  body_repair: "maintenance.taskTypes.bodyRepair", general_service: "maintenance.taskTypes.generalService", other: "maintenance.taskTypes.other",
+};
+const OPEN_STATUS_KEYS: Record<string, string> = {
+  scheduled: "maintenance.status.scheduled", in_progress: "maintenance.status.inProgress",
 };
 
 export default function PartsPage() {
+  const { lang, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"inventory" | "add" | "usage">("inventory");
 
   // Inventory state
@@ -130,11 +130,11 @@ export default function PartsPage() {
         }),
       });
       const data = await res.json();
-      if (!data.success) { setSubmitError(data.error?.message || "Failed to create part"); return; }
+      if (!data.success) { setSubmitError(data.error?.message || t("maintenance.parts.failedCreate")); return; }
       setForm({ part_code: "", part_name: "", category: "", manufacturer: "", unit_of_measure: "unit", quantity_in_stock: "0", reorder_level: "5", unit_price: "", supplier_id: "", storage_location: "" });
       setActiveTab("inventory");
       fetchParts();
-    } catch { setSubmitError("Network error"); }
+    } catch { setSubmitError(t("maintenance.common.networkError")); }
     setSubmitting(false);
   }
 
@@ -184,10 +184,10 @@ export default function PartsPage() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!data.success) { setModalError(data.error?.message || "Action failed"); return; }
+      if (!data.success) { setModalError(data.error?.message || t("maintenance.taskDetail.actionFailed")); return; }
       setStockModal(null);
       fetchParts();
-    } catch { setModalError("Network error"); }
+    } catch { setModalError(t("maintenance.common.networkError")); }
     setModalLoading(false);
   }
 
@@ -224,10 +224,10 @@ export default function PartsPage() {
         }),
       });
       const data = await res.json();
-      if (!data.success) { setModalError(data.error?.message || "Update failed"); return; }
+      if (!data.success) { setModalError(data.error?.message || t("maintenance.parts.updateFailed")); return; }
       setEditModal(null);
       fetchParts();
-    } catch { setModalError("Network error"); }
+    } catch { setModalError(t("maintenance.common.networkError")); }
     setEditLoading(false);
   }
 
@@ -238,40 +238,40 @@ export default function PartsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1>Spare Parts Inventory</h1>
-          <p className={styles.subtitle}>Track stock levels, record movements and see part usage per bus.</p>
+          <h1>{t("maintenance.parts.title")}</h1>
+          <p className={styles.subtitle}>{t("maintenance.parts.sub")}</p>
         </div>
         {activeTab === "inventory" && lowCount > 0 && (
-          <span className={styles.lowBanner}><AlertTriangle size={14} /> {lowCount} part(s) below reorder level</span>
+          <span className={styles.lowBanner}><AlertTriangle size={14} /> {lowCount} {t("maintenance.parts.lowBannerPost")}</span>
         )}
       </div>
 
       <div className={styles.tabs}>
-        <button className={`${styles.tab} ${activeTab === "inventory" ? styles.tabActive : ""}`} onClick={() => setActiveTab("inventory")}><Package size={14} /> Inventory</button>
-        <button className={`${styles.tab} ${activeTab === "add" ? styles.tabActive : ""}`} onClick={() => setActiveTab("add")}><Plus size={14} /> Add Part</button>
-        <button className={`${styles.tab} ${activeTab === "usage" ? styles.tabActive : ""}`} onClick={() => setActiveTab("usage")}><History size={14} /> Usage per Bus</button>
+        <button className={`${styles.tab} ${activeTab === "inventory" ? styles.tabActive : ""}`} onClick={() => setActiveTab("inventory")}><Package size={14} /> {t("maintenance.parts.tabInventory")}</button>
+        <button className={`${styles.tab} ${activeTab === "add" ? styles.tabActive : ""}`} onClick={() => setActiveTab("add")}><Plus size={14} /> {t("maintenance.parts.tabAdd")}</button>
+        <button className={`${styles.tab} ${activeTab === "usage" ? styles.tabActive : ""}`} onClick={() => setActiveTab("usage")}><History size={14} /> {t("maintenance.parts.tabUsage")}</button>
       </div>
 
       {activeTab === "inventory" && (
         <>
           <div className={styles.filters}>
-            <input className={styles.searchInput} placeholder="Search code, name, manufacturer..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input className={styles.searchInput} placeholder={t("maintenance.parts.searchPh")} value={search} onChange={(e) => setSearch(e.target.value)} />
             <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={styles.filterSelect}>
-              <option value="">All categories</option>
+              <option value="">{t("maintenance.parts.filterCat")}</option>
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <label className={styles.lowToggle}>
               <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
-              Low stock only
+              {t("maintenance.parts.lowOnly")}
             </label>
           </div>
 
-          {loading ? <div className={styles.loading}>Loading inventory...</div> : (
+          {loading ? <div className={styles.loading}>{t("maintenance.parts.loading")}</div> : (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Part</th><th>Category</th><th>In Stock</th><th>Reorder Level</th><th>Unit Price</th><th>Location</th><th>Actions</th>
+                    <th>{t("maintenance.parts.colPart")}</th><th>{t("maintenance.parts.colCategory")}</th><th>{t("maintenance.parts.colStock")}</th><th>{t("maintenance.parts.colReorder")}</th><th>{t("maintenance.parts.colPrice")}</th><th>{t("maintenance.parts.colLocation")}</th><th>{t("maintenance.parts.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -287,22 +287,22 @@ export default function PartsPage() {
                         <span className={`${p.lowStock ? styles.qtyLow : styles.qtyOk}`}>
                           {p.quantityInStock} {p.unitOfMeasure}
                         </span>
-                        {p.lowStock && <span className={styles.lowBadge}>LOW</span>}
+                        {p.lowStock && <span className={styles.lowBadge}>{t("maintenance.parts.lowBadge")}</span>}
                       </td>
                       <td>{p.reorderLevel} {p.unitOfMeasure}</td>
-                      <td>{p.unitPrice != null ? Number(p.unitPrice).toLocaleString() : "—"}</td>
+                      <td>{p.unitPrice != null ? formatNumber(Number(p.unitPrice), lang) : "—"}</td>
                       <td>{p.storageLocation || "—"}</td>
                       <td>
                         <div className={styles.actionBtns}>
-                          <button className={styles.stockInBtn} onClick={() => openStock(p, "in")} title="Add stock"><ArrowDownToLine size={12} /> In</button>
-                          <button className={styles.stockOutBtn} onClick={() => openStock(p, "out")} title="Remove stock"><ArrowUpFromLine size={12} /> Out</button>
-                          <button className={styles.editBtn} onClick={() => openEdit(p)} title="Edit part"><PenLine size={12} /></button>
+                          <button className={styles.stockInBtn} onClick={() => openStock(p, "in")} title={t("maintenance.parts.modalInTitle")}><ArrowDownToLine size={12} /> {t("maintenance.parts.btnIn")}</button>
+                          <button className={styles.stockOutBtn} onClick={() => openStock(p, "out")} title={t("maintenance.parts.modalOutTitle")}><ArrowUpFromLine size={12} /> {t("maintenance.parts.btnOut")}</button>
+                          <button className={styles.editBtn} onClick={() => openEdit(p)} title={t("common.edit")}><PenLine size={12} /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
                   {parts.length === 0 && (
-                    <tr><td colSpan={7} className={styles.emptyState}>No parts — add one to start tracking inventory.</td></tr>
+                    <tr><td colSpan={7} className={styles.emptyState}>{t("maintenance.parts.empty")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -316,49 +316,49 @@ export default function PartsPage() {
           {submitError && <div className={styles.error}>{submitError}</div>}
           <div className={styles.formRow}>
             <div className={styles.field}>
-              <label>Part Code *</label>
-              <input type="text" value={form.part_code} onChange={(e) => setForm({ ...form, part_code: e.target.value })} placeholder="e.g. OIL-F-5W30" required />
+              <label>{t("maintenance.parts.formCode")}</label>
+              <input type="text" value={form.part_code} onChange={(e) => setForm({ ...form, part_code: e.target.value })} placeholder={t("maintenance.parts.phCode")} required />
             </div>
             <div className={styles.field}>
-              <label>Part Name *</label>
-              <input type="text" value={form.part_name} onChange={(e) => setForm({ ...form, part_name: e.target.value })} placeholder="e.g. Engine Oil 5W-30" required />
+              <label>{t("maintenance.parts.formName")}</label>
+              <input type="text" value={form.part_name} onChange={(e) => setForm({ ...form, part_name: e.target.value })} placeholder={t("maintenance.parts.phName")} required />
             </div>
             <div className={styles.field}>
-              <label>Category</label>
-              <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Lubricants, Filters, Brakes" />
+              <label>{t("maintenance.parts.formCategory")}</label>
+              <input type="text" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder={t("maintenance.parts.phCategory")} />
             </div>
             <div className={styles.field}>
-              <label>Manufacturer</label>
+              <label>{t("maintenance.parts.formManufacturer")}</label>
               <input type="text" value={form.manufacturer} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Unit of Measure</label>
+              <label>{t("maintenance.parts.formUnit")}</label>
               <input type="text" value={form.unit_of_measure} onChange={(e) => setForm({ ...form, unit_of_measure: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Initial Quantity</label>
+              <label>{t("maintenance.parts.formQty")}</label>
               <input type="number" min="0" value={form.quantity_in_stock} onChange={(e) => setForm({ ...form, quantity_in_stock: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Reorder Level</label>
+              <label>{t("maintenance.parts.colReorder")}</label>
               <input type="number" min="0" value={form.reorder_level} onChange={(e) => setForm({ ...form, reorder_level: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Unit Price</label>
+              <label>{t("maintenance.parts.colPrice")}</label>
               <input type="number" min="0" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Supplier</label>
-              <input type="text" value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })} placeholder="Supplier name or ID" />
+              <label>{t("maintenance.parts.formSupplier")}</label>
+              <input type="text" value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })} placeholder={t("maintenance.parts.phSupplier")} />
             </div>
             <div className={styles.field}>
-              <label>Storage Location</label>
-              <input type="text" value={form.storage_location} onChange={(e) => setForm({ ...form, storage_location: e.target.value })} placeholder="e.g. Shelf A-3" />
+              <label>{t("maintenance.parts.formLocation")}</label>
+              <input type="text" value={form.storage_location} onChange={(e) => setForm({ ...form, storage_location: e.target.value })} placeholder={t("maintenance.parts.phLocation")} />
             </div>
           </div>
           <div className={styles.formActions}>
             <button type="submit" className={styles.primaryBtn} disabled={submitting || !form.part_code.trim() || !form.part_name.trim()}>
-              {submitting ? "Creating..." : "Create Part"}
+              {submitting ? t("drivers.new.creating") : t("maintenance.parts.createBtn")}
             </button>
           </div>
         </form>
@@ -367,23 +367,23 @@ export default function PartsPage() {
       {activeTab === "usage" && (
         <div className={styles.usageWrap}>
           <div className={styles.filters}>
-            <label className={styles.busLabel}><Truck size={14} /> Bus</label>
+            <label className={styles.busLabel}><Truck size={14} /> {t("maintenance.breakdowns.colBus")}</label>
             <select value={usageBus} onChange={(e) => setUsageBus(e.target.value)} className={styles.filterSelect}>
               {buses.map((b) => <option key={b.id} value={b.id}>{b.plateNumber} — {b.make} {b.model}</option>)}
             </select>
           </div>
-          {usageLoading ? <div className={styles.loading}>Loading usage...</div> : (
+          {usageLoading ? <div className={styles.loading}>{t("maintenance.parts.usageLoading")}</div> : (
             usage && (
               <>
                 <div className={styles.usageStats}>
-                  <div className={styles.usageStat}><strong>{usage.totalParts}</strong> parts used</div>
-                  <div className={styles.usageStatCost}><strong>{Number(usage.totalCost).toLocaleString()}</strong> total cost</div>
-                  <div className={styles.usageStatItems}><strong>{usage.items.length}</strong> movements</div>
+                  <div className={styles.usageStat}><strong>{usage.totalParts}</strong> {t("maintenance.parts.usagePartsUsed")}</div>
+                  <div className={styles.usageStatCost}><strong>{formatNumber(Number(usage.totalCost), lang)}</strong> {t("maintenance.parts.usageTotalCost")}</div>
+                  <div className={styles.usageStatItems}><strong>{usage.items.length}</strong> {t("maintenance.parts.usageMovements")}</div>
                 </div>
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
-                      <tr><th>Part</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Date</th><th>Maintenance Task</th></tr>
+                      <tr><th>{t("maintenance.parts.colPart")}</th><th>{t("maintenance.parts.uColQty")}</th><th>{t("maintenance.parts.colPrice")}</th><th>{t("maintenance.costs.colTotal")}</th><th>{t("maintenance.parts.uColDate")}</th><th>{t("maintenance.parts.uColTask")}</th></tr>
                     </thead>
                     <tbody>
                       {usage.items.map((item: any) => (
@@ -393,17 +393,17 @@ export default function PartsPage() {
                             <div className={styles.cellSub}>{item.partCode}</div>
                           </td>
                           <td>{item.quantity} {item.unitOfMeasure}</td>
-                          <td>{item.unitPrice != null ? Number(item.unitPrice).toLocaleString() : "—"}</td>
-                          <td>{item.total != null ? Number(item.total).toLocaleString() : "—"}</td>
-                          <td>{fmtDateTime(item.date)}</td>
+                          <td>{item.unitPrice != null ? formatNumber(Number(item.unitPrice), lang) : "—"}</td>
+                          <td>{item.total != null ? formatNumber(Number(item.total), lang) : "—"}</td>
+                          <td>{formatDateTime(item.date, lang)}</td>
                           <td>
-                            <span className={styles.taskType}><Wrench size={12} /> {TASK_TYPES[item.task?.taskType] || item.task?.taskType || "—"}</span>
-                            {item.task?.scheduledDate && <div className={styles.cellSub}>{item.task.scheduledDate}</div>}
+                            <span className={styles.taskType}><Wrench size={12} /> {t(TASK_KEYS[item.task?.taskType] || item.task?.taskType || "—")}</span>
+                            {item.task?.scheduledDate && <div className={styles.cellSub}>{formatDate(item.task.scheduledDate, lang)}</div>}
                           </td>
                         </tr>
                       ))}
                       {usage.items.length === 0 && (
-                        <tr><td colSpan={6} className={styles.emptyState}>No parts used for this bus yet.</td></tr>
+                        <tr><td colSpan={6} className={styles.emptyState}>{t("maintenance.parts.usageEmpty")}</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -418,38 +418,38 @@ export default function PartsPage() {
       {stockModal && (
         <div className={styles.overlay} onClick={() => setStockModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{stockModal.type === "in" ? "Add Stock" : "Remove Stock"}</h2>
+            <h2>{stockModal.type === "in" ? t("maintenance.parts.modalInTitle") : t("maintenance.parts.modalOutTitle")}</h2>
             <p className={styles.modalSub}>
-              {stockModal.part.partName} ({stockModal.part.partCode}) — {stockModal.part.quantityInStock} in stock
+              {stockModal.part.partName} ({stockModal.part.partCode}) — {stockModal.part.quantityInStock} {t("maintenance.parts.modalSubInStock")}
             </p>
             {modalError && <div className={styles.error}>{modalError}</div>}
             <div className={styles.field}>
-              <label>Quantity *</label>
+              <label>{t("maintenance.parts.mQty")}</label>
               <input type="number" min="1" value={qtyInput} onChange={(e) => setQtyInput(e.target.value)} />
             </div>
             {stockModal.type === "in" ? (
               <>
                 <div className={styles.field}>
-                  <label>Unit Price</label>
+                  <label>{t("maintenance.parts.colPrice")}</label>
                   <input type="number" min="0" step="0.01" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} />
                 </div>
                 <div className={styles.field}>
-                  <label>Supplier</label>
+                  <label>{t("maintenance.parts.formSupplier")}</label>
                   <input type="text" value={supplierInput} onChange={(e) => setSupplierInput(e.target.value)} />
                 </div>
                 <div className={styles.field}>
-                  <label>Reference</label>
-                  <input type="text" value={refInput} onChange={(e) => setRefInput(e.target.value)} placeholder="PO / invoice number" />
+                  <label>{t("maintenance.parts.mRef")}</label>
+                  <input type="text" value={refInput} onChange={(e) => setRefInput(e.target.value)} placeholder={t("maintenance.parts.phRefIn")} />
                 </div>
               </>
             ) : (
               <>
                 <div className={styles.field}>
-                  <label>Link to Maintenance Task</label>
+                  <label>{t("maintenance.parts.mTaskLink")}</label>
                   <select value={taskInput} onChange={(e) => setTaskInput(e.target.value)}>
-                    <option value="">No task (other usage)</option>
-                    {tasks.map((t) => (
-                      <option key={t.id} value={t.id}>{t.bus?.plateNumber} — {TASK_TYPES[t.taskType] || t.taskType} ({t.status})</option>
+                    <option value="">{t("maintenance.parts.noTask")}</option>
+                    {tasks.map((task) => (
+                      <option key={task.id} value={task.id}>{task.bus?.plateNumber} — {t(TASK_KEYS[task.taskType] || task.taskType)} ({t(OPEN_STATUS_KEYS[task.status] || task.status)})</option>
                     ))}
                   </select>
                   <button type="button" className={styles.loadTasksBtn} onClick={async () => {
@@ -457,24 +457,24 @@ export default function PartsPage() {
                     try {
                       const res = await fetch(`${API}/maintenance/tasks?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
                       const data = await res.json();
-                      if (data.success) setTasks((data.data || []).filter((t: any) => t.status !== "completed" && t.status !== "cancelled"));
+                      if (data.success) setTasks((data.data || []).filter((task: any) => task.status !== "completed" && task.status !== "cancelled"));
                     } catch {}
-                  }}>Load open tasks</button>
+                  }}>{t("maintenance.parts.loadTasks")}</button>
                 </div>
                 <div className={styles.field}>
-                  <label>Reference</label>
-                  <input type="text" value={refInput} onChange={(e) => setRefInput(e.target.value)} placeholder="e.g. Work order ref" />
+                  <label>{t("maintenance.parts.mRef")}</label>
+                  <input type="text" value={refInput} onChange={(e) => setRefInput(e.target.value)} placeholder={t("maintenance.parts.phRefOut")} />
                 </div>
               </>
             )}
             <div className={styles.field}>
-              <label>Notes</label>
+              <label>{t("common.notes")}</label>
               <textarea value={notesInput} onChange={(e) => setNotesInput(e.target.value)} rows={2} />
             </div>
             <div className={styles.modalActions}>
-              <button className={styles.secondaryBtn} onClick={() => setStockModal(null)}>Back</button>
+              <button className={styles.secondaryBtn} onClick={() => setStockModal(null)}>{t("common.back")}</button>
               <button className={stockModal.type === "in" ? styles.stockInBtn : styles.stockOutBtn} onClick={submitStock} disabled={modalLoading || !qtyInput || Number(qtyInput) < 1}>
-                {modalLoading ? "Saving..." : stockModal.type === "in" ? "Add Stock" : "Remove Stock"}
+                {modalLoading ? t("drivers.common.saving") : stockModal.type === "in" ? t("maintenance.parts.modalInTitle") : t("maintenance.parts.modalOutTitle")}
               </button>
             </div>
           </div>
@@ -485,48 +485,48 @@ export default function PartsPage() {
       {editModal && (
         <div className={styles.overlay} onClick={() => setEditModal(null)}>
           <form className={styles.modal} onClick={(e) => e.stopPropagation()} onSubmit={submitEdit}>
-            <h2>Edit Part</h2>
+            <h2>{t("maintenance.parts.editTitle")}</h2>
             {modalError && <div className={styles.error}>{modalError}</div>}
             <div className={styles.field}>
-              <label>Part Code *</label>
+              <label>{t("maintenance.parts.formCode")}</label>
               <input type="text" value={editForm.part_code || ""} onChange={(e) => setEditForm({ ...editForm, part_code: e.target.value })} required />
             </div>
             <div className={styles.field}>
-              <label>Part Name *</label>
+              <label>{t("maintenance.parts.formName")}</label>
               <input type="text" value={editForm.part_name || ""} onChange={(e) => setEditForm({ ...editForm, part_name: e.target.value })} required />
             </div>
             <div className={styles.field}>
-              <label>Category</label>
+              <label>{t("maintenance.parts.formCategory")}</label>
               <input type="text" value={editForm.category || ""} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Manufacturer</label>
+              <label>{t("maintenance.parts.formManufacturer")}</label>
               <input type="text" value={editForm.manufacturer || ""} onChange={(e) => setEditForm({ ...editForm, manufacturer: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Unit of Measure</label>
+              <label>{t("maintenance.parts.formUnit")}</label>
               <input type="text" value={editForm.unit_of_measure || ""} onChange={(e) => setEditForm({ ...editForm, unit_of_measure: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Reorder Level</label>
+              <label>{t("maintenance.parts.colReorder")}</label>
               <input type="number" min="0" value={editForm.reorder_level || "0"} onChange={(e) => setEditForm({ ...editForm, reorder_level: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Unit Price</label>
+              <label>{t("maintenance.parts.colPrice")}</label>
               <input type="number" min="0" step="0.01" value={editForm.unit_price || ""} onChange={(e) => setEditForm({ ...editForm, unit_price: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Supplier</label>
+              <label>{t("maintenance.parts.formSupplier")}</label>
               <input type="text" value={editForm.supplier_id || ""} onChange={(e) => setEditForm({ ...editForm, supplier_id: e.target.value })} />
             </div>
             <div className={styles.field}>
-              <label>Storage Location</label>
+              <label>{t("maintenance.parts.formLocation")}</label>
               <input type="text" value={editForm.storage_location || ""} onChange={(e) => setEditForm({ ...editForm, storage_location: e.target.value })} />
             </div>
             <div className={styles.modalActions}>
-              <button type="button" className={styles.secondaryBtn} onClick={() => setEditModal(null)}>Back</button>
+              <button type="button" className={styles.secondaryBtn} onClick={() => setEditModal(null)}>{t("common.back")}</button>
               <button type="submit" className={styles.primaryBtn} disabled={editLoading}>
-                {editLoading ? "Saving..." : "Save Changes"}
+                {editLoading ? t("drivers.common.saving") : t("drivers.edit.saveChanges")}
               </button>
             </div>
           </form>

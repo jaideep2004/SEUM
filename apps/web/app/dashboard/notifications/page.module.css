@@ -268,3 +268,9 @@
   .page { padding: 16px; }
   .header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .unread {
+  border-left: none;
+  border-right: 3px solid var(--color-primary, #1d4ed8);
+}

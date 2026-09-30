@@ -360,3 +360,24 @@
   max-height: 200px;
   overflow-y: auto;
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .searchIcon {
+  left: auto;
+  right: 12px;
+}
+:global([dir="rtl"]) .searchInput {
+  padding-left: 12px;
+  padding-right: 36px;
+}
+:global([dir="rtl"]) .logCount {
+  margin-left: 0;
+  margin-right: auto;
+}
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .resourceId {
+  margin-left: 0;
+  margin-right: 5px;
+}

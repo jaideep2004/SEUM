@@ -14,20 +14,21 @@ import {
   Calendar,
   Gauge,
 } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
-  ready: { label: "Ready", color: "#10b981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", icon: CheckCircle2 },
-  in_maintenance: { label: "In Maintenance", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", icon: Wrench },
-  out_of_service: { label: "Out of Service", color: "#ef4444", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.3)", icon: AlertTriangle },
-  reserved: { label: "Reserved", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.3)", icon: Clock },
+  ready: { label: "fleet.readiness.st.ready", color: "#10b981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.3)", icon: CheckCircle2 },
+  in_maintenance: { label: "fleet.readiness.st.inMaintenance", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", icon: Wrench },
+  out_of_service: { label: "fleet.readiness.st.outOfService", color: "#ef4444", bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.3)", icon: AlertTriangle },
+  reserved: { label: "fleet.readiness.st.reserved", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.3)", icon: Clock },
 };
 
 const STATUS_OPTIONS = [
-  { value: "ready", label: "Ready" },
-  { value: "in_maintenance", label: "In Maintenance" },
-  { value: "out_of_service", label: "Out of Service" },
-  { value: "reserved", label: "Reserved" },
+  { value: "ready", label: "fleet.readiness.st.ready" },
+  { value: "in_maintenance", label: "fleet.readiness.st.inMaintenance" },
+  { value: "out_of_service", label: "fleet.readiness.st.outOfService" },
+  { value: "reserved", label: "fleet.readiness.st.reserved" },
 ];
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -44,6 +45,7 @@ function getReadinessData(
 }
 
 export default function ReadinessDashboard() {
+  const { lang, t } = useLanguage();
   const [readiness, setReadiness] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -109,7 +111,7 @@ export default function ReadinessDashboard() {
   };
 
   const FilterBtn = ({ value, count }: { value: string | null; count: number }) => {
-    const label = value ? STATUS_CONFIG[value]?.label || value : "All";
+    const label = value ? t(STATUS_CONFIG[value]?.label || value) : t("fleet.readiness.all");
     const isActive = statusFilter === value;
     const color = value ? STATUS_CONFIG[value]?.color : "var(--color-text-secondary)";
     return (
@@ -139,14 +141,14 @@ export default function ReadinessDashboard() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Bus Readiness</h1>
+          <h1 className={styles.pageTitle}>{t("fleet.readiness.title")}</h1>
           <p className={styles.pageDesc}>
-            Real-time readiness status of all vehicles
+            {t("fleet.readiness.desc")}
           </p>
         </div>
         <button className={styles.refreshBtn} onClick={fetchReadiness}>
           <RefreshCw size={14} />
-          Refresh
+          {t("fleet.readiness.refresh")}
         </button>
       </div>
 
@@ -154,27 +156,27 @@ export default function ReadinessDashboard() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <span className={styles.statValue}>{readiness.length}</span>
-          <span className={styles.statLabel}>Total Buses</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.totalBuses")}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue} style={{ color: "#10b981" }}>{statusCounts.ready}</span>
-          <span className={styles.statLabel}>Ready</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.st.ready")}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue} style={{ color: "#f59e0b" }}>{statusCounts.in_maintenance}</span>
-          <span className={styles.statLabel}>In Maintenance</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.st.inMaintenance")}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue} style={{ color: "#ef4444" }}>{statusCounts.out_of_service}</span>
-          <span className={styles.statLabel}>Out of Service</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.st.outOfService")}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue} style={{ color: "#8b5cf6" }}>{statusCounts.reserved}</span>
-          <span className={styles.statLabel}>Reserved</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.st.reserved")}</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statValue} style={{ color: "#94a3b8" }}>{statusCounts.unchecked}</span>
-          <span className={styles.statLabel}>Unchecked</span>
+          <span className={styles.statLabel}>{t("fleet.readiness.unchecked")}</span>
         </div>
       </div>
 
@@ -192,7 +194,7 @@ export default function ReadinessDashboard() {
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Search by plate, make, model..."
+            placeholder={t("fleet.readiness.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -203,12 +205,12 @@ export default function ReadinessDashboard() {
       {loading ? (
         <div className={styles.loadingState}>
           <div className={styles.spinner} />
-          Loading readiness data...
+          {t("fleet.readiness.loading")}
         </div>
       ) : filtered.length === 0 ? (
         <div className={styles.emptyState}>
           <Gauge size={48} style={{ color: "var(--color-text-tertiary)", opacity: 0.4 }} />
-          <p>No buses found matching the current filters.</p>
+          <p>{t("fleet.readiness.noMatch")}</p>
         </div>
       ) : (
         <div className={styles.cardGrid}>
@@ -229,7 +231,7 @@ export default function ReadinessDashboard() {
                     }}
                   >
                     <Icon size={12} />
-                    {cfg?.label || "Unchecked"}
+                    {cfg?.label ? t(cfg.label) : t("fleet.readiness.unchecked")}
                   </span>
                 </div>
                 <div className={styles.busMeta}>
@@ -238,12 +240,12 @@ export default function ReadinessDashboard() {
                 <div className={styles.busCardBody}>
                   <div className={styles.busInfoRow}>
                     <UserCheck size={13} />
-                    <span>{item.checkedBy ? "Checked" : "Not checked"}</span>
+                    <span>{item.checkedBy ? t("fleet.readiness.checked") : t("fleet.readiness.notChecked")}</span>
                   </div>
                   {item.checkedAt && (
                     <div className={styles.busInfoRow}>
                       <Calendar size={13} />
-                      <span>{new Date(item.checkedAt).toLocaleDateString()}</span>
+                      <span>{formatDate(item.checkedAt, lang)}</span>
                     </div>
                   )}
                   {item.notes && (
@@ -254,7 +256,7 @@ export default function ReadinessDashboard() {
                   className={styles.updateBtn}
                   onClick={() => setModalBus(item)}
                 >
-                  Update Status
+                  {t("fleet.readiness.updateStatus")}
                 </button>
               </div>
             );
@@ -267,7 +269,7 @@ export default function ReadinessDashboard() {
         <div className={styles.modalOverlay} onClick={() => setModalBus(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>Update Readiness</h3>
+              <h3>{t("fleet.readiness.updateTitle")}</h3>
               <button className={styles.modalClose} onClick={() => setModalBus(null)}>
                 <X size={18} />
               </button>
@@ -277,17 +279,17 @@ export default function ReadinessDashboard() {
                 {modalBus.plateNumber} — {modalBus.busMake} {modalBus.busModel}
               </p>
               <p className={styles.modalCurrentStatus}>
-                Current:{" "}
+                {t("fleet.readiness.current")}{" "}
                 <span
                   style={{
                     color: STATUS_CONFIG[modalBus.status]?.color || "var(--color-text-tertiary)",
                     fontWeight: 600,
                   }}
                 >
-                  {STATUS_CONFIG[modalBus.status]?.label || "Unchecked"}
+                  {STATUS_CONFIG[modalBus.status]?.label ? t(STATUS_CONFIG[modalBus.status].label) : t("fleet.readiness.unchecked")}
                 </span>
               </p>
-              <label className={styles.modalLabel}>New Status</label>
+              <label className={styles.modalLabel}>{t("fleet.readiness.newStatus")}</label>
               <div className={styles.statusGrid}>
                 {STATUS_OPTIONS.map((opt) => {
                   const isSelected = modalBus._selectedStatus === opt.value;
@@ -311,7 +313,7 @@ export default function ReadinessDashboard() {
                       }}
                     >
                       <OptIcon size={16} />
-                      {opt.label}
+                      {t(opt.label)}
                     </button>
                   );
                 })}
@@ -319,7 +321,7 @@ export default function ReadinessDashboard() {
             </div>
             <div className={styles.modalFooter}>
               <button className={styles.cancelBtn} onClick={() => setModalBus(null)}>
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 className={styles.saveBtn}
@@ -328,7 +330,7 @@ export default function ReadinessDashboard() {
                   handleStatusUpdate(modalBus.busId, modalBus._selectedStatus)
                 }
               >
-                Update Status
+                {t("fleet.readiness.updateStatus")}
               </button>
             </div>
           </div>

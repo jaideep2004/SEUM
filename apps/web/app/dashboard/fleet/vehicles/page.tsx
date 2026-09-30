@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { useLanguage } from "@/lib/i18n";
 import {
   Truck,
   Search,
@@ -47,16 +48,17 @@ const statusColors: Record<string, { bg: string; dot: string }> = {
 };
 
 const statusLabels: Record<string, string> = {
-  active: "Active",
-  maintenance: "Maintenance",
-  retired: "Retired",
-  sold: "Sold",
+  active: "fleet.vehicles.status.active",
+  maintenance: "fleet.vehicles.status.maintenance",
+  retired: "fleet.vehicles.status.retired",
+  sold: "fleet.vehicles.status.sold",
 };
 
 const fuelTypes = ["diesel", "petrol", "electric", "hybrid", "cng", "lpg"];
 const statuses = ["active", "maintenance", "retired", "sold"];
 
 export default function VehiclesPage() {
+  const { lang, t } = useLanguage();
   const router = useRouter();
   const [buses, setBuses] = useState<Bus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,7 +112,7 @@ export default function VehiclesPage() {
       setBuses(data.data);
       setMeta(data.meta);
     } catch (err: any) {
-      setError(err.message || "Failed to load vehicles");
+      setError(err.message || t("fleet.vehicles.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -162,7 +164,7 @@ export default function VehiclesPage() {
       });
       fetchBuses();
     } catch (err: any) {
-      setSubmitError(err.message || "Failed to create vehicle");
+      setSubmitError(err.message || t("fleet.vehicles.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -173,14 +175,14 @@ export default function VehiclesPage() {
       <div className={styles.header}>
         <Truck size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Vehicles</h1>
+          <h1 className={styles.headerTitle}>{t("fleet.vehicles.title")}</h1>
           <p className={styles.headerSub}>
-            {meta ? `${meta.total} vehicle${meta.total !== 1 ? "s" : ""}` : "Loading..."}
+            {meta ? `${meta.total} ${meta.total !== 1 ? t("fleet.vehicles.countVehicles") : t("fleet.vehicles.countVehicle")}` : t("fleet.vehicles.loadingHeader")}
           </p>
         </div>
         <button className={styles.addBtn} onClick={() => setShowCreate(true)}>
           <Plus size={16} />
-          Add Vehicle
+          {t("fleet.vehicles.addVehicle")}
         </button>
       </div>
 
@@ -189,35 +191,35 @@ export default function VehiclesPage() {
           <Search size={16} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Search by plate, make, or model..."
+            placeholder={t("fleet.vehicles.searchPh")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select className={styles.select} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="retired">Retired</option>
-          <option value="sold">Sold</option>
+          <option value="">{t("fleet.vehicles.allStatuses")}</option>
+          <option value="active">{t("fleet.vehicles.status.active")}</option>
+          <option value="maintenance">{t("fleet.vehicles.status.maintenance")}</option>
+          <option value="retired">{t("fleet.vehicles.status.retired")}</option>
+          <option value="sold">{t("fleet.vehicles.status.sold")}</option>
         </select>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
 
       {loading ? (
-        <div className={styles.empty}>Loading vehicles...</div>
+        <div className={styles.empty}>{t("fleet.vehicles.loading")}</div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Year</th>
-                <th>Capacity</th>
-                <th>Fuel</th>
-                <th>Depot</th>
-                <th>Status</th>
+                <th>{t("fleet.vehicles.colVehicle")}</th>
+                <th>{t("fleet.vehicles.colYear")}</th>
+                <th>{t("fleet.vehicles.colCapacity")}</th>
+                <th>{t("fleet.vehicles.colFuel")}</th>
+                <th>{t("fleet.vehicles.colDepot")}</th>
+                <th>{t("fleet.vehicles.colStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -244,8 +246,8 @@ export default function VehiclesPage() {
                     <td>
                       <div className={styles.capacity}>
                         <UsersIcon size={14} />
-                        {bus.capacitySeated} seat{bus.capacitySeated !== 1 ? "s" : ""}
-                        {bus.capacityStanding > 0 && ` + ${bus.capacityStanding} stand`}
+                        {bus.capacitySeated} {bus.capacitySeated !== 1 ? t("fleet.vehicles.seatPl") : t("fleet.vehicles.seatSg")}
+                        {bus.capacityStanding > 0 && ` + ${bus.capacityStanding} ${t("fleet.vehicles.stand")}`}
                       </div>
                     </td>
                     <td>
@@ -258,7 +260,7 @@ export default function VehiclesPage() {
                     <td>
                       <span className={styles.statusBadge} style={{ background: sc.bg, color: sc.dot }}>
                         <span className={styles.statusDot} style={{ background: sc.dot }} />
-                        {statusLabels[bus.status] || bus.status}
+                        {t(statusLabels[bus.status] || bus.status)}
                       </span>
                     </td>
                   </tr>
@@ -268,7 +270,7 @@ export default function VehiclesPage() {
           </table>
 
           {buses.length === 0 && (
-            <div className={styles.empty}>No vehicles found</div>
+            <div className={styles.empty}>{t("fleet.vehicles.noVehicles")}</div>
           )}
 
           {meta && meta.totalPages > 1 && (
@@ -276,7 +278,7 @@ export default function VehiclesPage() {
               <button className={styles.pageBtn} disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft size={16} />
               </button>
-              <span className={styles.pageInfo}>Page {meta.page} of {meta.totalPages}</span>
+              <span className={styles.pageInfo}>{t("fleet.vehicles.page")} {meta.page} {t("fleet.vehicles.of")} {meta.totalPages}</span>
               <button className={styles.pageBtn} disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>
                 <ChevronRight size={16} />
               </button>
@@ -290,7 +292,7 @@ export default function VehiclesPage() {
         <div className={styles.modalOverlay} onClick={() => setShowCreate(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add Vehicle</h2>
+              <h2 className={styles.modalTitle}>{t("fleet.vehicles.addVehicle")}</h2>
               <button className={styles.modalClose} onClick={() => setShowCreate(false)}>
                 <X size={18} />
               </button>
@@ -298,68 +300,68 @@ export default function VehiclesPage() {
             <form className={styles.modalBody} onSubmit={handleCreate}>
               <div className={styles.modalGrid}>
                 <div className={styles.field}>
-                  <label className={styles.label}>Plate Number *</label>
-                  <input className={styles.input} name="plateNumber" value={formData.plateNumber} onChange={handleInputChange} required placeholder="e.g. ABC 1234" />
+                  <label className={styles.label}>{t("fleet.vehicles.fPlate")}</label>
+                  <input className={styles.input} name="plateNumber" value={formData.plateNumber} onChange={handleInputChange} required placeholder={t("fleet.vehicles.phPlate")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Make *</label>
-                  <input className={styles.input} name="make" value={formData.make} onChange={handleInputChange} required placeholder="e.g. Toyota" />
+                  <label className={styles.label}>{t("fleet.vehicles.fMake")}</label>
+                  <input className={styles.input} name="make" value={formData.make} onChange={handleInputChange} required placeholder={t("fleet.vehicles.phMake")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Model *</label>
-                  <input className={styles.input} name="model" value={formData.model} onChange={handleInputChange} required placeholder="e.g. Coaster" />
+                  <label className={styles.label}>{t("fleet.vehicles.fModel")}</label>
+                  <input className={styles.input} name="model" value={formData.model} onChange={handleInputChange} required placeholder={t("fleet.vehicles.phModel")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Year *</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fYear")}</label>
                   <input className={styles.input} name="year" type="number" value={formData.year} onChange={handleInputChange} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Capacity (Seated) *</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fCapSeated")}</label>
                   <input className={styles.input} name="capacitySeated" type="number" value={formData.capacitySeated} onChange={handleInputChange} required />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Capacity (Standing)</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fCapStanding")}</label>
                   <input className={styles.input} name="capacityStanding" type="number" value={formData.capacityStanding} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Fuel Type *</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fFuel")}</label>
                   <select className={styles.select} name="fuelType" value={formData.fuelType} onChange={handleInputChange}>
                     {fuelTypes.map((ft) => <option key={ft} value={ft}>{ft.charAt(0).toUpperCase() + ft.slice(1)}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Status *</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fStatus")}</label>
                   <select className={styles.select} name="status" value={formData.status} onChange={handleInputChange}>
-                    {statuses.map((s) => <option key={s} value={s}>{statusLabels[s] || s}</option>)}
+                    {statuses.map((s) => <option key={s} value={s}>{t(statusLabels[s] || s)}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Color</label>
-                  <input className={styles.input} name="color" value={formData.color} onChange={handleInputChange} placeholder="e.g. White" />
+                  <label className={styles.label}>{t("fleet.vehicles.fColor")}</label>
+                  <input className={styles.input} name="color" value={formData.color} onChange={handleInputChange} placeholder={t("fleet.vehicles.phColor")} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Chassis Number</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fChassis")}</label>
                   <input className={styles.input} name="chassisNumber" value={formData.chassisNumber} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>VIN</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fVin")}</label>
                   <input className={styles.input} name="vin" value={formData.vin} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Engine Number</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fEngine")}</label>
                   <input className={styles.input} name="engineNumber" value={formData.engineNumber} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Purchase Price (SAR)</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fPrice")}</label>
                   <input className={styles.input} name="purchasePrice" type="number" value={formData.purchasePrice} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Purchase Date</label>
+                  <label className={styles.label}>{t("fleet.vehicles.fDate")}</label>
                   <input className={styles.input} name="purchaseDate" type="date" value={formData.purchaseDate} onChange={handleInputChange} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Assigned Depot</label>
-                  <input className={styles.input} name="assignedDepot" value={formData.assignedDepot} onChange={handleInputChange} placeholder="e.g. Main Depot" />
+                  <label className={styles.label}>{t("fleet.vehicles.fDepot")}</label>
+                  <input className={styles.input} name="assignedDepot" value={formData.assignedDepot} onChange={handleInputChange} placeholder={t("fleet.vehicles.phDepot")} />
                 </div>
               </div>
 
@@ -372,10 +374,10 @@ export default function VehiclesPage() {
 
               <div className={styles.modalActions}>
                 <button type="button" className={styles.cancelBtn} onClick={() => setShowCreate(false)}>
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button type="submit" className={styles.submitBtn} disabled={submitting}>
-                  {submitting ? "Creating..." : "Add Vehicle"}
+                  {submitting ? t("fleet.vehicles.creating") : t("fleet.vehicles.addVehicle")}
                 </button>
               </div>
             </form>

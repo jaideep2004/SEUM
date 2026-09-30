@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -22,6 +23,7 @@ function getFirstDayOfMonth(year:number,month:number){return new Date(year,month
 
 export default function TripCalendarPage(){
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const now=new Date();
   const [year,setYear]=useState(now.getFullYear());
   const [month,setMonth]=useState(now.getMonth()+1);
@@ -47,35 +49,39 @@ export default function TripCalendarPage(){
   const prevMonth=()=>{if(month===1){setMonth(12);setYear(y=>y-1)}else setMonth(m=>m-1)};
   const nextMonth=()=>{if(month===12){setMonth(1);setYear(y=>y+1)}else setMonth(m=>m+1)};
 
+  const MONTH_LABELS=[t("trips.calendar.mJan"),t("trips.calendar.mFeb"),t("trips.calendar.mMar"),t("trips.calendar.mApr"),t("trips.calendar.mMay"),t("trips.calendar.mJun"),t("trips.calendar.mJul"),t("trips.calendar.mAug"),t("trips.calendar.mSep"),t("trips.calendar.mOct"),t("trips.calendar.mNov"),t("trips.calendar.mDec")];
+  const DAY_LABELS_T=[t("trips.calendar.dSun"),t("trips.calendar.dMon"),t("trips.calendar.dTue"),t("trips.calendar.dWed"),t("trips.calendar.dThu"),t("trips.calendar.dFri"),t("trips.calendar.dSat")];
+  const VIEW_LABELS: Record<ViewMode,string>={daily:t("trips.calendar.daily"),weekly:t("trips.calendar.weekly"),monthly:t("trips.calendar.monthly")};
+
   return(
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Trip Calendar</h1>
-          <p className={styles.pageDesc}>Monthly view of scheduled trips</p>
+          <h1 className={styles.pageTitle}>{t("trips.calendar.title")}</h1>
+          <p className={styles.pageDesc}>{t("trips.calendar.desc")}</p>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.viewToggle}>
             {(["daily","weekly","monthly"] as ViewMode[]).map(v=>(
               <button key={v} className={`${styles.viewBtn} ${view===v?styles.viewActive:""}`} onClick={()=>setView(v)}>
-                {v.charAt(0).toUpperCase()+v.slice(1)}
+                {VIEW_LABELS[v]}
               </button>
             ))}
           </div>
           <div className={styles.monthNav}>
             <button className={styles.navBtn} onClick={prevMonth}><ChevronLeft size={18}/></button>
-            <span className={styles.monthLabel}>{MONTHS[month-1]} {year}</span>
+            <span className={styles.monthLabel}>{MONTH_LABELS[month-1]} {year}</span>
             <button className={styles.navBtn} onClick={nextMonth}><ChevronRight size={18}/></button>
           </div>
         </div>
       </div>
 
       {loading?(
-        <div className={styles.loadingState}><div className={styles.spinner}/> Loading calendar...</div>
+        <div className={styles.loadingState}><div className={styles.spinner}/> {t("trips.calendar.loading")}</div>
       ):trips.length===0?(
         <div className={styles.emptyState}>
           <CalendarDays size={48} style={{opacity:0.3}}/>
-          <p>No trips for this month.</p>
+          <p>{t("trips.calendar.empty")}</p>
         </div>
       ):(
         <div className={styles.calendarWrap}>
@@ -83,7 +89,7 @@ export default function TripCalendarPage(){
             <div className={styles.busLabelCol}/>
             {Array.from({length:daysInMonth},(_,i)=>(
               <div key={i} className={styles.dayHeader}>
-                <span className={styles.dayName}>{DAYS[(firstDay+i)%7]}</span>
+                <span className={styles.dayName}>{DAY_LABELS_T[(firstDay+i)%7]}</span>
                 <span className={styles.dayNum}>{i+1}</span>
               </div>
             ))}
@@ -93,7 +99,7 @@ export default function TripCalendarPage(){
           <div className={styles.calendarGrid} style={{gridTemplateColumns:`140px repeat(${daysInMonth},minmax(60px,1fr))`}}>
             <div className={styles.busLabelCol}>
               <MapPin size={14} style={{color:"var(--color-text-tertiary)"}}/>
-              <span className={styles.plateNumber}>All Trips</span>
+              <span className={styles.plateNumber}>{t("trips.calendar.allTrips")}</span>
             </div>
             {Array.from({length:daysInMonth},(_,dayIdx)=>{
               const dateStr=`${year}-${String(month).padStart(2,"0")}-${String(dayIdx+1).padStart(2,"0")}`;

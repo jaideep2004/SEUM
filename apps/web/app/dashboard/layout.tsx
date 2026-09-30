@@ -6,330 +6,55 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/Toast";
+import { SocketProvider, useSocketEvent } from "@/components/SocketProvider";
 import { API_URL } from "@/services/api";
+// Sidebar icons live in @/lib/access with the nav config — only the icons the
+// shell itself renders are imported here.
 import {
-  LayoutDashboard,
-  Building2,
-  CreditCard,
-  Package,
-  Puzzle,
-  Users,
-  LifeBuoy,
-  HeartPulse,
-  Plug,
-  BarChart3,
-  Settings,
-  ChevronDown,
   Bell,
-  Search,
-  LogOut,
-  Menu,
-  X,
-  Route,
-  Bus,
-  Truck,
-  Wallet,
-  Briefcase,
-  Radio,
-  Map,
-  Calendar,
-  FileText,
-  Receipt,
-  AlertTriangle,
-  Headphones,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  UserCheck,
-  ClipboardList,
-  CalendarDays,
-  Navigation,
-  Gauge,
-  Wrench,
-  Fuel,
-  MapPin,
-  Milestone,
-  Repeat,
-  CheckCircle2,
-  ChevronUp,
-  Clock,
-  DollarSign,
-  BookOpen,
-  Archive,
-  Sun,
+  Headphones,
+  LogOut,
+  Menu,
   Moon,
-  MessageSquare,
+  Sun,
+  X,
 } from "lucide-react";
+import {
+  canAccess,
+  homeFor,
+  readStoredUser,
+  roleLabel,
+  storedCapabilities,
+  visibleSections,
+} from "@/lib/access";
+import {
+  useLanguage,
+  navItemLabel,
+  navSectionLabel,
+  localizedRoleLabel,
+} from "@/lib/i18n";
+import { formatDate } from "@/lib/i18n";
 import styles from "./layout.module.css";
 
-type NavItem = { label: string; href: string; icon: any; badge?: number };
 
-const superAdminNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Companies", href: "/dashboard/companies", icon: Building2 },
-  { label: "Subscriptions", href: "/dashboard/subscriptions", icon: CreditCard },
-  { label: "Plans", href: "/dashboard/plans", icon: Package },
-  { label: "Modules", href: "/dashboard/modules", icon: Puzzle },
-  { label: "Users", href: "/dashboard/users", icon: Users },
-  { label: "Support Tickets", href: "/dashboard/support", icon: Headphones, badge: 5 },
-  { label: "System Health", href: "/dashboard/health", icon: HeartPulse },
-  { label: "Integrations", href: "/dashboard/integrations", icon: Plug },
-  { label: "Audit Logs", href: "/dashboard/audit-logs", icon: ClipboardList },
-  { label: "Archived", href: "/dashboard/archived", icon: Archive },
-  { label: "Global Reports", href: "/dashboard/reports", icon: BarChart3 },
-  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
-];
-
-const companyAdminNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard/company", icon: LayoutDashboard },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
-  { label: "Operations", href: "/dashboard/operations", icon: Route },
-  { label: "Users", href: "/dashboard/users", icon: Users },
-  { label: "Fleet", href: "/dashboard/fleet", icon: Truck },
-  { label: "Readiness", href: "/dashboard/fleet/readiness", icon: Gauge },
-  { label: "Fuel Logs", href: "/dashboard/fleet/fuel", icon: Fuel },
-  { label: "Fuel Analytics", href: "/dashboard/fleet/fuel/analytics", icon: BarChart3 },
-  { label: "Assignments", href: "/dashboard/fleet/assignments", icon: CalendarDays },
-  { label: "Calendar", href: "/dashboard/fleet/assignments/calendar", icon: Calendar },
-  { label: "Analytics", href: "/dashboard/fleet/analytics", icon: BarChart3 },
-  { label: "Employees", href: "/dashboard/hr/employees", icon: Briefcase },
-  { label: "Attendance", href: "/dashboard/hr/attendance", icon: Clock },
-  { label: "Payroll", href: "/dashboard/hr/payroll", icon: DollarSign },
-  { label: "Leaves", href: "/dashboard/hr/leaves", icon: CalendarDays },
-  { label: "Finance", href: "/dashboard/finance", icon: Wallet },
-  { label: "Chart of Accounts", href: "/dashboard/accounts", icon: BookOpen },
-  { label: "Journal Entries", href: "/dashboard/accounting/journal-entries", icon: FileText },
-  { label: "Invoices", href: "/dashboard/accounting/invoices", icon: Receipt },
-  { label: "Expenses", href: "/dashboard/accounting/expenses", icon: Wallet },
-  { label: "Trip Profitability", href: "/dashboard/accounting/trip-profitability", icon: BarChart3 },
-  { label: "Financial Reports", href: "/dashboard/accounting/reports", icon: BarChart3 },
-  { label: "Payroll", href: "/dashboard/accounting/payroll", icon: DollarSign },
-  { label: "Bank Accounts", href: "/dashboard/accounting/bank-accounts", icon: Wallet },
-  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
-  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
-  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
-  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
-  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
-  { label: "Monitoring", href: "/dashboard/monitoring", icon: Radio },
-  { label: "Reports", href: "/dashboard/company/reports", icon: BarChart3 },
-  { label: "Settings", href: "/dashboard/company/settings", icon: Settings },
-];
-
-const operationsNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard/operations", icon: LayoutDashboard },
-  { label: "Bookings", href: "/dashboard/bookings", icon: ClipboardList },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
-  { label: "Customers", href: "/dashboard/customers", icon: Users },
-  { label: "Pilgrim Groups", href: "/dashboard/pilgrim-groups", icon: Users },
-  { label: "Trip Planning", href: "/dashboard/trip-planning", icon: CalendarDays },
-  { label: "Trips", href: "/dashboard/trips", icon: Route },
-  { label: "Recurring Trips", href: "/dashboard/recurring-trips", icon: Repeat },
-  { label: "Schedules", href: "/dashboard/schedules", icon: Calendar },
-  { label: "Drivers", href: "/dashboard/drivers", icon: UserCheck },
-  { label: "Attendance", href: "/dashboard/drivers/attendance", icon: Clock },
-  { label: "Leaves", href: "/dashboard/drivers/leaves", icon: CalendarDays },
-  { label: "Violations", href: "/dashboard/drivers/violations", icon: AlertTriangle },
-  { label: "Scores", href: "/dashboard/drivers/scores", icon: BarChart3 },
-  { label: "Payroll", href: "/dashboard/drivers/payroll", icon: DollarSign },
-  { label: "Vehicles", href: "/dashboard/fleet/vehicles", icon: Bus },
-  { label: "Routes", href: "/dashboard/routes", icon: Map },
-  { label: "Work Orders", href: "/dashboard/maintenance/workshops", icon: FileText },
-  { label: "Live Trips", href: "/dashboard/live-trips", icon: Navigation },
-  { label: "Reports", href: "/dashboard/ops-reports", icon: BarChart3 },
-];
-
-const Shield = ({ size = 18, ...props }: any) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
-
-const fleetNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard/fleet", icon: LayoutDashboard },
-  { label: "Vehicles", href: "/dashboard/fleet/vehicles", icon: Truck, badge: 0 },
-  { label: "Documents", href: "/dashboard/fleet/documents", icon: FileText },
-  { label: "Insurance", href: "/dashboard/fleet/insurance", icon: Shield },
-  { label: "Fuel", href: "/dashboard/fleet/fuel", icon: Fuel },
-  { label: "GPS & Tracking", href: "/dashboard/fleet/gps", icon: MapPin },
-  { label: "Mileage", href: "/dashboard/fleet/mileage", icon: Milestone },
-  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
-  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
-  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
-  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
-  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
-  { label: "Reports", href: "/dashboard/fleet/reports", icon: BarChart3 },
-];
-
-const monitoringNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard/monitoring", icon: LayoutDashboard },
-  { label: "Live Tracking", href: "/dashboard/live-trips", icon: Navigation },
-  { label: "Alerts", href: "/dashboard/alerts", icon: AlertTriangle },
-  { label: "Geofencing", href: "/dashboard/geofencing", icon: MapPin },
-  { label: "Speed Monitor", href: "/dashboard/speed", icon: Gauge },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-const hrNav: NavItem[] = [
-  { label: "Employees", href: "/dashboard/hr/employees", icon: Briefcase },
-  { label: "Attendance", href: "/dashboard/hr/attendance", icon: Clock },
-  { label: "Payroll", href: "/dashboard/hr/payroll", icon: DollarSign },
-  { label: "Leaves", href: "/dashboard/hr/leaves", icon: CalendarDays },
-  { label: "Driver Leaves", href: "/dashboard/drivers/leaves", icon: CalendarDays },
-  { label: "Driver Violations", href: "/dashboard/drivers/violations", icon: AlertTriangle },
-  { label: "Driver Scores", href: "/dashboard/drivers/scores", icon: BarChart3 },
-  { label: "Driver Payroll", href: "/dashboard/drivers/payroll", icon: DollarSign },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-const financeNav: NavItem[] = [
-  { label: "Chart of Accounts", href: "/dashboard/accounts", icon: BookOpen },
-  { label: "Journal Entries", href: "/dashboard/accounting/journal-entries", icon: FileText },
-  { label: "Invoices", href: "/dashboard/accounting/invoices", icon: Receipt },
-  { label: "Expenses", href: "/dashboard/accounting/expenses", icon: Wallet },
-  { label: "Trip Profitability", href: "/dashboard/accounting/trip-profitability", icon: BarChart3 },
-  { label: "Financial Reports", href: "/dashboard/accounting/reports", icon: BarChart3 },
-  { label: "Payroll", href: "/dashboard/accounting/payroll", icon: DollarSign },
-  { label: "Bank Accounts", href: "/dashboard/accounting/bank-accounts", icon: Wallet },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-const csNav: NavItem[] = [
-  { label: "Booking Dashboard", href: "/dashboard/bookings/dashboard", icon: LayoutDashboard },
-  { label: "Bookings", href: "/dashboard/bookings", icon: ClipboardList },
-  { label: "New Booking", href: "/dashboard/bookings/new", icon: ClipboardList },
-  { label: "Customers", href: "/dashboard/customers", icon: Users },
-  { label: "Waitlist", href: "/dashboard/bookings/waitlist", icon: CalendarDays },
-  { label: "Communications", href: "/dashboard/communications", icon: MessageSquare },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-const maintenanceNav: NavItem[] = [
-  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
-  { label: "Breakdowns", href: "/dashboard/maintenance/breakdowns", icon: AlertTriangle },
-  { label: "Spare Parts", href: "/dashboard/maintenance/parts", icon: Package },
-  { label: "Workshops", href: "/dashboard/maintenance/workshops", icon: Wrench },
-  { label: "Cost Tracking", href: "/dashboard/maintenance/costs", icon: DollarSign },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-const driverNav: NavItem[] = [
-  { label: "My Schedule", href: "/dashboard/schedules", icon: Calendar },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-];
-
-function getRoleFromUser(): string {
-  if (typeof window === "undefined") return "company";
-  try {
-    const stored = localStorage.getItem("seum_user");
-    if (!stored) return "company";
-    const user = JSON.parse(stored);
-    const role = user.roles?.[0];
-    const roleMap: Record<string, string> = {
-      super_admin: "superadmin",
-      company_admin: "company",
-      operations_manager: "operations",
-      fleet_manager: "fleet",
-      monitoring_control: "monitoring",
-      hr_manager: "hr",
-      finance_accountant: "finance",
-      customer_service: "cs",
-      maintenance_workshop: "maintenance",
-      driver: "driver",
-      executive: "company",
-    };
-    return roleMap[role] || "company";
-  } catch {
-    return "company";
-  }
+/**
+ * Capabilities for the signed-in user, read from the record the API returned on
+ * login. The union across every role the user holds, so a second role is never
+ * ignored. The menu, the route guard and the API gates all read the same list.
+ */
+function getCapabilitiesFromUser(): string[] {
+  return storedCapabilities(readStoredUser());
 }
 
-function getNavItems(role: string): NavItem[] {
-  switch (role) {
-    case "superadmin": return superAdminNav;
-    case "operations": return operationsNav;
-    case "fleet": return fleetNav;
-    case "monitoring": return monitoringNav;
-    case "hr": return hrNav;
-    case "finance": return financeNav;
-    case "cs": return csNav;
-    case "maintenance": return maintenanceNav;
-    case "driver": return driverNav;
-    default: return companyAdminNav;
-  }
+/** Human-readable role summary for the profile menu (localized). */
+function getRoleLabelFromUser(lang: "en" | "ar"): string {
+  const roles = readStoredUser()?.roles ?? [];
+  if (lang === "ar") return roles.map((r) => localizedRoleLabel(r, lang)).join("، ") || "مستخدم";
+  return roles.map(roleLabel).join(", ") || "User";
 }
-
-const roleLabels: Record<string, string> = {
-  superadmin: "Super Admin",
-  company: "Company Admin",
-  operations: "Operations Manager",
-  fleet: "Fleet Manager",
-  monitoring: "Monitoring",
-  hr: "HR Manager",
-  finance: "Finance Accountant",
-  cs: "Customer Service",
-  maintenance: "Maintenance",
-  driver: "Driver",
-};
-
-const roleHome: Record<string, string> = {
-  superadmin: "/dashboard",
-  company: "/dashboard/company",
-  operations: "/dashboard/operations",
-  fleet: "/dashboard/fleet",
-  monitoring: "/dashboard/monitoring",
-  hr: "/dashboard/hr/employees",
-  finance: "/dashboard/accounts",
-  cs: "/dashboard/bookings",
-  maintenance: "/dashboard/maintenance",
-  driver: "/dashboard/schedules",
-};
-
-const roleAllowed: Record<string, string[]> = {
-  superadmin: [
-    "/dashboard",
-    "/dashboard/companies", "/dashboard/subscriptions", "/dashboard/plans", "/dashboard/modules",
-    "/dashboard/users", "/dashboard/support", "/dashboard/health", "/dashboard/integrations",
-    "/dashboard/audit-logs", "/dashboard/archived", "/dashboard/reports", "/dashboard/settings",
-    "/dashboard/notifications", "/dashboard/communications",
-  ],
-  company: [
-    "/dashboard/company", "/dashboard/notifications", "/dashboard/communications", "/dashboard/operations", "/dashboard/users",
-    "/dashboard/fleet", "/dashboard/hr", "/dashboard/finance", "/dashboard/delays",
-    "/dashboard/accounts", "/dashboard/accounting", "/dashboard/maintenance", "/dashboard/monitoring",
-  ],
-  operations: [
-    "/dashboard/operations", "/dashboard/notifications", "/dashboard/communications", "/dashboard/bookings", "/dashboard/customers",
-    "/dashboard/pilgrim-groups", "/dashboard/trip-planning", "/dashboard/trips",
-    "/dashboard/recurring-trips", "/dashboard/schedules", "/dashboard/drivers",
-    "/dashboard/fleet/vehicles", "/dashboard/routes", "/dashboard/maintenance/workshops",
-    "/dashboard/live-trips", "/dashboard/ops-reports", "/dashboard/delays",
-  ],
-  fleet: [
-    "/dashboard/fleet", "/dashboard/notifications", "/dashboard/maintenance",
-  ],
-  monitoring: [
-    "/dashboard/monitoring", "/dashboard/notifications", "/dashboard/live-trips",
-    "/dashboard/alerts", "/dashboard/geofencing", "/dashboard/speed",
-  ],
-  hr: [
-    "/dashboard/hr", "/dashboard/notifications", "/dashboard/drivers/leaves",
-    "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
-  ],
-  finance: [
-    "/dashboard/accounts", "/dashboard/accounting", "/dashboard/notifications",
-  ],
-  cs: [
-    "/dashboard/bookings", "/dashboard/customers", "/dashboard/notifications", "/dashboard/communications",
-  ],
-  maintenance: [
-    "/dashboard/maintenance", "/dashboard/notifications",
-  ],
-  driver: [
-    "/dashboard/schedules", "/dashboard/notifications",
-  ],
-};
 
 function getUserFromStorage() {
   if (typeof window === "undefined") return { name: "User", email: "", initials: "U" };
@@ -343,6 +68,15 @@ function getUserFromStorage() {
   } catch {
     return { name: "User", email: "", initials: "U" };
   }
+}
+
+/**
+ * Lives inside <SocketProvider>: refreshes the header bell whenever a
+ * `notification:new` realtime event arrives for this tenant/user.
+ */
+function SocketNotifBridge({ onNotification }: { onNotification: () => void }) {
+  useSocketEvent("notification:new", onNotification);
+  return null;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -421,49 +155,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login");
   }
 
-  const role = useMemo(() => getRoleFromUser(), []);
-  const navItems = useMemo(() => getNavItems(role), [role]);
+  const capabilities = useMemo(() => getCapabilitiesFromUser(), []);
+  const sections = useMemo(() => visibleSections(capabilities), [capabilities]);
   const user = useMemo(() => getUserFromStorage(), []);
-  const roleLabel = roleLabels[role] || "User";
+  const { lang, toggleLang, t } = useLanguage();
+  const roleLabel = useMemo(() => getRoleLabelFromUser(lang), [lang]);
   const { theme, toggleTheme } = useTheme();
+  const weekRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(now.getDate() - now.getDay() + 1);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return `${formatDate(start, lang)} - ${formatDate(end, lang)}`;
+  }, [lang]);
 
+  // Belt-and-braces refresh: an admin can change someone's roles while they are
+  // signed in, so re-read the capability list once per page load.
   useEffect(() => {
-    if (role === "superadmin") return;
-    const prefixes = roleAllowed[role] || [];
-    const allowed = prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
-    if (!allowed) router.replace(roleHome[role] || "/dashboard");
-  }, [pathname, role, router]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
+        const data = await res.json();
+        if (cancelled || !data?.success || !data.data) return;
+        const fresh = data.data;
+        const stored = readStoredUser();
+        localStorage.setItem("seum_user", JSON.stringify({ ...stored, ...fresh }));
+      } catch {
+        /* keep the cached capabilities */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Route guard: a page the user has no capability for sends them to their home.
+  useEffect(() => {
+    if (capabilities.length === 0) return;
+    if (canAccess(capabilities, pathname)) return;
+    router.replace(homeFor(capabilities));
+  }, [pathname, capabilities, router]);
 
   const isActive = (href: string) => pathname === href || pathname === href + "/";
-
-  const completedPages = new Set([
-    "/dashboard", "/dashboard/companies", "/dashboard/subscriptions", "/dashboard/plans",
-    "/dashboard/users", "/dashboard/audit-logs", "/dashboard/archived",
-    "/dashboard/company", "/dashboard/notifications", "/dashboard/operations",
-    "/dashboard/fleet", "/dashboard/fleet/vehicles", "/dashboard/fleet/documents",
-    "/dashboard/fleet/readiness", "/dashboard/fleet/fuel",
-    "/dashboard/fleet/fuel/analytics", "/dashboard/fleet/assignments",
-    "/dashboard/fleet/assignments/calendar", "/dashboard/fleet/analytics",
-    "/dashboard/routes", "/dashboard/trips", "/dashboard/recurring-trips",
-    "/dashboard/schedules", "/dashboard/bookings", "/dashboard/customers",
-    "/dashboard/drivers", "/dashboard/drivers/attendance", "/dashboard/drivers/leaves",
-    "/dashboard/drivers/violations", "/dashboard/drivers/scores", "/dashboard/drivers/payroll",
-    "/dashboard/hr/employees", "/dashboard/hr/attendance", "/dashboard/hr/payroll",
-    "/dashboard/hr/leaves",
-    "/dashboard/accounts",
-    "/dashboard/accounting/journal-entries",
-    "/dashboard/accounting/invoices",
-    "/dashboard/accounting/expenses",
-    "/dashboard/accounting/trip-profitability",
-    "/dashboard/accounting/reports",
-    "/dashboard/accounting/payroll",
-    "/dashboard/accounting/bank-accounts",
-    "/dashboard/maintenance", "/dashboard/maintenance/breakdowns",
-    "/dashboard/maintenance/parts", "/dashboard/maintenance/workshops",
-    "/dashboard/maintenance/costs",
-    "/dashboard/monitoring", "/dashboard/delays",
-    "/dashboard/communications",
-  ]);
 
   return (
     <div className={styles.layout}>
@@ -498,26 +233,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation */}
         <nav className={styles.sidebarNav}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`${styles.navItem} ${active ? styles.navItemActive : ""}`}
-              >
-                <Icon size={18} className={styles.navIcon} />
-                <span className={styles.navLabel}>{item.label}</span>
-                {completedPages.has(item.href) && (
-                  <CheckCircle2 size={12} className={styles.navCheck} />
-                )}
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={styles.navBadge}>{item.badge}</span>
-                )}
-              </Link>
-            );
-          })}
+          {sections.map((section) => (
+            <div key={section.key} className={styles.navSection}>
+              <span className={styles.navSectionLabel}>{navSectionLabel(section.key, section.label, lang)}</span>
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles.navItem} ${active ? styles.navItemActive : ""}`}
+                  >
+                    <Icon size={18} className={styles.navIcon} />
+                    <span className={styles.navLabel}>{navItemLabel(item.href, item.label, lang)}</span>
+                    {item.href === "/dashboard/notifications" && notifCount > 0 && (
+                      <span className={styles.navBadge}>{notifCount}</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Support Section */}
@@ -529,14 +266,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                   className={styles.supportClose}
                   onClick={() => setSupportOpen(false)}
-                  title="Close"
+                  title={t("shell.closeHelp")}
                 >
                   <X size={14} />
                 </button>
               </div>
-              <p className={styles.supportTitle}>Need Help?</p>
-              <p className={styles.supportDesc}>Contact our support team for assistance</p>
-              <button className={styles.supportBtn}>Contact Support</button>
+              <p className={styles.supportTitle}>{t("shell.needHelp")}</p>
+              <p className={styles.supportDesc}>{t("shell.supportDesc")}</p>
+              <button className={styles.supportBtn}>{t("shell.contactSupport")}</button>
             </div>
           </div>
         )}
@@ -544,10 +281,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             className={styles.supportReopen}
             onClick={() => setSupportOpen(true)}
-            title="Show help"
+            title={t("shell.showHelp")}
           >
             <Headphones size={16} />
-            <span>Need Help?</span>
+            <span>{t("shell.needHelp")}</span>
           </button>
         )}
 
@@ -563,7 +300,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             className={styles.collapseBtn}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            title={sidebarOpen ? t("shell.collapseSidebar") : t("shell.expandSidebar")}
           >
             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
@@ -575,15 +312,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top Header */}
         <header className={styles.topHeader}>
           <div className={styles.headerLeft}>
-            <button className={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <button className={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)} title={t("shell.menu")} aria-label={t("shell.menu")}>
               {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
             <div className={styles.headerDateRange}>
-              <span>May 12 - May 18, 2025</span>
+              <span>{weekRange}</span>
             </div>
           </div>
           <div className={styles.headerRight}>
-            <button className={styles.langBtn}>EN</button>
+            <button
+              className={styles.langBtn}
+              onClick={toggleLang}
+              title={lang === "en" ? t("shell.switchToArabic") : t("shell.switchToEnglish")}
+            >
+              {lang === "en" ? "عربي" : "EN"}
+            </button>
             <button className={styles.headerIconBtn} aria-label="Toggle theme" onClick={toggleTheme}>
               {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
             </button>
@@ -595,11 +338,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {notifOpen && (
                 <div className={styles.notifDropdown}>
                   <div className={styles.notifDropdownHeader}>
-                    <span className={styles.notifDropdownTitle}>Notifications</span>
-                    <button className={styles.notifMarkRead} onClick={handleMarkAllRead}>Mark all read</button>
+                    <span className={styles.notifDropdownTitle}>{t("shell.notifications")}</span>
+                    <button className={styles.notifMarkRead} onClick={handleMarkAllRead}>{t("shell.markAllRead")}</button>
                   </div>
                   {notifications.length === 0 ? (
-                    <div className={styles.notifEmpty}>No new notifications</div>
+                    <div className={styles.notifEmpty}>{t("shell.noNewNotifications")}</div>
                   ) : (
                     notifications.map((n: any) => (
                       <div key={n.id} className={`${styles.notifItem} ${!n.is_read ? styles.notifUnread : ''}`}>
@@ -610,7 +353,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     ))
                   )}
                   <Link href="/dashboard/notifications" className={styles.notifViewAll} onClick={() => setNotifOpen(false)}>
-                    Open notification center
+                    {t("shell.openNotificationCenter")}
                   </Link>
                 </div>
               )}
@@ -636,7 +379,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className={styles.dropdownDivider} />
                   <button className={styles.dropdownItem} onClick={handleLogout}>
                     <LogOut size={15} />
-                    Sign Out
+                    {t("shell.signOut")}
                   </button>
                 </div>
               )}
@@ -647,7 +390,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Content */}
         <main className={styles.content}>
           <ErrorBoundary>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <SocketProvider>
+                <SocketNotifBridge
+                  onNotification={() => {
+                    fetchNotifCount();
+                    fetchNotifications();
+                  }}
+                />
+                {children}
+              </SocketProvider>
+            </ToastProvider>
           </ErrorBoundary>
         </main>
       </div>

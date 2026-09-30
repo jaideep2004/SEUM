@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Bus, User, Clock, FileText, UserPlus, Trash2, Play, CheckCircle, XCircle, AlertTriangle, UserCheck, Route, Users, Plane, Hotel, Printer, X } from "lucide-react";
 import TripTimeline from "@/components/TripTimeline";
 import DriverAssignModal from "@/components/DriverAssignModal";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 import "./print.css";
 
@@ -14,6 +15,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [trip, setTrip] = useState<any>(null);
   const [passengers, setPassengers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,10 +54,10 @@ export default function TripDetailPage() {
         body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!json.success) { alert(json.message || `Failed to ${action}`); return; }
+      if (!json.success) { alert(json.message || `${t("trips.detail.failedTo")} ${action}`); return; }
       setShowDelay(false); setShowCancel(false);
       await fetchTrip();
-    } catch { alert(`Failed to ${action}`); } finally { setActionLoading(""); }
+    } catch { alert(`${t("trips.detail.failedTo")} ${action}`); } finally { setActionLoading(""); }
   }
 
   async function addPassenger() {
@@ -70,7 +72,7 @@ export default function TripDetailPage() {
       });
       const json = await res.json();
       if (json.success) { setPassengerName(""); setPassengerContact(""); await fetchTrip(); }
-      else alert(json.message || "Failed to add passenger");
+      else alert(json.message || t("trips.detail.failedAddPassenger"));
     } catch {} finally { setActionLoading(""); }
   }
 
@@ -86,8 +88,8 @@ export default function TripDetailPage() {
     } catch {} finally { setActionLoading(""); }
   }
 
-  if (loading) return <div className={styles.page}><p>Loading trip...</p></div>;
-  if (!trip) return <div className={styles.page}><p>Trip not found</p></div>;
+  if (loading) return <div className={styles.page}><p>{t("trips.detail.loading")}</p></div>;
+  if (!trip) return <div className={styles.page}><p>{t("trips.detail.notFound")}</p></div>;
 
   const isScheduled = trip.status === "scheduled";
   const isEnRoute = trip.status === "en_route";
@@ -99,18 +101,18 @@ export default function TripDetailPage() {
   return (
     <div className={styles.page}>
       <Link href="/dashboard/trips" className={styles.backLink}>
-        <ArrowLeft size={14} /> Back to Trips
+        <ArrowLeft size={14} /> {t("trips.detail.back")}
       </Link>
 
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>
-          {trip.tripTitle || trip.routeName || "Trip"} <span className={styles.tripId}>#{trip.id?.slice(0, 8)}</span>
+          {trip.tripTitle || trip.routeName || t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.id?.slice(0, 8)}</span>
         </h1>
         <div className={styles.headerRight}>
-          <span className={styles.typeTag}>{trip.tripType === "round" ? "Round Trip" : "Single Trip"}</span>
+          <span className={styles.typeTag}>{trip.tripType === "round" ? t("trips.detail.roundTrip") : t("trips.detail.singleTrip")}</span>
           {trip.tripType === "round" && (
             <button className={styles.manifestBtn} onClick={() => setShowManifest(true)}>
-              <Printer size={13} /> Print Manifest
+              <Printer size={13} /> {t("trips.detail.printManifest")}
             </button>
           )}
           <span className={`${styles.statusBadge} ${styles[`status_${trip.status}`]}`}>
@@ -122,21 +124,21 @@ export default function TripDetailPage() {
       <div className={styles.contentGrid}>
         <div className={styles.column}>
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Trip Details</h3>
+            <h3 className={styles.cardTitle}>{t("trips.detail.detailsTitle")}</h3>
             <div className={styles.detailRow}>
               <MapPin size={14} className={styles.detailIcon} />
-              <div><span className={styles.detailLabel}>Route</span><span>{trip.routeName || trip.routeId || "—"}</span></div>
+              <div><span className={styles.detailLabel}>{t("trips.detail.route")}</span><span>{trip.routeName || trip.routeId || "—"}</span></div>
             </div>
             <div className={styles.detailRow}>
               <Bus size={14} className={styles.detailIcon} />
-              <div><span className={styles.detailLabel}>Bus</span><span>{trip.busPlate || trip.busId || "—"}</span></div>
+              <div><span className={styles.detailLabel}>{t("trips.detail.bus")}</span><span>{trip.busPlate || trip.busId || "—"}</span></div>
             </div>
             <div className={styles.detailRow}>
               <User size={14} className={styles.detailIcon} />
               <div>
-                <span className={styles.detailLabel}>Driver</span>
+                <span className={styles.detailLabel}>{t("roles.driver")}</span>
                 <span className={styles.driverRow}>
-                  {trip.driverName || trip.driverId || <span className={styles.muted}>Not assigned</span>}
+                  {trip.driverName || trip.driverId || <span className={styles.muted}>{t("trips.detail.notAssigned")}</span>}
                   {trip.driverConfirmationStatus && trip.driverConfirmationStatus !== "pending" && (
                     <span className={styles.confirmBadge} data-status={trip.driverConfirmationStatus}>
                       {trip.driverConfirmationStatus}
@@ -144,7 +146,7 @@ export default function TripDetailPage() {
                   )}
                   {canModify && (
                     <button className={styles.assignDriverBtn} onClick={() => setShowDriverAssign(true)}>
-                      <UserCheck size={12} /> {trip.driverId ? "Change" : "Assign"}
+                      <UserCheck size={12} /> {trip.driverId ? t("trips.detail.change") : t("trips.detail.assign")}
                     </button>
                   )}
                 </span>
@@ -153,37 +155,37 @@ export default function TripDetailPage() {
             <div className={styles.detailRow}>
               <Clock size={14} className={styles.detailIcon} />
               <div>
-                <span className={styles.detailLabel}>Date & Time</span>
-                <span>{trip.scheduledDate ? new Date(trip.scheduledDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : "—"} at {trip.scheduledStartTime?.slice(0, 5) || "—"}</span>
+                <span className={styles.detailLabel}>{t("trips.detail.dateTime")}</span>
+                <span>{trip.scheduledDate ? formatDate(trip.scheduledDate, lang) : "—"} {t("trips.detail.at")} {trip.scheduledStartTime?.slice(0, 5) || "—"}</span>
               </div>
             </div>
             <div className={styles.detailRow}>
               <FileText size={14} className={styles.detailIcon} />
-              <div><span className={styles.detailLabel}>Type</span><span className={styles.typeTag}>{trip.tripType}</span></div>
+              <div><span className={styles.detailLabel}>{t("trips.detail.type")}</span><span className={styles.typeTag}>{trip.tripType}</span></div>
             </div>
             {trip.scheduledEndTime && (
               <div className={styles.detailRow}>
                 <Clock size={14} className={styles.detailIcon} />
-                <div><span className={styles.detailLabel}>End Time</span><span>{trip.scheduledEndTime.slice(0, 5)}</span></div>
+                <div><span className={styles.detailLabel}>{t("trips.detail.endTime")}</span><span>{trip.scheduledEndTime.slice(0, 5)}</span></div>
               </div>
             )}
             {trip.notes && (
               <div className={styles.detailRow}>
                 <FileText size={14} className={styles.detailIcon} />
-                <div><span className={styles.detailLabel}>Notes</span><span>{trip.notes}</span></div>
+                <div><span className={styles.detailLabel}>{t("common.notes")}</span><span>{trip.notes}</span></div>
               </div>
             )}
             {trip.tripType === "round" && (
               <div className={styles.detailRow}>
                 <Route size={14} className={styles.detailIcon} />
-                <div><span className={styles.detailLabel}>Legs</span><span>{trip.legCount ?? trip.legs?.length ?? 0} stops across {trip.legs?.length ? new Set(trip.legs.map((l: any) => l.legDate)).size : 1} date(s)</span></div>
+                <div><span className={styles.detailLabel}>{t("trips.detail.legs")}</span><span>{trip.legCount ?? trip.legs?.length ?? 0} {t("trips.detail.stopsAcross")} {trip.legs?.length ? new Set(trip.legs.map((l: any) => l.legDate)).size : 1} {t("trips.detail.dates")}</span></div>
               </div>
             )}
           </div>
 
           {trip.tripType === "round" && trip.legs && trip.legs.length > 0 && (
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}><Route size={14} /> Trip Legs</h3>
+              <h3 className={styles.cardTitle}><Route size={14} /> {t("trips.detail.legsTitle")}</h3>
               <div className={styles.legsTimeline}>
                 {trip.legs.map((leg: any, idx: number) => (
                   <div key={leg.id || idx} className={styles.legItem}>
@@ -194,10 +196,10 @@ export default function TripDetailPage() {
                     <div className={styles.legContent}>
                       <div className={styles.legPath}>{leg.origin} → {leg.destination}</div>
                       <div className={styles.legMeta}>
-                        {new Date(leg.legDate).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
-                        {leg.departureTime && <> · dep {leg.departureTime.slice(0, 5)}</>}
-                        {leg.arrivalTime && <> · arr {leg.arrivalTime.slice(0, 5)}</>}
-                        {leg.overnightFlag && <span className={styles.overnightBadge}>Overnight</span>}
+                        {formatDate(leg.legDate, lang)}
+                        {leg.departureTime && <> · {t("trips.detail.dep")} {leg.departureTime.slice(0, 5)}</>}
+                        {leg.arrivalTime && <> · {t("trips.detail.arr")} {leg.arrivalTime.slice(0, 5)}</>}
+                        {leg.overnightFlag && <span className={styles.overnightBadge}>{t("trips.detail.overnight")}</span>}
                       </div>
                     </div>
                   </div>
@@ -208,13 +210,13 @@ export default function TripDetailPage() {
 
           {(trip.groupLeader || trip.groupNo || trip.noOfPax != null || trip.agent || trip.agentId) && (
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}><Users size={14} /> Manifest</h3>
-              {trip.tripTitle && <div className={styles.detailRow}><span className={styles.detailLabel}>Title</span><span>{trip.tripTitle}</span></div>}
-              {trip.groupLeader && <div className={styles.detailRow}><span className={styles.detailLabel}>Group Leader</span><span>{trip.groupLeader}{trip.groupLeaderNo ? ` (${trip.groupLeaderNo})` : ""}</span></div>}
-              {trip.nationality && <div className={styles.detailRow}><span className={styles.detailLabel}>Nationality</span><span>{trip.nationality}</span></div>}
+              <h3 className={styles.cardTitle}><Users size={14} /> {t("trips.detail.manifest")}</h3>
+              {trip.tripTitle && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.title")}</span><span>{trip.tripTitle}</span></div>}
+              {trip.groupLeader && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.groupLeader")}</span><span>{trip.groupLeader}{trip.groupLeaderNo ? ` (${trip.groupLeaderNo})` : ""}</span></div>}
+              {trip.nationality && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.nationality")}</span><span>{trip.nationality}</span></div>}
               {(trip.agent || trip.agentId) && (
                 <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Agent</span>
+                  <span className={styles.detailLabel}>{t("trips.detail.agent")}</span>
                   <span>
                     {trip.agentId ? (
                       <Link href={`/dashboard/customers/${trip.agentId}`} style={{ color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'underline' }}>
@@ -227,16 +229,31 @@ export default function TripDetailPage() {
                   </span>
                 </div>
               )}
-              {trip.groupNo && <div className={styles.detailRow}><span className={styles.detailLabel}>Group No</span><span>{trip.groupNo}</span></div>}
-              {trip.noOfPax != null && <div className={styles.detailRow}><span className={styles.detailLabel}>No of Pax</span><span>{trip.noOfPax}</span></div>}
-              {trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>Vehicle Type</span><span>{trip.vehicleType}</span></div>}
+              {trip.groupNo && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.groupNo")}</span><span>{trip.groupNo}</span></div>}
+              {trip.noOfPax != null && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.noOfPax")}</span><span>{trip.noOfPax}</span></div>}
+              {trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.vehicleType")}</span><span>{trip.vehicleType}{trip.vehicleCount ? ` × ${trip.vehicleCount}` : ""}</span></div>}
+              {trip.vehicleCount != null && !trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.vehicleCount")}</span><span>{trip.vehicleCount}</span></div>}
+              {Array.isArray(trip.groups) && trip.groups.length > 0 && (
+                <div className={styles.detailRow} style={{ alignItems: "flex-start" }}>
+                  <span className={styles.detailLabel}>{t("trips.detail.groupsTitle")}</span>
+                  <span>
+                    {trip.groups.map((g: any, i: number) => (
+                      <span key={i} style={{ display: "block", marginBottom: 4 }}>
+                        <strong>{t("trips.new.group")} {i + 1}</strong>
+                        {g.groupNo ? ` — ${g.groupNo}` : ""}{g.groupLeader ? ` · ${g.groupLeader}` : ""}{g.nationality ? ` (${g.nationality})` : ""}{g.noOfPax != null ? ` · ${g.noOfPax} ${t("trips.detail.paxShort")}` : ""}
+                        {g.nusukInfo?.reference ? <span style={{ display: "block", fontSize: 11, color: "var(--color-text-secondary)" }}>{t("trips.detail.nusukRef")}: {g.nusukInfo.reference}</span> : null}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
               {trip.flights?.length > 0 && (
                 <div className={styles.detailRow}>
                   <Plane size={13} className={styles.detailIcon} />
                   <div className={styles.subList}>
                     {trip.flights.map((f: any, i: number) => (
                       <span key={i} className={styles.subItem}>
-                        {f.flightNo || "Flight"}{f.airline ? ` · ${f.airline}` : ""}{f.from ? ` · ${f.from} → ${f.to || "?"}` : ""}{f.date ? ` · ${f.date}` : ""}
+                        {f.flightNo || t("trips.detail.flight")}{f.airline ? ` · ${f.airline}` : ""}{f.from ? ` · ${f.from} → ${f.to || "?"}` : ""}{f.date ? ` · ${f.date}` : ""}
                       </span>
                     ))}
                   </div>
@@ -248,7 +265,7 @@ export default function TripDetailPage() {
                   <div className={styles.subList}>
                     {trip.hotels.map((h: any, i: number) => (
                       <span key={i} className={styles.subItem}>
-                        {h.hotel || "Hotel"}{h.city ? ` · ${h.city}` : ""}{h.from ? ` · ${h.from}${h.to ? ` → ${h.to}` : ""}` : ""}
+                        {h.hotel || t("trips.detail.hotel")}{h.city ? ` · ${h.city}` : ""}{h.from ? ` · ${h.from}${h.to ? ` → ${h.to}` : ""}` : ""}
                       </span>
                     ))}
                   </div>
@@ -260,22 +277,22 @@ export default function TripDetailPage() {
           {trip.agentId && (
             <div className={styles.card} style={{ borderColor: 'var(--color-primary)', borderWidth: 1 }}>
               <h3 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Users size={14} /> Linked Agent
-                <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 400, color: 'var(--color-text-tertiary)', textTransform: 'none', letterSpacing: 0 }}>from Accounts → Customers</span>
+                <Users size={14} /> {t("trips.detail.linkedAgent")}
+                <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 400, color: 'var(--color-text-tertiary)', textTransform: 'none', letterSpacing: 0 }}>{t("trips.detail.linkedAgentSub")}</span>
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Link href={`/dashboard/customers/${trip.agentId}`} style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', textDecoration: 'underline' }}>
-                  {trip.agentCompanyName || trip.agentName || trip.agent || 'View Agent'}
+                    {trip.agentCompanyName || trip.agentName || trip.agent || t("trips.detail.viewAgent")}
                 </Link>
                 {trip.agentName && trip.agentCompanyName && trip.agentName !== trip.agentCompanyName && (
-                  <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Contact: {trip.agentName}</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{t("trips.detail.contact")} {trip.agentName}</span>
                 )}
                 <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--color-text-tertiary)' }}>
                   {trip.agentPhone && <span>📞 {trip.agentPhone}</span>}
                   {trip.agentEmail && <span>✉️ {trip.agentEmail}</span>}
                 </div>
                 <Link href={`/dashboard/customers/${trip.agentId}`} style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--color-primary)', border: '1px solid var(--color-primary)', borderRadius: '9999px', padding: '4px 10px', width: 'fit-content', textDecoration: 'none' }}>
-                  Open in Customers →
+                  {t("trips.detail.openInCustomers")}
                 </Link>
               </div>
             </div>
@@ -283,48 +300,48 @@ export default function TripDetailPage() {
 
           {(canModify || isDelayed) && (
             <div className={styles.card}>
-              <h3 className={styles.cardTitle}>Actions</h3>
+              <h3 className={styles.cardTitle}>{t("trips.detail.actions")}</h3>
               <div className={styles.actionRow}>
                 {isScheduled && (
                   <button className={styles.actionBtn} onClick={() => performAction("start", {})} disabled={actionLoading === "start"}>
-                    <Play size={13} /> {actionLoading === "start" ? "Starting..." : "Start Trip"}
+                    <Play size={13} /> {actionLoading === "start" ? t("trips.detail.starting") : t("trips.detail.startTrip")}
                   </button>
                 )}
                 {isEnRoute && (
                   <button className={`${styles.actionBtn} ${styles.actionDone}`} onClick={() => performAction("complete", {})} disabled={actionLoading === "complete"}>
-                    <CheckCircle size={13} /> {actionLoading === "complete" ? "Completing..." : "Complete Trip"}
+                    <CheckCircle size={13} /> {actionLoading === "complete" ? t("trips.detail.completing") : t("trips.detail.completeTrip")}
                   </button>
                 )}
                 {!showDelay && (isScheduled || isEnRoute) && (
                   <button className={`${styles.actionBtn} ${styles.actionWarn}`} onClick={() => setShowDelay(true)} disabled={actionLoading !== ""}>
-                    <AlertTriangle size={13} /> Delay
+                    <AlertTriangle size={13} /> {t("trips.detail.delay")}
                   </button>
                 )}
                 {!showCancel && canModify && (
                   <button className={`${styles.actionBtn} ${styles.actionDanger}`} onClick={() => setShowCancel(true)} disabled={actionLoading !== ""}>
-                    <XCircle size={13} /> Cancel
+                    <XCircle size={13} /> {t("common.cancel")}
                   </button>
                 )}
               </div>
 
               {showDelay && (
                 <div className={styles.inlineForm}>
-                  <input type="number" min={5} value={delayMinutes} onChange={(e) => setDelayMinutes(Number(e.target.value))} placeholder="Minutes" />
-                  <input type="text" value={delayReason} onChange={(e) => setDelayReason(e.target.value)} placeholder="Reason" />
+                  <input type="number" min={5} value={delayMinutes} onChange={(e) => setDelayMinutes(Number(e.target.value))} placeholder={t("trips.detail.minutesPh")} />
+                  <input type="text" value={delayReason} onChange={(e) => setDelayReason(e.target.value)} placeholder={t("trips.detail.reasonPh")} />
                   <button className={styles.actionBtn} onClick={() => performAction("delay", { delayMinutes, delayReason })} disabled={actionLoading === "delay"}>
-                    {actionLoading === "delay" ? "Saving..." : "Confirm Delay"}
+                    {actionLoading === "delay" ? t("trips.detail.saving") : t("trips.detail.confirmDelay")}
                   </button>
-                  <button className={styles.cancelBtn} onClick={() => setShowDelay(false)}>Cancel</button>
+                  <button className={styles.cancelBtn} onClick={() => setShowDelay(false)}>{t("common.cancel")}</button>
                 </div>
               )}
 
               {showCancel && (
                 <div className={styles.inlineForm}>
-                  <input type="text" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Cancellation reason" />
+                  <input type="text" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder={t("trips.detail.cancelReasonPh")} />
                   <button className={`${styles.actionBtn} ${styles.actionDanger}`} onClick={() => performAction("cancel", { rejectionReason: cancelReason })} disabled={actionLoading === "cancel"}>
-                    {actionLoading === "cancel" ? "Cancelling..." : "Confirm Cancel"}
+                    {actionLoading === "cancel" ? t("trips.detail.cancelling") : t("trips.detail.confirmCancel")}
                   </button>
-                  <button className={styles.cancelBtn} onClick={() => setShowCancel(false)}>Cancel</button>
+                  <button className={styles.cancelBtn} onClick={() => setShowCancel(false)}>{t("common.cancel")}</button>
                 </div>
               )}
             </div>
@@ -333,7 +350,7 @@ export default function TripDetailPage() {
 
         <div className={styles.column}>
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Status Timeline</h3>
+            <h3 className={styles.cardTitle}>{t("trips.detail.statusTimeline")}</h3>
             <TripTimeline
               status={trip.status}
               actualStartTime={trip.actualStartTime}
@@ -345,22 +362,22 @@ export default function TripDetailPage() {
           </div>
 
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Passengers ({passengers.length})</h3>
+            <h3 className={styles.cardTitle}>{t("trips.detail.passengers")} ({passengers.length})</h3>
             {canModify && (
               <div className={styles.addPassenger}>
-                <input value={passengerName} onChange={(e) => setPassengerName(e.target.value)} placeholder="Name" className={styles.pInput} />
-                <input value={passengerContact} onChange={(e) => setPassengerContact(e.target.value)} placeholder="Contact (optional)" className={styles.pInput2} />
+                <input value={passengerName} onChange={(e) => setPassengerName(e.target.value)} placeholder={t("trips.detail.namePh")} className={styles.pInput} />
+                <input value={passengerContact} onChange={(e) => setPassengerContact(e.target.value)} placeholder={t("trips.detail.contactPh")} className={styles.pInput2} />
                 <button className={styles.actionBtn} onClick={addPassenger} disabled={actionLoading === "addPassenger" || !passengerName.trim()}>
-                  <UserPlus size={13} /> Add
+                  <UserPlus size={13} /> {t("common.add")}
                 </button>
               </div>
             )}
             {passengers.length === 0 ? (
-              <p className={styles.emptyText}>No passengers</p>
+              <p className={styles.emptyText}>{t("trips.detail.noPassengers")}</p>
             ) : (
               <table className={styles.passengerTable}>
                 <thead>
-                  <tr><th>Name</th><th>Contact</th><th style={{ width: 36 }}></th></tr>
+                  <tr><th>{t("trips.detail.colName")}</th><th>{t("trips.detail.colContact")}</th><th style={{ width: 36 }}></th></tr>
                 </thead>
                 <tbody>
                   {passengers.map((p: any) => (
@@ -387,17 +404,17 @@ export default function TripDetailPage() {
         <div className={styles.overlay} onClick={() => setShowManifest(false)}>
           <div className={styles.manifestModal} onClick={e => e.stopPropagation()}>
             <div className={styles.manifestToolbar}>
-              <h2>Trip Manifest</h2>
+              <h2>{t("trips.detail.manifestTitle")}</h2>
               <button className={styles.manifestClose} onClick={() => setShowManifest(false)}><X size={15} /></button>
             </div>
             <div id="manifest-print" className={styles.manifestSheet}>
-              <h2 className={styles.manifestBrand}>{trip.tripTitle || "TRIP MANIFEST"}</h2>
-              <p className={styles.manifestSub}>Trip Type: {trip.tripType === "round" ? "Round Trip" : "Single Trip"} · Bus: {trip.busPlate || "—"} · Driver: {trip.driverName || "—"}</p>
+              <h2 className={styles.manifestBrand}>{trip.tripTitle || t("trips.detail.manifestBrand")}</h2>
+              <p className={styles.manifestSub}>{t("trips.detail.tripTypeLabel")}: {trip.tripType === "round" ? t("trips.detail.roundTrip") : t("trips.detail.singleTrip")} · {t("trips.detail.busLabel")}: {trip.busPlate || "—"} · {t("roles.driver")}: {trip.driverName || "—"}</p>
 
-              <h3 className={styles.manifestSection}>Trip Info</h3>
+              <h3 className={styles.manifestSection}>{t("trips.detail.tripInfo")}</h3>
               <table className={styles.manifestTable}>
                 <tbody>
-                  {[["Trip Title", trip.tripTitle], ["Type of Vehicle", trip.vehicleType], ["Group Leader", trip.groupLeader], ["Group Leader No", trip.groupLeaderNo], ["Nationality", trip.nationality], ["Agent", trip.agent], ["Group No", trip.groupNo], ["No Of Pax", trip.noOfPax != null ? String(trip.noOfPax) : "—"], ["Route", trip.routeName || "—"]]
+                  {[[t("trips.detail.mTripTitle"), trip.tripTitle], [t("trips.detail.mVehicleType"), trip.vehicleType], [t("trips.detail.mGroupLeader"), trip.groupLeader], [t("trips.detail.mGroupLeaderNo"), trip.groupLeaderNo], [t("trips.detail.mNationality"), trip.nationality], [t("trips.detail.mAgent"), trip.agent], [t("trips.detail.mGroupNo"), trip.groupNo], [t("trips.detail.mNoOfPax"), trip.noOfPax != null ? String(trip.noOfPax) : "—"], [t("trips.detail.mRoute"), trip.routeName || "—"]]
                     .filter(([k, v]) => v)
                     .map(([k, v], i) => (
                       <tr key={i}><td>{k}</td><td>{v}</td></tr>
@@ -407,10 +424,10 @@ export default function TripDetailPage() {
 
               {trip.legs?.length > 0 && (
                 <>
-                  <h3 className={styles.manifestSection}>Transportation / Route</h3>
+                  <h3 className={styles.manifestSection}>{t("trips.detail.transportRoute")}</h3>
                   <table className={styles.manifestTable}>
                     <thead>
-                      <tr><th>#</th><th>From</th><th>To</th><th>Date</th><th>Time</th></tr>
+                      <tr><th>#</th><th>{t("common.from")}</th><th>{t("common.to")}</th><th>{t("trips.detail.mDate")}</th><th>{t("trips.detail.mTime")}</th></tr>
                     </thead>
                     <tbody>
                       {trip.legs.map((leg: any, idx: number) => (
@@ -429,10 +446,10 @@ export default function TripDetailPage() {
 
               {trip.flights?.length > 0 && (
                 <>
-                  <h3 className={styles.manifestSection}>Flights</h3>
+                  <h3 className={styles.manifestSection}>{t("trips.detail.flightsTitle")}</h3>
                   <table className={styles.manifestTable}>
                     <thead>
-                      <tr><th>Flight No</th><th>Airline</th><th>From</th><th>To</th><th>Date</th><th>Time</th></tr>
+                      <tr><th>{t("trips.detail.mFlightNo")}</th><th>{t("trips.detail.mAirline")}</th><th>{t("common.from")}</th><th>{t("common.to")}</th><th>{t("trips.detail.mDate")}</th><th>{t("trips.detail.mTime")}</th></tr>
                     </thead>
                     <tbody>
                       {trip.flights.map((f: any, i: number) => (
@@ -445,10 +462,10 @@ export default function TripDetailPage() {
 
               {trip.hotels?.length > 0 && (
                 <>
-                  <h3 className={styles.manifestSection}>Hotels</h3>
+                  <h3 className={styles.manifestSection}>{t("trips.detail.hotelsTitle")}</h3>
                   <table className={styles.manifestTable}>
                     <thead>
-                      <tr><th>City</th><th>Hotel</th><th>Check-in</th><th>Check-out</th></tr>
+                      <tr><th>{t("trips.detail.mCity")}</th><th>{t("trips.detail.mHotel")}</th><th>{t("trips.detail.mCheckIn")}</th><th>{t("trips.detail.mCheckOut")}</th></tr>
                     </thead>
                     <tbody>
                       {trip.hotels.map((h: any, i: number) => (
@@ -461,7 +478,7 @@ export default function TripDetailPage() {
             </div>
             <div className={styles.manifestActions}>
               <button className={styles.manifestPrintBtn} onClick={() => window.print()}>
-                <Printer size={14} /> Print
+                <Printer size={14} /> {t("common.print")}
               </button>
             </div>
           </div>

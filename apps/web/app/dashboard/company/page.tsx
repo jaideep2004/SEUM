@@ -19,6 +19,7 @@ import {
 import DonutChart from "@/components/dashboard/DonutChart";
 import Sparkline from "@/components/dashboard/Sparkline";
 import MapPlaceholder from "@/components/dashboard/MapPlaceholder";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface TripStats {
@@ -43,6 +44,7 @@ interface ActiveTrip {
 const spark = [12, 16, 14, 20, 18, 24, 22];
 
 export default function CompanyAdminDashboard() {
+  const { lang, t } = useLanguage();
   const [stats, setStats] = useState<TripStats | null>(null);
   const [fleet, setFleet] = useState({ total: 0, active: 0, maintenance: 0, retired: 0, sold: 0 });
   const [revenue, setRevenue] = useState({ today: 0, thisWeek: 0, thisMonth: 0 });
@@ -113,47 +115,47 @@ export default function CompanyAdminDashboard() {
   }, []);
 
   const kpiRow1 = [
-    { label: "Today's Trips", value: String(stats?.total_trips || 0), change: `${stats?.en_route || 0} en route now`, trend: "up" as const, icon: Bus, color: "#2563eb", bg: "#eff6ff", sparkData: spark },
-    { label: "Active Buses", value: String(fleet.active), change: `${fleet.total} total fleet`, trend: "up" as const, icon: Gauge, color: "#10b981", bg: "#ecfdf5", sparkData: spark },
-    { label: "Delayed Trips", value: String(stats?.delayed || 0), change: (stats?.delayed || 0) > 0 ? "needs attention" : "all on time", trend: (stats?.delayed || 0) > 0 ? ("warning" as const) : ("up" as const), icon: Clock, color: "#f59e0b", bg: "#fffbeb", sparkData: spark },
-    { label: "Today's Revenue", value: `SAR ${(revenue.today || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, change: `SAR ${(revenue.thisMonth || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} this month`, trend: "up" as const, icon: DollarSign, color: "#10b981", bg: "#ecfdf5", sparkData: spark },
+    { label: t("home.company.todayTrips"), value: formatNumber(stats?.total_trips || 0, lang), change: `${formatNumber(stats?.en_route || 0, lang)} ${t("home.company.enRouteNow")}`, trend: "up" as const, icon: Bus, color: "#2563eb", bg: "#eff6ff", sparkData: spark },
+    { label: t("home.company.activeBuses"), value: formatNumber(fleet.active, lang), change: `${formatNumber(fleet.total, lang)} ${t("home.company.totalFleet")}`, trend: "up" as const, icon: Gauge, color: "#10b981", bg: "#ecfdf5", sparkData: spark },
+    { label: t("home.company.delayedTrips"), value: formatNumber(stats?.delayed || 0, lang), change: (stats?.delayed || 0) > 0 ? t("home.company.needsAttention") : t("home.company.allOnTime"), trend: (stats?.delayed || 0) > 0 ? ("warning" as const) : ("up" as const), icon: Clock, color: "#f59e0b", bg: "#fffbeb", sparkData: spark },
+    { label: t("home.company.todayRevenue"), value: formatCurrency(revenue.today || 0, lang, 0), change: `${formatCurrency(revenue.thisMonth || 0, lang, 0)} ${t("home.company.thisMonthSuffix")}`, trend: "up" as const, icon: DollarSign, color: "#10b981", bg: "#ecfdf5", sparkData: spark },
   ];
 
   const kpiRow2 = [
-    { label: "Employees", value: String(employees), icon: Users, color: "#6366f1", bg: "#eef2ff" },
-    { label: "Maintenance Due", value: String(maintenanceDue), icon: Wrench, color: "#f59e0b", bg: "#fffbeb" },
-    { label: "Incidents", value: String(incidents), icon: AlertTriangle, color: "#ef4444", bg: "#fef2f2" },
-    { label: "Alerts", value: String(alertsCount), icon: Bell, color: "#2563eb", bg: "#eff6ff" },
+    { label: t("home.company.employees"), value: formatNumber(employees, lang), icon: Users, color: "#6366f1", bg: "#eef2ff" },
+    { label: t("home.company.maintDue"), value: formatNumber(maintenanceDue, lang), icon: Wrench, color: "#f59e0b", bg: "#fffbeb" },
+    { label: t("home.company.incidents"), value: formatNumber(incidents, lang), icon: AlertTriangle, color: "#ef4444", bg: "#fef2f2" },
+    { label: t("home.company.alerts"), value: formatNumber(alertsCount, lang), icon: Bell, color: "#2563eb", bg: "#eff6ff" },
   ];
 
   const donutSegments = [
-    { label: "Active", value: fleet.active, color: "#2563eb" },
-    { label: "Maintenance", value: fleet.maintenance, color: "#f59e0b" },
-    { label: "Retired", value: fleet.retired, color: "#94a3b8" },
-    { label: "Sold", value: fleet.sold, color: "#ef4444" },
+    { label: t("home.company.segActive"), value: fleet.active, color: "#2563eb" },
+    { label: t("home.company.segMaintenance"), value: fleet.maintenance, color: "#f59e0b" },
+    { label: t("home.company.segRetired"), value: fleet.retired, color: "#94a3b8" },
+    { label: t("home.company.segSold"), value: fleet.sold, color: "#ef4444" },
   ].filter((s) => s.value > 0);
   const pct = (v: number) => (fleet.total > 0 ? `${Math.round((v / fleet.total) * 100)}%` : "0%");
 
   const tripStatus = [
-    { label: "Scheduled", count: stats?.scheduled || 0, color: "#94a3b8" },
-    { label: "On Trip", count: stats?.en_route || 0, color: "#2563eb" },
-    { label: "Completed", count: stats?.completed || 0, color: "#10b981" },
-    { label: "Delayed", count: stats?.delayed || 0, color: "#f59e0b" },
-    { label: "Cancelled", count: stats?.cancelled || 0, color: "#ef4444" },
+    { label: t("home.company.tsScheduled"), count: stats?.scheduled || 0, color: "#94a3b8" },
+    { label: t("home.company.tsOnTrip"), count: stats?.en_route || 0, color: "#2563eb" },
+    { label: t("home.company.tsCompleted"), count: stats?.completed || 0, color: "#10b981" },
+    { label: t("home.company.tsDelayed"), count: stats?.delayed || 0, color: "#f59e0b" },
+    { label: t("home.company.tsCancelled"), count: stats?.cancelled || 0, color: "#ef4444" },
   ];
 
   const alerts = [
     ...delays.map((d) => ({
       type: "danger" as const,
-      message: "Delayed Trip",
+      message: t("home.company.delayedTrip"),
       detail: `${d.routeName || "Trip"} · ${d.busPlate || "-"}${d.delayMinutes ? ` · +${d.delayMinutes} min` : ""}`,
       time: d.driverName || "—",
     })),
     ...renewals.map((r) => ({
       type: "warning" as const,
-      message: "Document Expiring",
+      message: t("home.company.docExpiring"),
       detail: `${r.plateNumber} · ${r.documentType}`,
-      time: r.expiryDate,
+      time: formatDate(r.expiryDate, lang),
     })),
   ].slice(0, 6);
 
@@ -168,13 +170,13 @@ export default function CompanyAdminDashboard() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Company Admin Dashboard</h1>
-          <p className={styles.pageDesc}>{companyName} · Makkah, Saudi Arabia</p>
+          <h1 className={styles.pageTitle}>{t("home.company.title")}</h1>
+          <p className={styles.pageDesc}>{companyName} {t("home.company.region")}</p>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading company overview...</div>
+        <div className={styles.loading}>{t("home.company.loading")}</div>
       ) : (
         <>
           <div className={styles.kpiGrid4}>
@@ -220,7 +222,7 @@ export default function CompanyAdminDashboard() {
               <div className={styles.grid2Col}>
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Fleet Status Overview</h2>
+                    <h2 className={styles.cardTitle}>{t("home.company.fleetOverview")}</h2>
                   </div>
                   <div className={styles.donutCenter}>
                     {donutSegments.length > 0 ? (
@@ -228,11 +230,11 @@ export default function CompanyAdminDashboard() {
                         segments={donutSegments}
                         size={160}
                         thickness={20}
-                        centerValue={String(fleet.total)}
-                        centerLabel="Total Fleet"
+                        centerValue={formatNumber(fleet.total, lang)}
+                        centerLabel={t("home.company.totalFleetLabel")}
                       />
                     ) : (
-                      <div className={styles.driverTrips}>No vehicles yet</div>
+                      <div className={styles.driverTrips}>{t("home.company.noVehicles")}</div>
                     )}
                   </div>
                   <div className={styles.donutLegend}>
@@ -240,7 +242,7 @@ export default function CompanyAdminDashboard() {
                       <div key={s.label} className={styles.legendItem}>
                         <span className={styles.legendDot} style={{ background: s.color }} />
                         <span className={styles.legendLabel}>{s.label}</span>
-                        <span className={styles.legendValue}>{s.value} ({pct(s.value)})</span>
+                        <span className={styles.legendValue}>{formatNumber(s.value, lang)} ({pct(s.value)})</span>
                       </div>
                     ))}
                   </div>
@@ -248,10 +250,10 @@ export default function CompanyAdminDashboard() {
 
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Live Fleet Map</h2>
-                    <span className={styles.cardAction}>Expand <ChevronRight size={14} /></span>
+                    <h2 className={styles.cardTitle}>{t("home.company.liveMap")}</h2>
+                    <span className={styles.cardAction}>{t("home.company.expand")}<ChevronRight size={14} /></span>
                   </div>
-                  <MapPlaceholder label={`${fleet.active} buses online in Makkah region`} />
+                  <MapPlaceholder label={`${formatNumber(fleet.active, lang)} ${t("home.company.busesOnline")}`} />
                 </div>
               </div>
 
@@ -259,10 +261,10 @@ export default function CompanyAdminDashboard() {
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
                     <div>
-                      <h2 className={styles.cardTitle}>Revenue Overview</h2>
-                      <p className={styles.cardSubtext}>Last {chartPts.length || 0} days</p>
+                      <h2 className={styles.cardTitle}>{t("home.company.revenueOverview")}</h2>
+                      <p className={styles.cardSubtext}>{t("home.company.lastA")}{formatNumber(chartPts.length, lang)}{t("home.company.lastB")}</p>
                     </div>
-                    <span className={styles.revenueValue}>SAR {revenue.thisWeek.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span className={styles.revenueValue}>{formatCurrency(revenue.thisWeek, lang, 0)}</span>
                   </div>
                   <div className={styles.lineChartArea}>
                     {chartPts.length >= 2 ? (
@@ -277,30 +279,30 @@ export default function CompanyAdminDashboard() {
                         <path d={linePath} fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="chartLine" />
                       </svg>
                     ) : (
-                      <div className={styles.driverTrips}>No revenue data yet</div>
+                      <div className={styles.driverTrips}>{t("home.company.noRevenue")}</div>
                     )}
                   </div>
                 </div>
 
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Fuel Summary</h2>
+                    <h2 className={styles.cardTitle}>{t("home.company.fuelSummary")}</h2>
                   </div>
                   <div className={styles.fuelGrid}>
                     <div className={styles.fuelItem}>
                       <Fuel size={18} style={{ color: "#2563eb" }} />
-                      <span className={styles.fuelLabel}>Total Fuel</span>
-                      <span className={styles.fuelValue}>{fuel.totalLiters.toLocaleString()} L</span>
+                      <span className={styles.fuelLabel}>{t("home.company.totalFuel")}</span>
+                      <span className={styles.fuelValue}>{formatNumber(fuel.totalLiters, lang)}{t("home.company.litersSuffix")}</span>
                     </div>
                     <div className={styles.fuelItem}>
                       <DollarSign size={18} style={{ color: "#10b981" }} />
-                      <span className={styles.fuelLabel}>Total Cost</span>
-                      <span className={styles.fuelValue}>SAR {fuel.totalCost.toLocaleString()}</span>
+                      <span className={styles.fuelLabel}>{t("home.company.totalCost")}</span>
+                      <span className={styles.fuelValue}>{formatCurrency(fuel.totalCost, lang, 0)}</span>
                     </div>
                     <div className={styles.fuelItemFull}>
                       <Gauge size={18} style={{ color: "#f59e0b" }} />
-                      <span className={styles.fuelLabel}>Avg Efficiency</span>
-                      <span className={styles.fuelValue}>{fuel.avgKmPerLiter ? `${fuel.avgKmPerLiter} km/L` : "—"}</span>
+                      <span className={styles.fuelLabel}>{t("home.company.avgEff")}</span>
+                      <span className={styles.fuelValue}>{fuel.avgKmPerLiter ? `${fuel.avgKmPerLiter}${t("home.company.kmPerLiter")}` : "—"}</span>
                     </div>
                   </div>
                 </div>
@@ -308,8 +310,8 @@ export default function CompanyAdminDashboard() {
 
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Recent Alerts & Notifications</h2>
-                  <Link href="/dashboard/delays" className={styles.cardAction}>View All <ChevronRight size={14} /></Link>
+                  <h2 className={styles.cardTitle}>{t("home.company.recentAlerts")}</h2>
+                  <Link href="/dashboard/delays" className={styles.cardAction}>{t("home.company.viewAll")}<ChevronRight size={14} /></Link>
                 </div>
                 <div className={styles.alertList}>
                   {alerts.map((a, i) => (
@@ -323,7 +325,7 @@ export default function CompanyAdminDashboard() {
                     </div>
                   ))}
                   {alerts.length === 0 && (
-                    <div className={styles.driverTrips} style={{ padding: 16 }}>No alerts — all clear</div>
+                    <div className={styles.driverTrips} style={{ padding: 16 }}>{t("home.company.noAlerts")}</div>
                   )}
                 </div>
               </div>
@@ -332,13 +334,13 @@ export default function CompanyAdminDashboard() {
             <div className={styles.rightSidebar}>
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Trip Status</h2>
+                  <h2 className={styles.cardTitle}>{t("home.company.tripStatus")}</h2>
                 </div>
                 <div className={styles.tripStatusList}>
-                  {tripStatus.map((t, i) => (
+                  {tripStatus.map((tr, i) => (
                     <div key={i} className={styles.tripStatusRow}>
-                      <span className={styles.tripStatusLabel}>{t.label}</span>
-                      <span className={styles.tripStatusCount} style={{ color: t.color }}>{t.count}</span>
+                      <span className={styles.tripStatusLabel}>{tr.label}</span>
+                      <span className={styles.tripStatusCount} style={{ color: tr.color }}>{formatNumber(tr.count, lang)}</span>
                     </div>
                   ))}
                 </div>
@@ -346,7 +348,7 @@ export default function CompanyAdminDashboard() {
 
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Top Performing Drivers</h2>
+                  <h2 className={styles.cardTitle}>{t("home.company.topDrivers")}</h2>
                 </div>
                 <div className={styles.driverList}>
                   {topDrivers.map((d, i) => (
@@ -356,7 +358,7 @@ export default function CompanyAdminDashboard() {
                       </div>
                       <div className={styles.driverInfo}>
                         <span className={styles.driverName}>{d.driverName || "—"}</span>
-                        <span className={styles.driverTrips}>{d.employeeCode || "Driver"}</span>
+                        <span className={styles.driverTrips}>{d.employeeCode || t("home.company.driverFallback")}</span>
                       </div>
                       <div className={styles.driverRating}>
                         <Star size={12} fill="#f59e0b" stroke="#f59e0b" />
@@ -365,7 +367,7 @@ export default function CompanyAdminDashboard() {
                     </div>
                   ))}
                   {topDrivers.length === 0 && (
-                    <div className={styles.driverTrips} style={{ padding: 16 }}>No driver scores yet</div>
+                    <div className={styles.driverTrips} style={{ padding: 16 }}>{t("home.company.noDriverScores")}</div>
                   )}
                 </div>
               </div>

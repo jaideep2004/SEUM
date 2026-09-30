@@ -319,3 +319,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }
+:global([dir="rtl"]) .driverNameCell { left: auto; right: 0; }

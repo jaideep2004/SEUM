@@ -32,6 +32,7 @@ import {
   Plus,
 } from "lucide-react";
 import { ExpiryBadge, getDaysUntilExpiry, getExpiryStatus } from "@/components/fleet/ExpiryBadge";
+import { useLanguage, formatDate, formatDateTime, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface BusDetail {
@@ -71,10 +72,10 @@ interface HistoryEntry {
 }
 
 const statusColors: Record<string, { bg: string; dot: string; label: string }> = {
-  active: { bg: "rgba(16,185,129,0.12)", dot: "#10b981", label: "Active" },
-  maintenance: { bg: "rgba(245,158,11,0.12)", dot: "#f59e0b", label: "Maintenance" },
-  retired: { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: "Retired" },
-  sold: { bg: "rgba(100,116,139,0.12)", dot: "#64748b", label: "Sold" },
+  active: { bg: "rgba(16,185,129,0.12)", dot: "#10b981", label: "fleet.vehicles.status.active" },
+  maintenance: { bg: "rgba(245,158,11,0.12)", dot: "#f59e0b", label: "fleet.vehicles.status.maintenance" },
+  retired: { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: "fleet.vehicles.status.retired" },
+  sold: { bg: "rgba(100,116,139,0.12)", dot: "#64748b", label: "fleet.vehicles.status.sold" },
 };
 
 const actionIcons: Record<string, any> = {
@@ -85,13 +86,14 @@ const actionIcons: Record<string, any> = {
 };
 
 const actionLabels: Record<string, string> = {
-  create: "Created",
-  update: "Updated",
-  delete: "Deleted",
-  upload: "Uploaded",
+  create: "fleet.vehicleDetail.actionCreated",
+  update: "fleet.vehicleDetail.actionUpdated",
+  delete: "fleet.vehicleDetail.actionDeleted",
+  upload: "fleet.vehicleDetail.actionUploaded",
 };
 
 export default function BusDetailPage() {
+  const { lang, t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const busId = params.id as string;
@@ -123,7 +125,7 @@ export default function BusDetailPage() {
       const data = await api.get<any>(`/fleet/buses/${busId}`);
       setBus(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load bus details");
+      setError(err.message || t("fleet.vehicleDetail.loadFailed"));
     }
   }, [busId]);
 
@@ -162,7 +164,7 @@ export default function BusDetailPage() {
       setDocForm({ documentType: "registration", documentNumber: "", issueDate: "", expiryDate: "", status: "active" });
       fetchDocuments();
     } catch (err: any) {
-      setUploadError(err.message || "Failed to upload document");
+      setUploadError(err.message || t("fleet.vehicleDetail.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -182,7 +184,7 @@ export default function BusDetailPage() {
       await api.delete(`/fleet/buses/${busId}`);
       router.push("/dashboard/fleet/vehicles");
     } catch (err: any) {
-      setError(err.message || "Failed to delete bus");
+      setError(err.message || t("fleet.vehicleDetail.deleteFailed"));
       setDeleting(false);
       setShowDeleteModal(false);
     }
@@ -191,7 +193,7 @@ export default function BusDetailPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loading}>Loading bus details...</div>
+        <div className={styles.loading}>{t("fleet.vehicleDetail.loading")}</div>
       </div>
     );
   }
@@ -201,9 +203,9 @@ export default function BusDetailPage() {
       <div className={styles.page}>
         <div className={styles.errorBanner}>
           <AlertTriangle size={20} />
-          <span>{error || "Bus not found"}</span>
+          <span>{error || t("fleet.vehicleDetail.notFound")}</span>
           <button className={styles.backBtn} onClick={() => router.push("/dashboard/fleet/vehicles")}>
-            Back to Vehicles
+            {t("fleet.vehicleDetail.backToVehicles")}
           </button>
         </div>
       </div>
@@ -213,18 +215,18 @@ export default function BusDetailPage() {
   const sc = statusColors[bus.status] || statusColors.active;
 
   const infoCards = [
-    { icon: Building2, label: "Make / Model", value: `${bus.make} ${bus.model}` },
-    { icon: Calendar, label: "Year", value: bus.year },
-    { icon: Users, label: "Capacity", value: `${bus.capacitySeated} seated${bus.capacityStanding > 0 ? ` + ${bus.capacityStanding} standing` : ""}` },
-    { icon: Fuel, label: "Fuel Type", value: bus.fuelType.charAt(0).toUpperCase() + bus.fuelType.slice(1) },
-    { icon: Hash, label: "Chassis Number", value: bus.chassisNumber || "—" },
-    { icon: Barcode, label: "VIN", value: bus.vin || "—" },
-    { icon: Wrench, label: "Engine Number", value: bus.engineNumber || "—" },
-    { icon: Palette, label: "Color", value: bus.color || "—" },
-    { icon: MapPin, label: "Assigned Depot", value: bus.assignedDepot || "—" },
-    { icon: DollarSign, label: "Purchase Price", value: bus.purchasePrice ? `SAR ${bus.purchasePrice.toLocaleString()}` : "—" },
-    { icon: Calendar, label: "Purchase Date", value: bus.purchaseDate ? new Date(bus.purchaseDate).toLocaleDateString() : "—" },
-    { icon: Activity, label: "Status", value: sc.label },
+    { icon: Building2, label: t("fleet.vehicleDetail.makeModel"), value: `${bus.make} ${bus.model}` },
+    { icon: Calendar, label: t("fleet.vehicleDetail.year"), value: bus.year },
+    { icon: Users, label: t("fleet.vehicleDetail.capacity"), value: `${bus.capacitySeated} ${t("fleet.vehicleDetail.seated")}${bus.capacityStanding > 0 ? ` + ${bus.capacityStanding} ${t("fleet.vehicleDetail.standing")}` : ""}` },
+    { icon: Fuel, label: t("fleet.vehicleDetail.fuelType"), value: bus.fuelType.charAt(0).toUpperCase() + bus.fuelType.slice(1) },
+    { icon: Hash, label: t("fleet.vehicleDetail.chassis"), value: bus.chassisNumber || "—" },
+    { icon: Barcode, label: t("fleet.vehicleDetail.vin"), value: bus.vin || "—" },
+    { icon: Wrench, label: t("fleet.vehicleDetail.engine"), value: bus.engineNumber || "—" },
+    { icon: Palette, label: t("fleet.vehicleDetail.color"), value: bus.color || "—" },
+    { icon: MapPin, label: t("fleet.vehicleDetail.depot"), value: bus.assignedDepot || "—" },
+    { icon: DollarSign, label: t("fleet.vehicleDetail.price"), value: bus.purchasePrice ? formatCurrency(bus.purchasePrice, lang, 0) : "—" },
+    { icon: Calendar, label: t("fleet.vehicleDetail.purchaseDate"), value: bus.purchaseDate ? formatDate(bus.purchaseDate, lang) : "—" },
+    { icon: Activity, label: t("fleet.vehicleDetail.status"), value: t(sc.label) },
   ];
 
   return (
@@ -239,27 +241,27 @@ export default function BusDetailPage() {
             <h1 className={styles.headerTitle}>{bus.plateNumber}</h1>
             <span className={styles.statusBadge} style={{ background: sc.bg, color: sc.dot }}>
               <span className={styles.statusDot} style={{ background: sc.dot }} />
-              {sc.label}
+              {t(sc.label)}
             </span>
             {!bus.isActive && (
               <span className={styles.inactiveBadge}>
                 <Ban size={12} />
-                Inactive
+                {t("fleet.vehicleDetail.inactive")}
               </span>
             )}
           </div>
           <p className={styles.headerSub}>
-            {bus.make} {bus.model} &middot; Added {new Date(bus.createdAt).toLocaleDateString()}
+            {bus.make} {bus.model} &middot; {t("fleet.vehicleDetail.added")} {formatDate(bus.createdAt, lang)}
           </p>
         </div>
         <div className={styles.headerActions}>
           <button className={styles.actionBtn} onClick={() => router.push(`/dashboard/fleet/vehicles/${busId}/edit`)}>
             <Edit3 size={15} />
-            Edit
+            {t("common.edit")}
           </button>
           <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={15} />
-            Delete
+            {t("common.delete")}
           </button>
         </div>
       </div>
@@ -289,14 +291,14 @@ export default function BusDetailPage() {
           onClick={() => setActiveTab(0)}
         >
           <Clock size={15} />
-          History
+          {t("fleet.vehicleDetail.history")}
         </button>
         <button
           className={`${styles.tabBtn} ${activeTab === 1 ? styles.tabBtnActive : ""}`}
           onClick={() => setActiveTab(1)}
         >
           <FileText size={15} />
-          Documents ({documents.length})
+          {t("fleet.vehicleDetail.documents")} ({documents.length})
         </button>
       </div>
 
@@ -305,11 +307,11 @@ export default function BusDetailPage() {
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <Clock size={18} />
-            <h2 className={styles.sectionTitle}>Lifecycle History</h2>
+            <h2 className={styles.sectionTitle}>{t("fleet.vehicleDetail.lifecycle")}</h2>
           </div>
           <div className={styles.timeline}>
             {history.length === 0 ? (
-              <div className={styles.timelineEmpty}>No history recorded yet</div>
+              <div className={styles.timelineEmpty}>{t("fleet.vehicleDetail.noHistory")}</div>
             ) : (
               history.map((entry, i) => {
                 const Icon = actionIcons[entry.action] || Info;
@@ -329,10 +331,10 @@ export default function BusDetailPage() {
                     <div className={styles.timelineContent}>
                       <div className={styles.timelineHeader}>
                         <span className={styles.timelineAction}>
-                          {actionLabels[entry.action] || entry.action}
+                          {t(actionLabels[entry.action] || entry.action)}
                         </span>
                         <span className={styles.timelineDate}>
-                          {new Date(entry.createdAt).toLocaleString()}
+                          {formatDateTime(entry.createdAt, lang)}
                         </span>
                       </div>
                       {entry.actorName && (
@@ -375,21 +377,21 @@ export default function BusDetailPage() {
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <FileText size={18} />
-            <h2 className={styles.sectionTitle}>Documents</h2>
+            <h2 className={styles.sectionTitle}>{t("fleet.vehicleDetail.documents")}</h2>
             <button className={styles.uploadBtn} onClick={() => setShowUploadModal(true)}>
               <Upload size={14} />
-              Upload
+              {t("fleet.vehicleDetail.upload")}
             </button>
           </div>
           {docsLoading ? (
-            <div className={styles.timelineEmpty}>Loading documents...</div>
+            <div className={styles.timelineEmpty}>{t("fleet.vehicleDetail.loadingDocs")}</div>
           ) : documents.length === 0 ? (
             <div className={styles.timelineEmpty}>
               <FileText size={24} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <div>No documents uploaded</div>
+              <div>{t("fleet.vehicleDetail.noDocs")}</div>
               <button className={styles.uploadEmptyBtn} onClick={() => setShowUploadModal(true)}>
                 <Plus size={14} />
-                Upload First Document
+                {t("fleet.vehicleDetail.uploadFirst")}
               </button>
             </div>
           ) : (
@@ -397,11 +399,11 @@ export default function BusDetailPage() {
               <table className={styles.docTable}>
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Document No.</th>
-                    <th>Issue Date</th>
-                    <th>Expiry Date</th>
-                    <th>Status</th>
+                    <th>{t("fleet.vehicleDetail.colType")}</th>
+                    <th>{t("fleet.vehicleDetail.colNumber")}</th>
+                    <th>{t("fleet.vehicleDetail.colIssue")}</th>
+                    <th>{t("fleet.vehicleDetail.colExpiry")}</th>
+                    <th>{t("fleet.vehicleDetail.colStatus")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -418,10 +420,10 @@ export default function BusDetailPage() {
                         </td>
                         <td className={styles.docNumber}>{doc.documentNumber || "—"}</td>
                         <td className={styles.docDate}>
-                          {doc.issueDate ? new Date(doc.issueDate).toLocaleDateString() : "—"}
+                          {doc.issueDate ? formatDate(doc.issueDate, lang) : "—"}
                         </td>
                         <td className={styles.docDate}>
-                          {doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : "—"}
+                          {doc.expiryDate ? formatDate(doc.expiryDate, lang) : "—"}
                         </td>
                         <td>
                           <ExpiryBadge expiryDate={doc.expiryDate} />
@@ -430,7 +432,7 @@ export default function BusDetailPage() {
                           <button
                             className={styles.docDeleteBtn}
                             onClick={() => handleDeleteDocument(doc.id)}
-                            title="Delete document"
+                            title={t("fleet.vehicleDetail.deleteDoc")}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -450,7 +452,7 @@ export default function BusDetailPage() {
         <div className={styles.modalOverlay} onClick={() => setShowUploadModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Upload Document</h3>
+              <h3 className={styles.modalTitle}>{t("fleet.vehicleDetail.uploadDoc")}</h3>
               <button className={styles.modalClose} onClick={() => setShowUploadModal(false)}>
                 <XCircle size={18} />
               </button>
@@ -458,7 +460,7 @@ export default function BusDetailPage() {
             <form onSubmit={handleUpload}>
               <div className={styles.uploadFormBody}>
                 <div className={styles.uploadField}>
-                  <label className={styles.uploadLabel}>Document Type *</label>
+                  <label className={styles.uploadLabel}>{t("fleet.vehicleDetail.docType")}</label>
                   <select className={styles.uploadSelect} name="documentType" value={docForm.documentType} onChange={handleDocInputChange}>
                     {["registration", "insurance", "permit", "inspection", "fitness", "road_tax"].map((t) => (
                       <option key={t} value={t}>
@@ -468,33 +470,33 @@ export default function BusDetailPage() {
                   </select>
                 </div>
                 <div className={styles.uploadField}>
-                  <label className={styles.uploadLabel}>Document Number</label>
+                  <label className={styles.uploadLabel}>{t("fleet.vehicleDetail.docNumber")}</label>
                   <input className={styles.uploadInput} name="documentNumber" value={docForm.documentNumber} onChange={handleDocInputChange} placeholder="e.g. INS-2025-001" />
                 </div>
                 <div className={styles.uploadRow}>
                   <div className={styles.uploadField}>
-                    <label className={styles.uploadLabel}>Issue Date</label>
+                    <label className={styles.uploadLabel}>{t("fleet.vehicleDetail.issueDate")}</label>
                     <input className={styles.uploadInput} name="issueDate" type="date" value={docForm.issueDate} onChange={handleDocInputChange} />
                   </div>
                   <div className={styles.uploadField}>
-                    <label className={styles.uploadLabel}>Expiry Date *</label>
+                    <label className={styles.uploadLabel}>{t("fleet.vehicleDetail.expiryDate")}</label>
                     <input className={styles.uploadInput} name="expiryDate" type="date" value={docForm.expiryDate} onChange={handleDocInputChange} required />
                   </div>
                 </div>
                 <div className={styles.uploadField}>
-                  <label className={styles.uploadLabel}>Status</label>
+                  <label className={styles.uploadLabel}>{t("fleet.vehicleDetail.statusLabel")}</label>
                   <select className={styles.uploadSelect} name="status" value={docForm.status} onChange={handleDocInputChange}>
-                    <option value="active">Active</option>
-                    <option value="expired">Expired</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="active">{t("fleet.vehicles.status.active")}</option>
+                    <option value="expired">{t("fleet.vehicleDetail.expired")}</option>
+                    <option value="cancelled">{t("fleet.vehicleDetail.cancelled")}</option>
                   </select>
                 </div>
                 {uploadError && <div className={styles.uploadError}>{uploadError}</div>}
               </div>
               <div className={styles.uploadActions}>
-                <button type="button" className={styles.uploadCancelBtn} onClick={() => setShowUploadModal(false)}>Cancel</button>
+                <button type="button" className={styles.uploadCancelBtn} onClick={() => setShowUploadModal(false)}>{t("common.cancel")}</button>
                 <button type="submit" className={styles.uploadSubmitBtn} disabled={uploading}>
-                  {uploading ? "Uploading..." : "Upload Document"}
+                  {uploading ? t("fleet.vehicleDetail.uploading") : t("fleet.vehicleDetail.uploadDoc")}
                 </button>
               </div>
             </form>
@@ -509,16 +511,16 @@ export default function BusDetailPage() {
             <div className={styles.modalIcon}>
               <AlertTriangle size={24} />
             </div>
-            <h3 className={styles.modalTitle}>Delete Vehicle</h3>
+            <h3 className={styles.modalTitle}>{t("fleet.vehicleDetail.deleteTitle")}</h3>
             <p className={styles.modalText}>
-              Are you sure you want to delete <strong>{bus.plateNumber}</strong>? This will soft-delete the vehicle and it will no longer appear in active listings.
+              {t("fleet.vehicleDetail.deletePre")} <strong>{bus.plateNumber}</strong>{t("fleet.vehicleDetail.deletePost")}
             </p>
             <div className={styles.modalActions}>
               <button className={styles.modalCancel} onClick={() => setShowDeleteModal(false)}>
-                Cancel
+                {t("common.cancel")}
               </button>
               <button className={styles.modalConfirm} onClick={handleDelete} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete Vehicle"}
+                {deleting ? t("fleet.vehicleDetail.deleting") : t("fleet.vehicleDetail.deleteTitle")}
               </button>
             </div>
           </div>

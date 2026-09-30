@@ -70,3 +70,7 @@
 /* Totals row */
 .totalsRow { background: var(--color-bg-subtle); font-weight: 700; }
 .totalsRow td { padding: 12px 14px; font-size: var(--text-sm); color: var(--color-text); border-bottom: 2px solid var(--color-border); }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }
+:global([dir="rtl"]) .payslipTable td:last-child { text-align: left; }

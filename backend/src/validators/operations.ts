@@ -63,9 +63,19 @@ export const hotelSchema = z.object({
   to: z.string().regex(DATE_REGEX).optional(),
 });
 
+export const tripGroupSchema = z.object({
+  groupNo: z.string().max(50).optional(),
+  groupLeader: z.string().max(255).optional(),
+  groupLeaderNo: z.string().max(50).optional(),
+  nationality: z.string().max(100).optional(),
+  noOfPax: z.number().int().min(0).optional(),
+  nusukInfo: z.record(z.unknown()).optional(),
+});
+
 export const manifestSchema = z.object({
   tripTitle: z.string().max(255).optional(),
   vehicleType: z.string().max(100).optional(),
+  vehicleCount: z.number().int().min(1).max(100).optional(),
   groupLeader: z.string().max(255).optional(),
   groupLeaderNo: z.string().max(50).optional(),
   nationality: z.string().max(100).optional(),
@@ -74,6 +84,7 @@ export const manifestSchema = z.object({
   groupNo: z.string().max(50).optional(),
   noOfPax: z.number().int().min(0).optional(),
   nusukInfo: z.record(z.unknown()).optional(),
+  groups: z.array(tripGroupSchema).max(50).optional(),
   flights: z.array(flightSchema).optional(),
   hotels: z.array(hotelSchema).optional(),
 });

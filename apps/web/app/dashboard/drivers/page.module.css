@@ -63,3 +63,8 @@
 .pagination button:hover:not(:disabled) { background: var(--color-hover); }
 .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
 .pagination span { font-size: 11px; color: var(--color-text-secondary); }
+
+/* RTL overrides */
+:global([dir="rtl"]) .searchIcon { left: auto; right: 10px; }
+:global([dir="rtl"]) .searchInput { padding: 8px 32px 8px 12px; }
+:global([dir="rtl"]) .table th { text-align: right; }

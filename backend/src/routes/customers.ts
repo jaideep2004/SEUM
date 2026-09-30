@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as customerController from '../controllers/customerController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-const CUSTOMER_WRITE = ['super_admin', 'company_admin', 'operations_manager', 'customer_service'];
-const CUSTOMER_READ = [...CUSTOMER_WRITE, 'fleet_manager'];
+const CUSTOMER_WRITE = CAP.customersWrite;
+const CUSTOMER_READ = CAP.customersRead;
 
 router.post('/', authenticate, requireRole(...CUSTOMER_WRITE), customerController.createCustomer);
 router.get('/', authenticate, requireRole(...CUSTOMER_READ), customerController.listCustomers);

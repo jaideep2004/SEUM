@@ -49,3 +49,8 @@
 .loading { text-align: center; padding: 48px 20px; color: var(--color-text-tertiary); font-size: 13px; }
 .emptyState { text-align: center; padding: 48px 20px; color: var(--color-text-tertiary); }
 .emptyState p { font-size: 13px; margin: 8px 0 0; }
+
+/* ─── RTL (Arabic) — mirrors physical left alignment when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}

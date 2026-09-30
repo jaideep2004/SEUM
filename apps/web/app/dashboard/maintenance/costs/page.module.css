@@ -142,3 +142,7 @@
 .scatterDot:hover { opacity: 1; }
 .scatterLegend { display: flex; gap: 16px; font-size: 11px; color: var(--color-text-secondary); flex-wrap: wrap; }
 .legendDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; margin-right: 4px; }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }
+:global([dir="rtl"]) .legendDot { margin-right: 0; margin-left: 4px; }

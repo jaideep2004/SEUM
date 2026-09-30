@@ -3,6 +3,7 @@ import { query, queryOne } from '../db';
 import { logger } from '../utils/logger';
 import { config } from '../config';
 import { sendEmailAsync } from './emailService';
+import { emitToUser, REALTIME_EVENTS } from '../realtime/socket';
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -90,6 +91,12 @@ export async function createNotification(input: CreateNotificationInput) {
         input.resource || null, input.resourceId || null,
       ]
     );
+    emitToUser(input.tenantId, input.userId, REALTIME_EVENTS.NOTIFICATION_NEW, {
+      tenantId: input.tenantId, userId: input.userId, type: input.type,
+      title: input.title, message: input.message || null,
+      data: input.data || null, resource: input.resource || null,
+      resourceId: input.resourceId || null,
+    });
     return true;
   } catch (err) {
     logger.error({ err }, 'Failed to create notification');

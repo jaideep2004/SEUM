@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, MapPin, Clock, CalendarDays } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -15,6 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function TripsPage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -50,15 +52,15 @@ export default function TripsPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Trips</h1>
-          <p className={styles.pageDesc}>Manage scheduled trips and operations</p>
+          <h1 className={styles.pageTitle}>{t("trips.list.title")}</h1>
+          <p className={styles.pageDesc}>{t("trips.list.desc")}</p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/dashboard/trips/calendar" className={styles.calendarBtn}>
-            <CalendarDays size={14} /> Calendar
+            <CalendarDays size={14} /> {t("trips.list.calendar")}
           </Link>
           <Link href="/dashboard/trips/new" className={styles.createBtn}>
-            <Plus size={14} /> New Trip
+            <Plus size={14} /> {t("trips.list.newTrip")}
           </Link>
         </div>
       </div>
@@ -66,25 +68,25 @@ export default function TripsPage() {
       <div className={styles.filters}>
         <div className={styles.searchWrap}>
           <Search size={14} className={styles.searchIcon} />
-          <input className={styles.searchInput} placeholder="Search trips..." value={search}
+          <input className={styles.searchInput} placeholder={t("trips.list.searchPh")} value={search}
             onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
         </div>
         <div className={styles.filterSelect}>
           <Filter size={13} />
           <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
-            <option value="">All Status</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="en_route">En Route</option>
-            <option value="completed">Completed</option>
-            <option value="delayed">Delayed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">{t("trips.list.allStatus")}</option>
+            <option value="scheduled">{t("trips.list.scheduled")}</option>
+            <option value="en_route">{t("trips.list.enRoute")}</option>
+            <option value="completed">{t("trips.list.completed")}</option>
+            <option value="delayed">{t("trips.list.delayed")}</option>
+            <option value="cancelled">{t("trips.list.cancelled")}</option>
           </select>
         </div>
         <div className={styles.filterSelect}>
           <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}>
-            <option value="">All Types</option>
-            <option value="single">Single Trip</option>
-            <option value="round">Round Trip</option>
+            <option value="">{t("trips.list.allTypes")}</option>
+            <option value="single">{t("trips.list.singleTrip")}</option>
+            <option value="round">{t("trips.list.roundTrip")}</option>
           </select>
         </div>
       </div>
@@ -93,49 +95,49 @@ export default function TripsPage() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Route</th>
-              <th>Bus</th>
-              <th>Driver</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Status</th>
+              <th>{t("trips.list.colRoute")}</th>
+              <th>{t("trips.list.colBus")}</th>
+              <th>{t("trips.list.colDriver")}</th>
+              <th>{t("trips.list.colDate")}</th>
+              <th>{t("trips.list.colTime")}</th>
+              <th>{t("trips.list.colType")}</th>
+              <th>{t("trips.list.colStatus")}</th>
               <th style={{ width: 50 }}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className={styles.tableEmpty}>Loading...</td></tr>
+              <tr><td colSpan={8} className={styles.tableEmpty}>{t("common.loading")}</td></tr>
             ) : trips.length === 0 ? (
-              <tr><td colSpan={8} className={styles.tableEmpty}>No trips found</td></tr>
-            ) : trips.map((t) => (
-              <tr key={t.id} className={styles.clickableRow} onClick={() => router.push(`/dashboard/trips/${t.id}`)}>
+              <tr><td colSpan={8} className={styles.tableEmpty}>{t("trips.list.empty")}</td></tr>
+            ) : trips.map((trip) => (
+              <tr key={trip.id} className={styles.clickableRow} onClick={() => router.push(`/dashboard/trips/${trip.id}`)}>
                 <td className={styles.routeCell}>
                   <MapPin size={12} />
-                  {t.tripTitle || t.routeName || <span className={styles.muted}>—</span>}
+                  {trip.tripTitle || trip.routeName || <span className={styles.muted}>—</span>}
                 </td>
-                <td>{t.busPlate || <span className={styles.muted}>—</span>}</td>
+                <td>{trip.busPlate || <span className={styles.muted}>—</span>}</td>
                 <td>
                   <div className={styles.driverCell}>
-                    <span>{t.driverName || <span className={styles.muted}>—</span>}</span>
-                    {t.driverConfirmationStatus && t.driverConfirmationStatus !== "pending" && (
-                      <span className={styles.confirmBadge} data-status={t.driverConfirmationStatus}>
-                        {t.driverConfirmationStatus}
+                    <span>{trip.driverName || <span className={styles.muted}>—</span>}</span>
+                    {trip.driverConfirmationStatus && trip.driverConfirmationStatus !== "pending" && (
+                      <span className={styles.confirmBadge} data-status={trip.driverConfirmationStatus}>
+                        {trip.driverConfirmationStatus}
                       </span>
                     )}
                   </div>
                 </td>
-                <td>{t.scheduledDate ? new Date(t.scheduledDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) : "—"}</td>
+                <td>{trip.scheduledDate ? formatDate(trip.scheduledDate, lang) : "—"}</td>
                 <td className={styles.timeCell}>
                   <Clock size={11} />
-                  {t.scheduledStartTime?.slice(0, 5) || "—"}
+                  {trip.scheduledStartTime?.slice(0, 5) || "—"}
                 </td>
                 <td>
-                  <span className={styles.typeTag}>{t.tripType === "round" ? `Round${t.legCount ? ` · ${t.legCount} legs` : ""}` : "Single"}</span>
+                  <span className={styles.typeTag}>{trip.tripType === "round" ? <>{t("trips.list.roundShort")}{trip.legCount ? ` · ${trip.legCount} ${t("trips.list.legs")}` : ""}</> : t("trips.list.singleShort")}</span>
                 </td>
                 <td>
-                  <span className={styles.statusDot} style={{ background: STATUS_COLORS[t.status] || "#6b7280" }} />
-                  <span className={styles.statusLabel}>{t.status.replace("_", " ")}</span>
+                  <span className={styles.statusDot} style={{ background: STATUS_COLORS[trip.status] || "#6b7280" }} />
+                  <span className={styles.statusLabel}>{trip.status.replace("_", " ")}</span>
                 </td>
                 <td>
                   <span className={styles.arrow}>→</span>
@@ -148,9 +150,9 @@ export default function TripsPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{t("trips.list.prev")}</button>
+          <span>{t("trips.list.page")} {page} {t("trips.list.of")} {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>{t("trips.list.next")}</button>
         </div>
       )}
     </div>

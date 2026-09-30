@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { api } from "@/services/api";
 import { CalendarDays, UserCheck, AlertTriangle } from "lucide-react";
 import DriverScheduleView from "@/components/DriverScheduleView";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface DriverOption {
@@ -16,6 +17,7 @@ interface DriverOption {
 }
 
 export default function SchedulesPage() {
+  const { lang, t } = useLanguage();
   const [drivers, setDrivers] = useState<DriverOption[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function SchedulesPage() {
       const data = await api.get<any[]>("/drivers?pageSize=100");
       setDrivers(data || []);
     } catch (err: any) {
-      setError(err.message || "Failed to load drivers");
+      setError(err.message || t("ops.sched.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -44,9 +46,9 @@ export default function SchedulesPage() {
       <div className={styles.header}>
         <CalendarDays size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Driver Schedules</h1>
+          <h1 className={styles.headerTitle}>{t("ops.sched.title")}</h1>
           <p className={styles.headerSub}>
-            {activeDrivers.length} active driver{activeDrivers.length !== 1 ? "s" : ""} · day / week view
+            {activeDrivers.length} {t("ops.sched.activeDriver")}{activeDrivers.length !== 1 ? t("ops.sched.pluralS") : ""} {t("ops.sched.viewSuffix")}
           </p>
         </div>
       </div>
@@ -54,22 +56,22 @@ export default function SchedulesPage() {
       {error && <div className={styles.error}><AlertTriangle size={13} /> {error}</div>}
 
       {loading ? (
-        <div className={styles.empty}>Loading drivers...</div>
+        <div className={styles.empty}>{t("ops.sched.loading")}</div>
       ) : drivers.length === 0 ? (
         <div className={styles.empty}>
           <UserCheck size={28} />
-          No drivers found — add drivers first to view schedules.
+          {t("ops.sched.empty")}
         </div>
       ) : (
         <div className={styles.scheduleBox}>
           <div className={styles.selector}>
-            <label className={styles.selectorLabel}>Driver</label>
+            <label className={styles.selectorLabel}>{t("ops.sched.driverLabel")}</label>
             <select
               className={styles.selectorSelect}
               value={selectedDriverId}
               onChange={(e) => setSelectedDriverId(e.target.value)}
             >
-              <option value="">Select a driver...</option>
+              <option value="">{t("ops.sched.selectPh")}</option>
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}{d.employeeCode ? ` (${d.employeeCode})` : ""}{d.status !== "active" ? ` — ${d.status}` : ""}
@@ -83,7 +85,7 @@ export default function SchedulesPage() {
           ) : (
             <div className={styles.empty}>
               <CalendarDays size={28} />
-              Select a driver to view their schedule
+              {t("ops.sched.selectPrompt")}
             </div>
           )}
         </div>

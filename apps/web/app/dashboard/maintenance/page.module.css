@@ -136,3 +136,6 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .taskBlock:hover { filter: brightness(0.95); }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }

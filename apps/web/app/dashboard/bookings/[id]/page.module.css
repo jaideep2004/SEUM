@@ -541,3 +541,8 @@
   .paymentGrid { grid-template-columns: 1fr; }
   .header { flex-direction: column; }
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}

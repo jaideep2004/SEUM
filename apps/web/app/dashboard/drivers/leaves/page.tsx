@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, CalendarDays, List, CheckCircle, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage, formatDate, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -14,12 +15,25 @@ const TYPE_COLORS: Record<string, string> = {
 };
 const LEAVE_TYPES = ["annual", "sick", "emergency", "unpaid"];
 
+const STATUS_KEYS: Record<string, string> = {
+  pending: "drivers.leaves.st.pending", approved: "drivers.leaves.st.approved", rejected: "drivers.leaves.st.rejected",
+};
+const TYPE_KEYS: Record<string, string> = {
+  annual: "drivers.leaves.ty.annual", sick: "drivers.leaves.ty.sick", emergency: "drivers.leaves.ty.emergency", unpaid: "drivers.leaves.ty.unpaid",
+};
+const DAY_KEYS = [
+  "maintenance.calendar.days.sun", "maintenance.calendar.days.mon", "maintenance.calendar.days.tue",
+  "maintenance.calendar.days.wed", "maintenance.calendar.days.thu", "maintenance.calendar.days.fri",
+  "maintenance.calendar.days.sat",
+];
+
 function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("seum_access_token");
 }
 
 export default function DriverLeavesPage() {
+  const { lang, t: tr } = useLanguage();
   const today = new Date().toISOString().slice(0, 10);
   const [activeTab, setActiveTab] = useState<"list" | "apply" | "calendar">("list");
 
@@ -143,26 +157,25 @@ export default function DriverLeavesPage() {
 
   const badge = (value: string, map: Record<string, string>) => (
     <span className={styles.statusBadge} style={{ background: (map[value] || "#6b7280") + "20", color: map[value] || "#6b7280" }}>
-      {value.replace("_", " ")}
+      {tr(STATUS_KEYS[value] || value)}
     </span>
   );
 
   const typeBadge = (value: string) => (
     <span className={styles.typeBadge} style={{ background: (TYPE_COLORS[value] || "#6b7280") + "20", color: TYPE_COLORS[value] || "#6b7280" }}>
-      {value}
+      {tr(TYPE_KEYS[value] || value)}
     </span>
   );
 
   const daysInMonth = new Date(calYear, calMonth, 0).getDate();
   const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
-  const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> Back</Link>
-          <h1>Leave Management</h1>
+          <Link href="/dashboard/drivers" className={styles.backLink}><ArrowLeft size={14} /> {tr("common.back")}</Link>
+          <h1>{tr("drivers.leaves.title")}</h1>
         </div>
       </div>
 
@@ -175,7 +188,7 @@ export default function DriverLeavesPage() {
                 {info.remaining === Infinity ? info.used : info.remaining}
               </div>
               <div className={styles.balanceUsed}>
-                {info.used} used {info.total !== Infinity ? `/ ${info.total}` : ""}
+                {info.used} {tr("drivers.leaves.usedWord")} {info.total !== Infinity ? `/ ${info.total}` : ""}
               </div>
             </div>
           ))}
@@ -184,13 +197,13 @@ export default function DriverLeavesPage() {
 
       <div className={styles.tabs}>
         <button className={`${styles.tab} ${activeTab === "list" ? styles.tabActive : ""}`} onClick={() => setActiveTab("list")}>
-          <List size={14} /> Leave List
+          <List size={14} /> {tr("drivers.leaves.tabList")}
         </button>
         <button className={`${styles.tab} ${activeTab === "apply" ? styles.tabActive : ""}`} onClick={() => setActiveTab("apply")}>
-          <Plus size={14} /> Apply Leave
+          <Plus size={14} /> {tr("drivers.leaves.tabApply")}
         </button>
         <button className={`${styles.tab} ${activeTab === "calendar" ? styles.tabActive : ""}`} onClick={() => setActiveTab("calendar")}>
-          <CalendarDays size={14} /> Calendar
+          <CalendarDays size={14} /> {tr("drivers.leaves.tabCalendar")}
         </button>
       </div>
 
@@ -198,49 +211,49 @@ export default function DriverLeavesPage() {
         <>
           <div className={styles.filters}>
             <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value="">{tr("drivers.list.allStatus")}</option>
+              <option value="pending">{tr("drivers.leaves.optPending")}</option>
+              <option value="approved">{tr("drivers.leaves.optApproved")}</option>
+              <option value="rejected">{tr("drivers.leaves.optRejected")}</option>
             </select>
             <select className={styles.filterSelect} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-              <option value="">All Types</option>
-              {LEAVE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="">{tr("drivers.leaves.filterType")}</option>
+              {LEAVE_TYPES.map(t => <option key={t} value={t}>{tr(TYPE_KEYS[t] || t)}</option>)}
             </select>
           </div>
 
           {loading ? (
-            <div className={styles.loading}>Loading leaves...</div>
+            <div className={styles.loading}>{tr("drivers.leaves.loading")}</div>
           ) : leaves.length === 0 ? (
             <div className={styles.emptyState}>
               <CalendarDays size={40} style={{ opacity: 0.3, marginBottom: 8 }} />
-              <p>No leave records found</p>
+              <p>{tr("drivers.leaves.empty")}</p>
             </div>
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>Driver</th>
-                    <th>Type</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Days</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>{tr("drivers.attendance.colDriver")}</th>
+                    <th>{tr("drivers.leaves.colType")}</th>
+                    <th>{tr("drivers.leaves.colFrom")}</th>
+                    <th>{tr("drivers.leaves.colTo")}</th>
+                    <th>{tr("drivers.leaves.colDays")}</th>
+                    <th>{tr("drivers.leaves.colReason")}</th>
+                    <th>{tr("drivers.attendance.colStatus")}</th>
+                    <th>{tr("drivers.attendance.colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leaves.map((l: any) => (
                     <tr key={l.id}>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{l.driver?.name || "Unknown"}</div>
+                        <div style={{ fontWeight: 600 }}>{l.driver?.name || tr("drivers.common.unknown")}</div>
                         <div style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{l.driver?.employeeCode || ""}</div>
                       </td>
                       <td>{typeBadge(l.leaveType)}</td>
-                      <td>{l.startDate}</td>
-                      <td>{l.endDate}</td>
+                      <td>{formatDate(l.startDate, lang)}</td>
+                      <td>{formatDate(l.endDate, lang)}</td>
                       <td>{Math.ceil((new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / 86400000) + 1}</td>
                       <td style={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.reason || "—"}</td>
                       <td>{badge(l.status, STATUS_COLORS)}</td>
@@ -274,44 +287,44 @@ export default function DriverLeavesPage() {
       {activeTab === "apply" && (
         <form className={styles.form} onSubmit={handleApply}>
           <div className={styles.field}>
-            <label>Driver ID</label>
+            <label>{tr("drivers.leaves.formDriverId")}</label>
             <input
               value={form.driver_id}
               onChange={e => setForm({ ...form, driver_id: e.target.value })}
-              placeholder="UUID from drivers table"
+              placeholder={tr("drivers.leaves.phDriverId")}
               required
             />
           </div>
           <div className={styles.formRow}>
             <div className={styles.field}>
-              <label>Leave Type</label>
+              <label>{tr("drivers.leaves.formLeaveType")}</label>
               <select value={form.leave_type} onChange={e => setForm({ ...form, leave_type: e.target.value })}>
-                {LEAVE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                {LEAVE_TYPES.map(t => <option key={t} value={t}>{tr(TYPE_KEYS[t] || t)}</option>)}
               </select>
             </div>
             <div className={styles.field}>
-              <label>Reason</label>
+              <label>{tr("drivers.leaves.colReason")}</label>
               <input
                 value={form.reason}
                 onChange={e => setForm({ ...form, reason: e.target.value })}
-                placeholder="Optional reason"
+                placeholder={tr("drivers.leaves.phReason")}
               />
             </div>
           </div>
           <div className={styles.formRow}>
             <div className={styles.field}>
-              <label>Start Date</label>
+              <label>{tr("drivers.leaves.formStart")}</label>
               <input type="date" value={form.start_date}
                 onChange={e => setForm({ ...form, start_date: e.target.value })} required />
             </div>
             <div className={styles.field}>
-              <label>End Date</label>
+              <label>{tr("drivers.leaves.formEnd")}</label>
               <input type="date" value={form.end_date}
                 onChange={e => setForm({ ...form, end_date: e.target.value })} required />
             </div>
           </div>
           <button type="submit" className={`${styles.actionBtn} ${styles.primaryBtn}`} disabled={actionLoading === "apply"}>
-            {actionLoading === "apply" ? "Submitting..." : "Submit Leave Request"}
+            {actionLoading === "apply" ? tr("drivers.leaves.submitting") : tr("drivers.leaves.submitBtn")}
           </button>
         </form>
       )}
@@ -320,26 +333,26 @@ export default function DriverLeavesPage() {
         <div className={styles.calendarWrap}>
           <div className={styles.calendarHeader}>
             <div className={styles.calendarTitle}>
-              {new Date(calYear, calMonth - 1).toLocaleString("default", { month: "long", year: "numeric" })}
+              {new Date(calYear, calMonth - 1).toLocaleString(localeOf(lang), { month: "long", year: "numeric" })}
             </div>
             <div className={styles.calendarNav}>
               <button onClick={() => { if (calMonth === 1) { setCalMonth(12); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }}>
                 <ChevronLeft size={14} />
               </button>
-              <button onClick={() => { const n = new Date(); setCalMonth(n.getMonth() + 1); setCalYear(n.getFullYear()); }}>Today</button>
+              <button onClick={() => { const n = new Date(); setCalMonth(n.getMonth() + 1); setCalYear(n.getFullYear()); }}>{tr("common.today")}</button>
               <button onClick={() => { if (calMonth === 12) { setCalMonth(1); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }}>
                 <ChevronRight size={14} />
               </button>
             </div>
           </div>
           {loading ? (
-            <div className={styles.loading}>Loading calendar...</div>
+            <div className={styles.loading}>{tr("drivers.leaves.calLoading")}</div>
           ) : !calendar ? null : (
             <table className={styles.calendarTable}>
               <thead>
                 <tr>
-                  <th style={{ width: 120 }}>Driver</th>
-                  {dayHeaders.map((d, i) => <th key={i}>{d}</th>)}
+                  <th style={{ width: 120 }}>{tr("drivers.leaves.calDriverCol")}</th>
+                  {DAY_KEYS.map((d) => <th key={d}>{tr(d)}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -362,7 +375,7 @@ export default function DriverLeavesPage() {
                                 background: (TYPE_COLORS[l.leaveType] || "#6b7280") + "30",
                                 color: TYPE_COLORS[l.leaveType] || "#6b7280",
                               }}>
-                                {l.leaveType}
+                                {tr(TYPE_KEYS[l.leaveType] || l.leaveType)}
                               </div>
                             ))}
                           </td>
@@ -380,17 +393,17 @@ export default function DriverLeavesPage() {
       {rejectModal && (
         <div className={styles.overlay} onClick={() => setRejectModal(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2>Reject Leave</h2>
+            <h2>{tr("drivers.leaves.rejectTitle")}</h2>
             <div className={styles.field}>
-              <label>Rejection Reason</label>
-              <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Required reason for rejection" />
+              <label>{tr("drivers.leaves.rejectReasonLabel")}</label>
+              <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder={tr("drivers.leaves.phRejectReason")} />
             </div>
             <div className={styles.modalActions}>
-              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setRejectModal(null)}>Cancel</button>
+              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setRejectModal(null)}>{tr("common.cancel")}</button>
               <button className={`${styles.actionBtn} ${styles.rejectBtn}`}
                 onClick={() => handleReject(rejectModal.id)}
                 disabled={!rejectReason.trim() || actionLoading === rejectModal.id}>
-                {actionLoading === rejectModal.id ? "Rejecting..." : "Reject"}
+                {actionLoading === rejectModal.id ? tr("drivers.leaves.rejecting") : tr("common.reject")}
               </button>
             </div>
           </div>

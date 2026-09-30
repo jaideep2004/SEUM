@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as partController from '../controllers/partController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-const MAINT_WRITE = ['super_admin', 'company_admin', 'fleet_manager'];
-const MAINT_READ = [...MAINT_WRITE, 'operations_manager'];
+const MAINT_WRITE = CAP.maintenanceWrite;
+const MAINT_READ = CAP.maintenanceRead;
 
 router.post('/', authenticate, requireRole(...MAINT_WRITE), partController.createPart);
 router.get('/', authenticate, requireRole(...MAINT_READ), partController.listParts);

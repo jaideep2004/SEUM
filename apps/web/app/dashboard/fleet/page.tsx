@@ -19,9 +19,10 @@ import { api, API_URL } from "@/services/api";
 import DonutChart from "@/components/dashboard/DonutChart";
 import Sparkline from "@/components/dashboard/Sparkline";
 import { ExpiryBadge, getDaysUntilExpiry } from "@/components/fleet/ExpiryBadge";
+import { useLanguage, formatDate, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
-const tabs = ["Trips", "Documents", "History"];
+const tabs = ["fleet.dashboard.trips", "fleet.dashboard.documents", "fleet.dashboard.history"];
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
@@ -38,8 +39,6 @@ function statusBadge(status: string) {
   const label = status?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
   return <span className={`${styles.badge} ${map[status?.toLowerCase()] || styles.badgeNeutral}`}>{label}</span>;
 }
-
-const dateOnly = (iso?: string) => (iso ? String(iso).slice(0, 10) : "—");
 
 interface Bus {
   id: string;
@@ -68,6 +67,7 @@ interface TripRow {
 }
 
 export default function FleetDashboard() {
+  const { lang, t: tr } = useLanguage();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -83,7 +83,7 @@ export default function FleetDashboard() {
   const [expiringCount, setExpiringCount] = useState(0);
   const [expiredCount, setExpiredCount] = useState(0);
   const [docKpiValue, setDocKpiValue] = useState("—");
-  const [docKpiChange, setDocKpiChange] = useState("Loading...");
+  const [docKpiChange, setDocKpiChange] = useState(tr("fleet.dashboard.loadingKpi"));
 
   // Fuel efficiency alert
   const [fuelAlert, setFuelAlert] = useState<{ dropped: boolean; message: string | null }>({ dropped: false, message: null });
@@ -136,7 +136,7 @@ export default function FleetDashboard() {
           setExpiredCount(expired.length);
           setExpiringCount(expiring.length);
           setDocKpiValue(String(expired.length + expiring.length));
-          setDocKpiChange(expired.length > 0 ? `${expired.length} expired` : `${expiring.length} expiring`);
+          setDocKpiChange(expired.length > 0 ? `${expired.length} ${tr("fleet.dashboard.expired")}` : `${expiring.length} ${tr("fleet.dashboard.expiring")}`);
         }
       } catch (e) {
         console.error("Failed to load fleet dashboard", e);
@@ -150,11 +150,11 @@ export default function FleetDashboard() {
   const pctOf = (n: number) => (fleetSummary.totalBuses > 0 ? `${((n / fleetSummary.totalBuses) * 100).toFixed(1)}%` : "0%");
 
   const kpiCards = [
-    { label: "Total Vehicles", value: String(busTotal), change: `${fleetSummary.totalBuses} active fleet`, trend: "up" as const, icon: Truck, color: "#2563eb", bg: "#eff6ff", sparkData: [busTotal * 0.86, busTotal * 0.9, busTotal * 0.92, busTotal * 0.95, busTotal * 0.97, busTotal * 0.98, busTotal * 0.99, busTotal] },
-    { label: "Active", value: String(fleetSummary.activeBuses), change: pctOf(fleetSummary.activeBuses), trend: "up" as const, icon: CheckCircle2, color: "#10b981", bg: "#ecfdf5", sparkData: [fleetSummary.activeBuses * 0.8, fleetSummary.activeBuses * 0.85, fleetSummary.activeBuses * 0.88, fleetSummary.activeBuses * 0.9, fleetSummary.activeBuses * 0.93, fleetSummary.activeBuses * 0.96, fleetSummary.activeBuses * 0.98, fleetSummary.activeBuses] },
-    { label: "Under Maintenance", value: String(fleetSummary.maintenanceBuses), change: pctOf(fleetSummary.maintenanceBuses), trend: "neutral" as const, icon: Wrench, color: "#f59e0b", bg: "#fffbeb", sparkData: [0, 1, 0, 2, 1, 2, 1, fleetSummary.maintenanceBuses] },
-    { label: "Out of Service", value: String(outOfService), change: pctOf(outOfService), trend: "down" as const, icon: AlertTriangle, color: "#ef4444", bg: "#fef2f2", sparkData: [outOfService, outOfService - (outOfService > 0 ? 1 : 0), 0, outOfService, 0, outOfService, 1, outOfService] },
-    { label: "Documents Expiring", value: docKpiValue, change: docKpiChange, trend: "down" as const, icon: FileText, color: "#8b5cf6", bg: "#f5f3ff", sparkData: [0, 1, 2, 3, 4, 3, 2, expiringCount + expiredCount] },
+    { label: tr("fleet.dashboard.totalVehicles"), value: String(busTotal), change: `${fleetSummary.totalBuses} ${tr("fleet.dashboard.activeFleet")}`, trend: "up" as const, icon: Truck, color: "#2563eb", bg: "#eff6ff", sparkData: [busTotal * 0.86, busTotal * 0.9, busTotal * 0.92, busTotal * 0.95, busTotal * 0.97, busTotal * 0.98, busTotal * 0.99, busTotal] },
+    { label: tr("fleet.dashboard.active"), value: String(fleetSummary.activeBuses), change: pctOf(fleetSummary.activeBuses), trend: "up" as const, icon: CheckCircle2, color: "#10b981", bg: "#ecfdf5", sparkData: [fleetSummary.activeBuses * 0.8, fleetSummary.activeBuses * 0.85, fleetSummary.activeBuses * 0.88, fleetSummary.activeBuses * 0.9, fleetSummary.activeBuses * 0.93, fleetSummary.activeBuses * 0.96, fleetSummary.activeBuses * 0.98, fleetSummary.activeBuses] },
+    { label: tr("fleet.dashboard.underMaintenance"), value: String(fleetSummary.maintenanceBuses), change: pctOf(fleetSummary.maintenanceBuses), trend: "neutral" as const, icon: Wrench, color: "#f59e0b", bg: "#fffbeb", sparkData: [0, 1, 0, 2, 1, 2, 1, fleetSummary.maintenanceBuses] },
+    { label: tr("fleet.dashboard.outOfService"), value: String(outOfService), change: pctOf(outOfService), trend: "down" as const, icon: AlertTriangle, color: "#ef4444", bg: "#fef2f2", sparkData: [outOfService, outOfService - (outOfService > 0 ? 1 : 0), 0, outOfService, 0, outOfService, 1, outOfService] },
+    { label: tr("fleet.dashboard.documentsExpiring"), value: docKpiValue, change: docKpiChange, trend: "down" as const, icon: FileText, color: "#8b5cf6", bg: "#f5f3ff", sparkData: [0, 1, 2, 3, 4, 3, 2, expiringCount + expiredCount] },
   ];
 
   const effMax = Math.max(...efficiencyTrend.map((e) => e.kmPerLiter), 1);
@@ -163,8 +163,8 @@ export default function FleetDashboard() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Fleet Management</h1>
-          <p className={styles.pageDesc}>Overview of your vehicle fleet</p>
+          <h1 className={styles.pageTitle}>{tr("fleet.dashboard.title")}</h1>
+          <p className={styles.pageDesc}>{tr("fleet.dashboard.desc")}</p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ export default function FleetDashboard() {
       )}
 
       {loading ? (
-        <div className={styles.loading}>Loading fleet overview...</div>
+        <div className={styles.loading}>{tr("fleet.dashboard.loading")}</div>
       ) : (
         <>
           <div className={styles.kpiGrid5}>
@@ -205,35 +205,35 @@ export default function FleetDashboard() {
               <div className={styles.grid2Col}>
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Fleet Status Distribution</h2>
+                    <h2 className={styles.cardTitle}>{tr("fleet.dashboard.statusDist")}</h2>
                   </div>
                   <div className={styles.donutCenter}>
                     <DonutChart
                       segments={[
-                        { label: "Active", value: fleetSummary.activeBuses, color: "#2563eb" },
-                        { label: "Under Maintenance", value: fleetSummary.maintenanceBuses, color: "#f59e0b" },
-                        { label: "Out of Service", value: outOfService, color: "#ef4444" },
+                        { label: tr("fleet.dashboard.active"), value: fleetSummary.activeBuses, color: "#2563eb" },
+                        { label: tr("fleet.dashboard.underMaintenance"), value: fleetSummary.maintenanceBuses, color: "#f59e0b" },
+                        { label: tr("fleet.dashboard.outOfService"), value: outOfService, color: "#ef4444" },
                       ].filter((s) => s.value > 0)}
                       size={150}
                       thickness={18}
                       centerValue={String(fleetSummary.totalBuses)}
-                      centerLabel="Total"
+                      centerLabel={tr("fleet.dashboard.total")}
                     />
                   </div>
                   <div className={styles.donutLegend}>
                     <div className={styles.legendItem}>
                       <span className={styles.legendDot} style={{ background: "#2563eb" }} />
-                      <span className={styles.legendLabel}>Active</span>
+                      <span className={styles.legendLabel}>{tr("fleet.dashboard.active")}</span>
                       <span className={styles.legendValue}>{fleetSummary.activeBuses} ({pctOf(fleetSummary.activeBuses)})</span>
                     </div>
                     <div className={styles.legendItem}>
                       <span className={styles.legendDot} style={{ background: "#f59e0b" }} />
-                      <span className={styles.legendLabel}>Under Maintenance</span>
+                      <span className={styles.legendLabel}>{tr("fleet.dashboard.underMaintenance")}</span>
                       <span className={styles.legendValue}>{fleetSummary.maintenanceBuses} ({pctOf(fleetSummary.maintenanceBuses)})</span>
                     </div>
                     <div className={styles.legendItem}>
                       <span className={styles.legendDot} style={{ background: "#ef4444" }} />
-                      <span className={styles.legendLabel}>Out of Service</span>
+                      <span className={styles.legendLabel}>{tr("fleet.dashboard.outOfService")}</span>
                       <span className={styles.legendValue}>{outOfService} ({pctOf(outOfService)})</span>
                     </div>
                   </div>
@@ -241,16 +241,16 @@ export default function FleetDashboard() {
 
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.cardTitle}>Fuel Summary</h2>
+                    <h2 className={styles.cardTitle}>{tr("fleet.dashboard.fuelSummary")}</h2>
                   </div>
                   <div className={styles.fuelStats}>
                     <div className={styles.fuelStatItem}>
-                      <span className={styles.fuelStatLabel}>Total Fuel</span>
-                      <span className={styles.fuelStatValue}>{fuelStats.totalLiters.toLocaleString()} L</span>
+                      <span className={styles.fuelStatLabel}>{tr("fleet.dashboard.totalFuel")}</span>
+                      <span className={styles.fuelStatValue}>{fuelStats.totalLiters.toLocaleString()} {tr("fleet.dashboard.litersUnit")}</span>
                     </div>
                     <div className={styles.fuelStatItem}>
-                      <span className={styles.fuelStatLabel}>Total Cost</span>
-                      <span className={styles.fuelStatValue}>SAR {fuelStats.totalCost.toLocaleString()}</span>
+                      <span className={styles.fuelStatLabel}>{tr("fleet.dashboard.totalCost")}</span>
+                      <span className={styles.fuelStatValue}>{formatCurrency(fuelStats.totalCost, lang, 0)}</span>
                     </div>
                   </div>
                   <div className={styles.lineChartArea}>
@@ -279,7 +279,7 @@ export default function FleetDashboard() {
                       </svg>
                     ) : (
                       <p className={styles.tabPlaceholder}>
-                        {fuelStats.avgKmPerLiter ? `Average efficiency: ${fuelStats.avgKmPerLiter} km/L` : "No fuel data yet"}
+                        {fuelStats.avgKmPerLiter ? `${tr("fleet.dashboard.avgEfficiency")}: ${fuelStats.avgKmPerLiter} ${tr("fleet.dashboard.kmPerL")}` : tr("fleet.dashboard.noFuelData")}
                       </p>
                     )}
                   </div>
@@ -288,23 +288,23 @@ export default function FleetDashboard() {
 
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Vehicles Overview</h2>
+                  <h2 className={styles.cardTitle}>{tr("fleet.dashboard.vehiclesOverview")}</h2>
                   <div className={styles.searchBox}>
                     <Search size={14} className={styles.searchIcon} />
-                    <input type="text" className={styles.searchInput} placeholder="Search vehicles..." />
+                    <input type="text" className={styles.searchInput} placeholder={tr("fleet.dashboard.searchVehicles")} />
                   </div>
                 </div>
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Plate Number</th>
-                        <th>Vehicle</th>
-                        <th>Status</th>
-                        <th>Depot</th>
-                        <th>Fuel Type</th>
-                        <th>In Fleet Since</th>
-                        <th>Actions</th>
+                        <th>{tr("fleet.dashboard.plateNumber")}</th>
+                        <th>{tr("fleet.dashboard.vehicle")}</th>
+                        <th>{tr("fleet.dashboard.status")}</th>
+                        <th>{tr("fleet.dashboard.depot")}</th>
+                        <th>{tr("fleet.dashboard.fuelType")}</th>
+                        <th>{tr("fleet.dashboard.inFleetSince")}</th>
+                        <th>{tr("fleet.dashboard.actions")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -314,7 +314,7 @@ export default function FleetDashboard() {
                           <td>
                             <div className={styles.vehicleCell}>
                               <span className={styles.vehicleModel}>{v.make} {v.model} {v.year || ""}</span>
-                              <span className={styles.vehicleId}>{v.fuelType ? `${v.fuelType} · ${v.capacitySeated ?? "—"} seats` : "—"}</span>
+                              <span className={styles.vehicleId}>{v.fuelType ? `${v.fuelType} · ${v.capacitySeated ?? "—"} ${tr("fleet.dashboard.seats")}` : "—"}</span>
                             </div>
                           </td>
                           <td>{statusBadge(v.status)}</td>
@@ -325,22 +325,22 @@ export default function FleetDashboard() {
                             </span>
                           </td>
                           <td className={styles.textMuted}>{v.fuelType || "—"}</td>
-                          <td className={styles.textMuted}>{dateOnly(v.createdAt)}</td>
+                          <td className={styles.textMuted}>{formatDate(v.createdAt, lang)}</td>
                           <td>
-                            <Link href="/dashboard/fleet/buses" className={styles.viewBtn}>View</Link>
+                            <Link href="/dashboard/fleet/buses" className={styles.viewBtn}>{tr("common.view")}</Link>
                           </td>
                         </tr>
                       ))}
                       {buses.length === 0 && (
                         <tr>
-                          <td colSpan={7} className={styles.textMuted} style={{ padding: 24, textAlign: "center" }}>No vehicles in fleet yet</td>
+                          <td colSpan={7} className={styles.textMuted} style={{ padding: 24, textAlign: "center" }}>{tr("fleet.dashboard.noVehicles")}</td>
                         </tr>
                       )}
                     </tbody>
                   </table>
                 </div>
                 <div className={styles.pagination}>
-                  <span className={styles.paginationInfo}>Showing {buses.length > 0 ? `1 to ${buses.length}` : "0"} of {busTotal} vehicles</span>
+                  <span className={styles.paginationInfo}>{tr("fleet.dashboard.showing")} {buses.length > 0 ? `1 ${tr("fleet.dashboard.to")} ${buses.length}` : "0"} {tr("fleet.dashboard.of")} {busTotal} {tr("fleet.dashboard.vehiclesWord")}</span>
                   <div className={styles.paginationBtns}>
                     <button className={styles.paginationBtn} disabled><ChevronLeft size={16} /></button>
                     <button className={`${styles.paginationBtn} ${styles.paginationActive}`}>1</button>
@@ -357,7 +357,7 @@ export default function FleetDashboard() {
                       className={`${styles.tab} ${activeTab === i ? styles.tabActive : ""}`}
                       onClick={() => setActiveTab(i)}
                     >
-                      {tab}
+                      {tr(tab)}
                     </button>
                   ))}
                 </div>
@@ -373,14 +373,14 @@ export default function FleetDashboard() {
                             </span>
                           </div>
                           <span className={styles.recentTripDate}>
-                            {dateOnly(t.scheduledDate)}{t.scheduledStartTime ? ` · ${t.scheduledStartTime.slice(0, 5)}` : ""}
+                            {formatDate(t.scheduledDate, lang)}{t.scheduledStartTime ? ` · ${t.scheduledStartTime.slice(0, 5)}` : ""}
                           </span>
-                          <span className={styles.recentTripMeta}>{t.busPlate || "No bus"} · {t.driverName || "No driver"}</span>
+                          <span className={styles.recentTripMeta}>{t.busPlate || tr("fleet.dashboard.noBus")} · {t.driverName || tr("fleet.dashboard.noDriver")}</span>
                           {statusBadge(t.status)}
                         </div>
                       ))}
                       {recentTrips.length === 0 && (
-                        <p className={styles.tabPlaceholder}>No trips scheduled yet</p>
+                        <p className={styles.tabPlaceholder}>{tr("fleet.dashboard.noTrips")}</p>
                       )}
                     </div>
                   )}
@@ -389,24 +389,24 @@ export default function FleetDashboard() {
                       {expiredCount > 0 && (
                         <div className={styles.docBannerDanger}>
                           <AlertTriangle size={16} />
-                          {expiredCount} document{expiredCount !== 1 ? "s" : ""} expired — requires immediate attention
+                          {expiredCount} {expiredCount !== 1 ? tr("fleet.dashboard.documentsPl") : tr("fleet.dashboard.documentSg")} {tr("fleet.dashboard.expiredAttention")}
                           <Link href="/dashboard/fleet/documents" className={styles.docBannerLink}>
-                            View All <ChevronRight size={14} />
+                            {tr("fleet.dashboard.viewAll")} <ChevronRight size={14} />
                           </Link>
                         </div>
                       )}
                       {expiredCount === 0 && expiringCount > 0 && (
                         <div className={styles.docBannerWarning}>
                           <Clock size={16} />
-                          {expiringCount} document{expiringCount !== 1 ? "s" : ""} expiring within 30 days
+                          {expiringCount} {expiringCount !== 1 ? tr("fleet.dashboard.documentsPl") : tr("fleet.dashboard.documentSg")} {tr("fleet.dashboard.expiringAttention")}
                           <Link href="/dashboard/fleet/documents" className={styles.docBannerLink}>
-                            View All <ChevronRight size={14} />
+                            {tr("fleet.dashboard.viewAll")} <ChevronRight size={14} />
                           </Link>
                         </div>
                       )}
                       <div className={styles.docListCompact}>
                         {expiringDocs.length === 0 ? (
-                          <p className={styles.tabPlaceholder}>No documents on file</p>
+                          <p className={styles.tabPlaceholder}>{tr("fleet.dashboard.noDocs")}</p>
                         ) : (
                           expiringDocs.slice(0, 8).map((doc: any) => (
                             <div key={doc.id} className={styles.docCompactItem}>
@@ -423,12 +423,12 @@ export default function FleetDashboard() {
                       </div>
                       <Link href="/dashboard/fleet/documents" className={styles.docViewAll}>
                         <FileText size={14} />
-                        View All Documents
+                        {tr("fleet.dashboard.viewAllDocs")}
                         <ChevronRight size={14} />
                       </Link>
                     </div>
                   )}
-                  {activeTab === 2 && <p className={styles.tabPlaceholder}>Maintenance and inspection history</p>}
+                  {activeTab === 2 && <p className={styles.tabPlaceholder}>{tr("fleet.dashboard.maintHistory")}</p>}
                 </div>
               </div>
             </div>
@@ -436,7 +436,7 @@ export default function FleetDashboard() {
             <div className={styles.rightSidebar}>
               <div className={styles.card}>
                 <div className={styles.cardHeader}>
-                  <h2 className={styles.cardTitle}>Vehicle Details</h2>
+                  <h2 className={styles.cardTitle}>{tr("fleet.dashboard.vehicleDetails")}</h2>
                 </div>
 
                 <div className={styles.busImage}>
@@ -453,43 +453,43 @@ export default function FleetDashboard() {
 
                     <div className={styles.detailSection}>
                       <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Fuel Type</span>
+                        <span className={styles.detailLabel}>{tr("fleet.dashboard.fuelType")}</span>
                         <span className={styles.detailValue}>{buses[0].fuelType || "—"}</span>
                       </div>
                       <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Assigned Depot</span>
+                        <span className={styles.detailLabel}>{tr("fleet.dashboard.assignedDepot")}</span>
                         <span className={styles.detailValue}>{buses[0].assignedDepot || "—"}</span>
                       </div>
                       <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Capacity</span>
-                        <span className={styles.detailValue}>{buses[0].capacitySeated ?? "—"} seated</span>
+                        <span className={styles.detailLabel}>{tr("fleet.dashboard.capacity")}</span>
+                        <span className={styles.detailValue}>{buses[0].capacitySeated ?? "—"} {tr("fleet.dashboard.seated")}</span>
                       </div>
                       <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Added</span>
-                        <span className={styles.detailValue}>{dateOnly(buses[0].createdAt)}</span>
+                        <span className={styles.detailLabel}>{tr("fleet.dashboard.added")}</span>
+                        <span className={styles.detailValue}>{formatDate(buses[0].createdAt, lang)}</span>
                       </div>
                       <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Last Updated</span>
-                        <span className={styles.detailValue}>{dateOnly(buses[0].updatedAt)}</span>
+                        <span className={styles.detailLabel}>{tr("fleet.dashboard.lastUpdated")}</span>
+                        <span className={styles.detailValue}>{formatDate(buses[0].updatedAt, lang)}</span>
                       </div>
                     </div>
                   </>
                 ) : (
-                  <p className={styles.tabPlaceholder}>Select a vehicle</p>
+                  <p className={styles.tabPlaceholder}>{tr("fleet.dashboard.selectVehicle")}</p>
                 )}
 
                 <div className={styles.detailActions}>
                   <button className={styles.detailActionBtn}>
                     <MapPin size={14} />
-                    Track
+                    {tr("fleet.dashboard.track")}
                   </button>
                   <Link href="/dashboard/fleet/documents" className={styles.detailActionBtn}>
                     <FileText size={14} />
-                    Documents
+                    {tr("fleet.dashboard.documentsBtn")}
                   </Link>
                   <Link href="/dashboard/maintenance" className={styles.detailActionBtn}>
                     <Wrench size={14} />
-                    Service
+                    {tr("fleet.dashboard.service")}
                   </Link>
                 </div>
               </div>

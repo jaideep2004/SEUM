@@ -1,27 +1,37 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Search, FileText, Pencil, Trash2, MapPin, Phone, User, Wrench, X } from "lucide-react";
+import { useLanguage, formatDate, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
-const AVAILABLE_SERVICES = [
-  { value: "oil_change", label: "Oil Change" },
-  { value: "tire_replacement", label: "Tire Replacement" },
-  { value: "brake_inspection", label: "Brake Inspection" },
-  { value: "engine_service", label: "Engine Service" },
-  { value: "ac_service", label: "AC Service" },
-  { value: "electrical", label: "Electrical" },
-  { value: "body_repair", label: "Body Repair" },
-  { value: "general_service", label: "General Service" },
-  { value: "other", label: "Other" },
-];
+const SERVICE_KEYS: Record<string, string> = {
+  oil_change: "maintenance.taskTypes.oilChange",
+  tire_replacement: "maintenance.taskTypes.tireReplacement",
+  brake_inspection: "maintenance.taskTypes.brakeInspection",
+  engine_service: "maintenance.taskTypes.engineService",
+  ac_service: "maintenance.taskTypes.acService",
+  electrical: "maintenance.taskTypes.electrical",
+  body_repair: "maintenance.taskTypes.bodyRepair",
+  general_service: "maintenance.taskTypes.generalService",
+  other: "maintenance.taskTypes.other",
+};
+const AVAILABLE_SERVICES = Object.keys(SERVICE_KEYS);
 
-const STATUS_LABELS: Record<string, string> = {
-  scheduled: "Scheduled", in_progress: "In Progress", completed: "Completed", cancelled: "Cancelled",
+const STATUS_KEYS: Record<string, string> = {
+  scheduled: "maintenance.status.scheduled", in_progress: "maintenance.status.inProgress", completed: "maintenance.status.completed", cancelled: "maintenance.status.cancelled",
 };
 const STATUS_COLORS: Record<string, string> = {
   scheduled: "#3b82f6", in_progress: "#8b5cf6", completed: "#059669", cancelled: "#6b7280",
+};
+const PRIORITY_KEYS: Record<string, string> = {
+  low: "maintenance.priority.low", medium: "maintenance.priority.medium", high: "maintenance.priority.high", critical: "maintenance.priority.critical",
+};
+const TASK_KEYS: Record<string, string> = {
+  oil_change: "maintenance.taskTypes.oilChange", tire_replacement: "maintenance.taskTypes.tireReplacement", brake_inspection: "maintenance.taskTypes.brakeInspection",
+  engine_service: "maintenance.taskTypes.engineService", ac_service: "maintenance.taskTypes.acService", electrical: "maintenance.taskTypes.electrical",
+  body_repair: "maintenance.taskTypes.bodyRepair", general_service: "maintenance.taskTypes.generalService", other: "maintenance.taskTypes.other",
 };
 
 function getToken() {
@@ -29,16 +39,12 @@ function getToken() {
   return localStorage.getItem("seum_access_token");
 }
 
-function fmtDate(d: string | null) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-}
-
 const EMPTY_FORM = {
   name: "", location: "", contact: "", supervisor: "", is_internal: true, services: [] as string[],
 };
 
 export default function WorkshopsPage() {
+  const { lang, t: tr } = useLanguage();
   const [workshops, setWorkshops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -94,7 +100,7 @@ export default function WorkshopsPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError("");
-    if (!form.name.trim()) { setSubmitError("Workshop name is required"); return; }
+    if (!form.name.trim()) { setSubmitError(tr("maintenance.workshops.reqName")); return; }
     setSubmitting(true);
     const token = getToken();
     try {
@@ -109,15 +115,15 @@ export default function WorkshopsPage() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!data.success) { setSubmitError(data.error?.message || "Failed to save workshop"); return; }
+      if (!data.success) { setSubmitError(data.error?.message || tr("maintenance.workshops.failedSave")); return; }
       setModalOpen(false);
       fetchWorkshops();
-    } catch { setSubmitError("Network error"); }
+    } catch { setSubmitError(tr("maintenance.common.networkError")); }
     setSubmitting(false);
   }
 
   async function handleDelete(w: any) {
-    if (!window.confirm(`Delete workshop "${w.name}"?`)) return;
+    if (!window.confirm(`${tr("maintenance.workshops.deleteConfirmPre")} "${w.name}"?`)) return;
     const token = getToken();
     try {
       const res = await fetch(`${API}/maintenance/workshops/${w.id}`, {
@@ -125,8 +131,8 @@ export default function WorkshopsPage() {
       });
       const data = await res.json();
       if (data.success) fetchWorkshops();
-      else window.alert(data.error?.message || "Failed to delete workshop");
-    } catch { window.alert("Network error"); }
+      else window.alert(data.error?.message || tr("maintenance.workshops.deleteFailed"));
+    } catch { window.alert(tr("maintenance.common.networkError")); }
   }
 
   async function openDetail(w: any) {
@@ -173,41 +179,44 @@ export default function WorkshopsPage() {
     !search.trim() || (w.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const pendingTasks = (detail?.tasks || []).filter((task: any) => task.status === "scheduled" || task.status === "in_progress");
+  const doneTasks = (detail?.tasks || []).filter((task: any) => task.status !== "scheduled" && task.status !== "in_progress");
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1>Workshops</h1>
-          <p className={styles.subtitle}>Manage internal and external workshops for maintenance work.</p>
+          <h1>{tr("maintenance.workshops.title")}</h1>
+          <p className={styles.subtitle}>{tr("maintenance.workshops.sub")}</p>
         </div>
-        <button className={styles.addBtn} onClick={openCreate}><Plus size={15} /> Add Workshop</button>
+        <button className={styles.addBtn} onClick={openCreate}><Plus size={15} /> {tr("maintenance.workshops.addBtn")}</button>
       </div>
 
       <div className={styles.filters}>
         <div className={styles.searchBox}>
           <Search size={14} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, location or supervisor..." />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr("maintenance.workshops.searchPh")} />
         </div>
         <select value={internalFilter} onChange={(e) => setInternalFilter(e.target.value)} className={styles.filterSelect}>
-          <option value="">All workshops</option>
-          <option value="internal">Internal</option>
-          <option value="external">External</option>
+          <option value="">{tr("maintenance.workshops.filterAll")}</option>
+          <option value="internal">{tr("maintenance.workshops.optInternal")}</option>
+          <option value="external">{tr("maintenance.workshops.optExternal")}</option>
         </select>
       </div>
 
-      {loading ? <div className={styles.loading}>Loading workshops...</div> : (
+      {loading ? <div className={styles.loading}>{tr("maintenance.workshops.loading")}</div> : (
         <div className={styles.grid}>
           {filtered.map((w) => (
             <div key={w.id} className={styles.card}>
               <div className={styles.cardHead}>
                 <div className={styles.cardTitleRow}>
                   <span className={`${styles.typeBadge} ${w.isInternal ? styles.typeInternal : styles.typeExternal}`}>
-                    {w.isInternal ? "Internal" : "External"}
+                    {w.isInternal ? tr("maintenance.workshops.optInternal") : tr("maintenance.workshops.optExternal")}
                   </span>
                   <div className={styles.cardActions}>
-                    <button className={styles.iconBtn} title="Work Order PDF" onClick={() => openDetail(w)}><FileText size={15} /></button>
-                    <button className={styles.iconBtn} title="Edit" onClick={() => openEdit(w)}><Pencil size={15} /></button>
-                    <button className={styles.iconBtn} title="Delete" onClick={() => handleDelete(w)}><Trash2 size={15} /></button>
+                    <button className={styles.iconBtn} title={tr("maintenance.workshops.titlePdf")} onClick={() => openDetail(w)}><FileText size={15} /></button>
+                    <button className={styles.iconBtn} title={tr("common.edit")} onClick={() => openEdit(w)}><Pencil size={15} /></button>
+                    <button className={styles.iconBtn} title={tr("common.delete")} onClick={() => handleDelete(w)}><Trash2 size={15} /></button>
                   </div>
                 </div>
                 <h3 className={styles.cardName}>{w.name}</h3>
@@ -219,14 +228,14 @@ export default function WorkshopsPage() {
                 {w.services.length > 0 && (
                   <div className={styles.services}>
                     <Wrench size={13} />
-                    <span>{w.services.map((s: string) => AVAILABLE_SERVICES.find((x) => x.value === s)?.label || s).join(", ")}</span>
+                    <span>{w.services.map((s: string) => tr(SERVICE_KEYS[s] || s)).join(", ")}</span>
                   </div>
                 )}
               </div>
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className={styles.emptyState}>No workshops found — add one to get started.</div>
+            <div className={styles.emptyState}>{tr("maintenance.workshops.empty")}</div>
           )}
         </div>
       )}
@@ -235,55 +244,55 @@ export default function WorkshopsPage() {
         <div className={styles.modalOverlay} onClick={() => setModalOpen(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
-              <h2>{editing ? "Edit Workshop" : "Add Workshop"}</h2>
+              <h2>{editing ? tr("maintenance.workshops.modalEditTitle") : tr("maintenance.workshops.addBtn")}</h2>
               <button className={styles.iconBtn} onClick={() => setModalOpen(false)}><X size={16} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               {submitError && <div className={styles.error}>{submitError}</div>}
               <div className={styles.formRow}>
                 <div className={styles.field}>
-                  <label>Name *</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Al Wadi Garage" />
+                  <label>{tr("maintenance.workshops.formName")}</label>
+                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={tr("maintenance.workshops.phName")} />
                 </div>
                 <div className={styles.field}>
-                  <label>Type</label>
+                  <label>{tr("maintenance.workshops.formType")}</label>
                   <select value={form.is_internal ? "internal" : "external"} onChange={(e) => setForm({ ...form, is_internal: e.target.value === "internal" })}>
-                    <option value="internal">Internal</option>
-                    <option value="external">External</option>
+                    <option value="internal">{tr("maintenance.workshops.optInternal")}</option>
+                    <option value="external">{tr("maintenance.workshops.optExternal")}</option>
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label>Location</label>
-                  <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="City, district..." />
+                  <label>{tr("maintenance.workshops.formLocation")}</label>
+                  <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={tr("maintenance.workshops.phLocation")} />
                 </div>
                 <div className={styles.field}>
-                  <label>Contact</label>
-                  <input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Phone / email" />
+                  <label>{tr("maintenance.workshops.formContact")}</label>
+                  <input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder={tr("maintenance.workshops.phContact")} />
                 </div>
                 <div className={styles.field}>
-                  <label>Supervisor</label>
-                  <input value={form.supervisor} onChange={(e) => setForm({ ...form, supervisor: e.target.value })} placeholder="Supervisor name" />
+                  <label>{tr("maintenance.workshops.formSupervisor")}</label>
+                  <input value={form.supervisor} onChange={(e) => setForm({ ...form, supervisor: e.target.value })} placeholder={tr("maintenance.workshops.phSupervisor")} />
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Services Offered</label>
+                <label>{tr("maintenance.workshops.formServices")}</label>
                 <div className={styles.serviceGrid}>
                   {AVAILABLE_SERVICES.map((s) => (
                     <button
-                      key={s.value}
+                      key={s}
                       type="button"
-                      className={`${styles.serviceChip} ${form.services.includes(s.value) ? styles.serviceChipOn : ""}`}
-                      onClick={() => toggleService(s.value)}
+                      className={`${styles.serviceChip} ${form.services.includes(s) ? styles.serviceChipOn : ""}`}
+                      onClick={() => toggleService(s)}
                     >
-                      {s.label}
+                      {tr(SERVICE_KEYS[s])}
                     </button>
                   ))}
                 </div>
               </div>
               <div className={styles.formActions}>
-                <button type="button" className={styles.cancelBtn} onClick={() => setModalOpen(false)}>Cancel</button>
+                <button type="button" className={styles.cancelBtn} onClick={() => setModalOpen(false)}>{tr("common.cancel")}</button>
                 <button type="submit" className={styles.primaryBtn} disabled={submitting}>
-                  {submitting ? "Saving..." : (editing ? "Save Changes" : "Create Workshop")}
+                  {submitting ? tr("drivers.common.saving") : (editing ? tr("drivers.edit.saveChanges") : tr("maintenance.workshops.createBtn"))}
                 </button>
               </div>
             </form>
@@ -296,14 +305,14 @@ export default function WorkshopsPage() {
           <div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <div>
-                <h2>{detail.workshop.name} — Work Order</h2>
+                <h2>{detail.workshop.name} {tr("maintenance.workshops.detailWorkOrder")}</h2>
                 <p className={styles.modalSub}>
-                  {fmtDate(new Date().toISOString())} · {detail.tasks.length} task(s) total
+                  {formatDate(new Date().toISOString(), lang)} · {detail.tasks.length} {tr("maintenance.workshops.tasksTotalPost")}
                 </p>
               </div>
               <div className={styles.detailActions}>
                 <button className={styles.pdfBtn} onClick={downloadPdf} disabled={pdfLoading}>
-                  <FileText size={14} /> {pdfLoading ? "Generating..." : "Download PDF"}
+                  <FileText size={14} /> {pdfLoading ? tr("drivers.payroll.generating") : tr("maintenance.workshops.pdfBtn")}
                 </button>
                 <button className={styles.iconBtn} onClick={() => setDetail(null)}><X size={16} /></button>
               </div>
@@ -313,45 +322,40 @@ export default function WorkshopsPage() {
                 className={`${styles.tab} ${detailTab === "pending" ? styles.tabActive : ""}`}
                 onClick={() => setDetailTab("pending")}
               >
-                Pending
-                <span className={styles.tabCount}>{detail.tasks.filter((t: any) => t.status === "scheduled" || t.status === "in_progress").length}</span>
+                {tr("maintenance.taskDetail.pending")}
+                <span className={styles.tabCount}>{pendingTasks.length}</span>
               </button>
               <button
                 className={`${styles.tab} ${detailTab === "completed" ? styles.tabActive : ""}`}
                 onClick={() => setDetailTab("completed")}
               >
-                Completed / Cancelled
-                <span className={styles.tabCount}>{detail.tasks.filter((t: any) => t.status !== "scheduled" && t.status !== "in_progress").length}</span>
+                {tr("maintenance.workshops.tabCompleted")}
+                <span className={styles.tabCount}>{doneTasks.length}</span>
               </button>
             </div>
-            {detailLoading ? <div className={styles.loading}>Loading tasks...</div> : (
+            {detailLoading ? <div className={styles.loading}>{tr("maintenance.list.loading")}</div> : (
               <div className={styles.taskList}>
-                {detail.tasks
-                  .filter((t: any) => detailTab === "pending"
-                    ? t.status === "scheduled" || t.status === "in_progress"
-                    : t.status !== "scheduled" && t.status !== "in_progress")
-                  .map((t: any) => (
-                    <div key={t.id} className={styles.taskItem}>
+                {(detailTab === "pending" ? pendingTasks : doneTasks)
+                  .map((task: any) => (
+                    <div key={task.id} className={styles.taskItem}>
                       <div className={styles.taskMain}>
-                        <span className={styles.taskType}>{t.taskType.replace(/_/g, " ")}</span>
-                        <span className={styles.taskBus}>{t.bus.plateNumber} · {t.bus.make} {t.bus.model}</span>
+                        <span className={styles.taskType}>{tr(TASK_KEYS[task.taskType] || task.taskType)}</span>
+                        <span className={styles.taskBus}>{task.bus.plateNumber} · {task.bus.make} {task.bus.model}</span>
                       </div>
                       <div className={styles.taskMeta}>
-                        <span className={styles.priorityBadge} style={{ textTransform: "capitalize" }}>{t.priority}</span>
-                        <span className={styles.statusBadge} style={{ color: STATUS_COLORS[t.status] || "#6b7280", background: (STATUS_COLORS[t.status] || "#6b7280") + "18" }}>
-                          {STATUS_LABELS[t.status] || t.status}
+                        <span className={styles.priorityBadge} style={{ textTransform: "capitalize" }}>{tr(PRIORITY_KEYS[task.priority] || task.priority)}</span>
+                        <span className={styles.statusBadge} style={{ color: STATUS_COLORS[task.status] || "#6b7280", background: (STATUS_COLORS[task.status] || "#6b7280") + "18" }}>
+                          {tr(STATUS_KEYS[task.status] || task.status)}
                         </span>
-                        <span className={styles.taskDate}>{fmtDate(t.scheduledDate)}</span>
-                        {t.assignedMechanic && <span className={styles.taskMechanic}><User size={12} /> {t.assignedMechanic}</span>}
-                        {t.cost != null && <span className={styles.taskCost}>{Number(t.cost).toLocaleString()} SAR</span>}
+                        <span className={styles.taskDate}>{formatDate(task.scheduledDate, lang)}</span>
+                        {task.assignedMechanic && <span className={styles.taskMechanic}><User size={12} /> {task.assignedMechanic}</span>}
+                        {task.cost != null && <span className={styles.taskCost}>{formatCurrency(task.cost, lang)}</span>}
                       </div>
-                      {t.description && <p className={styles.taskDesc}>{t.description}</p>}
+                      {task.description && <p className={styles.taskDesc}>{task.description}</p>}
                     </div>
                   ))}
-                {detail.tasks.filter((t: any) => detailTab === "pending"
-                  ? t.status === "scheduled" || t.status === "in_progress"
-                  : t.status !== "scheduled" && t.status !== "in_progress").length === 0 && (
-                  <div className={styles.emptyState}>No {detailTab} tasks for this workshop.</div>
+                {(detailTab === "pending" ? pendingTasks : doneTasks).length === 0 && (
+                  <div className={styles.emptyState}>{tr("maintenance.workshops.noPre")} {detailTab === "pending" ? tr("maintenance.workshops.emptyPendingTab") : tr("maintenance.workshops.emptyCompletedTab")} {tr("maintenance.workshops.noPost")}</div>
                 )}
               </div>
             )}

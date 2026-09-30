@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, BellRing, Save } from "lucide-react";
 import { API_URL } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface PrefRow {
@@ -15,6 +16,7 @@ interface PrefRow {
 }
 
 export default function NotificationPreferencesPage() {
+  const { lang, t } = useLanguage();
   const [prefs, setPrefs] = useState<PrefRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,9 +29,9 @@ export default function NotificationPreferencesPage() {
         const res = await fetch(`${API_URL}/notifications/preferences`, { credentials: "include" });
         const data = await res.json();
         if (data.success) setPrefs(data.data);
-        else setError(data.message || "Failed to load preferences");
+        else setError(data.message || t("admin.notifPrefs.loadFailed"));
       } catch {
-        setError("Failed to load preferences");
+        setError(t("admin.notifPrefs.loadFailed"));
       }
       setLoading(false);
     })();
@@ -56,9 +58,9 @@ export default function NotificationPreferencesPage() {
       });
       const data = await res.json();
       if (data.success) setSaved(true);
-      else setError(data.message || "Failed to save preferences");
+      else setError(data.message || t("admin.notifPrefs.saveFailed"));
     } catch {
-      setError("Failed to save preferences");
+      setError(t("admin.notifPrefs.saveFailed"));
     }
     setSaving(false);
   }
@@ -67,22 +69,22 @@ export default function NotificationPreferencesPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <Link href="/dashboard/notifications" className={styles.backBtn}>
-          <ArrowLeft size={15} /> Back
+          <ArrowLeft size={15} /> {t("admin.notifPrefs.back")}
         </Link>
         <div className={styles.headerLeft}>
           <BellRing size={22} className={styles.headerIcon} />
           <div>
-            <h1 className={styles.title}>Notification Preferences</h1>
-            <p className={styles.subtitle}>Choose which events notify you, and through which channels.</p>
+            <h1 className={styles.title}>{t("admin.notifPrefs.title")}</h1>
+            <p className={styles.subtitle}>{t("admin.notifPrefs.subtitle")}</p>
           </div>
         </div>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
-      {saved && <div className={styles.success}>Preferences saved.</div>}
+      {saved && <div className={styles.success}>{t("admin.notifPrefs.saved")}</div>}
 
       {loading ? (
-        <div className={styles.empty}>Loading preferences…</div>
+        <div className={styles.empty}>{t("admin.notifPrefs.loading")}</div>
       ) : (
         <div className={styles.card}>
           {prefs.map((p) => (
@@ -99,7 +101,7 @@ export default function NotificationPreferencesPage() {
                     checked={p.inApp}
                     onChange={() => toggle(p.eventType, "inApp")}
                   />
-                  <span>In-app</span>
+                  <span>{t("admin.notifPrefs.inApp")}</span>
                 </label>
                 {p.sendsEmail && (
                   <label className={styles.toggleWrap}>
@@ -109,7 +111,7 @@ export default function NotificationPreferencesPage() {
                       checked={p.email}
                       onChange={() => toggle(p.eventType, "email")}
                     />
-                    <span>Email</span>
+                    <span>{t("admin.notifPrefs.email")}</span>
                   </label>
                 )}
               </div>
@@ -117,7 +119,7 @@ export default function NotificationPreferencesPage() {
           ))}
           <div className={styles.footer}>
             <button className={styles.saveBtn} onClick={save} disabled={saving}>
-              <Save size={15} /> {saving ? "Saving…" : "Save preferences"}
+              <Save size={15} /> {saving ? t("admin.notifPrefs.saving") : t("admin.notifPrefs.save")}
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import {
   Building2,
   ArrowLeft,
@@ -46,6 +47,7 @@ const tierColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function CompanyDetailPage() {
+  const { lang, t } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const tenantId = params.id as string;
@@ -61,11 +63,11 @@ export default function CompanyDetailPage() {
       const data = await api.get<any>(`/tenants/${tenantId}`);
       setTenant(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load company");
+      setError(err.message || t("companies.detail.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [tenantId]);
+  }, [tenantId, t]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -73,7 +75,7 @@ export default function CompanyDetailPage() {
       await api.delete(`/tenants/${tenantId}`);
       router.push("/dashboard/companies");
     } catch (err: any) {
-      setError(err.message || "Failed to delete company");
+      setError(err.message || t("companies.detail.deleteFailed"));
       setShowDeleteModal(false);
     } finally {
       setDeleting(false);
@@ -82,26 +84,35 @@ export default function CompanyDetailPage() {
 
   useEffect(() => { fetchTenant(); }, [fetchTenant]);
 
-  if (loading) return <div className={styles.page}><div className={styles.loading}>Loading...</div></div>;
+  if (loading) return <div className={styles.page}><div className={styles.loading}>{t("companies.detail.loading")}</div></div>;
   if (error || !tenant) return (
     <div className={styles.page}>
       <div className={styles.errorBanner}>
         <AlertTriangle size={20} />
-        <span>{error || "Company not found"}</span>
-        <button className={styles.backBtn} onClick={() => router.push("/dashboard/companies")}>Back</button>
+        <span>{error || t("companies.detail.notFound")}</span>
+        <button className={styles.backBtn} onClick={() => router.push("/dashboard/companies")}>{t("companies.detail.back")}</button>
       </div>
     </div>
   );
 
   const tc = tenant.subscriptionTier ? tierColors[tenant.subscriptionTier] : undefined;
+  const tierLabel = (tier: string | null | undefined) => {
+    if (!tier) return t("companies.tierUnknown");
+    const map: Record<string, string> = {
+      starter: t("companies.tierStarter"),
+      professional: t("companies.tierProfessional"),
+      enterprise: t("companies.tierEnterprise"),
+    };
+    return map[tier] || tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
 
   const infoCards = [
-    { icon: Globe, label: "Domain", value: tenant.domain || "—" },
-    { icon: User, label: "Contact", value: tenant.contactName || "—" },
-    { icon: Mail, label: "Email", value: tenant.contactEmail || "—" },
-    { icon: Phone, label: "Phone", value: tenant.contactPhone || "—" },
-    { icon: Calendar, label: "Created", value: new Date(tenant.createdAt).toLocaleDateString() },
-    { icon: Activity, label: "Status", value: tenant.isActive ? "Active" : "Inactive" },
+    { icon: Globe, label: t("companies.detail.domain"), value: tenant.domain || "—" },
+    { icon: User, label: t("companies.detail.contact"), value: tenant.contactName || "—" },
+    { icon: Mail, label: t("companies.detail.email"), value: tenant.contactEmail || "—" },
+    { icon: Phone, label: t("companies.detail.phone"), value: tenant.contactPhone || "—" },
+    { icon: Calendar, label: t("companies.detail.created"), value: formatDate(tenant.createdAt, lang) },
+    { icon: Activity, label: t("companies.detail.status"), value: tenant.isActive ? t("companies.detail.active") : t("companies.detail.inactive") },
   ];
 
   return (
@@ -113,14 +124,14 @@ export default function CompanyDetailPage() {
         <div className={styles.headerInfo}>
           <div className={styles.headerTop}>
             <div className={styles.avatar}>{(tenant.name || "?").charAt(0).toUpperCase()}</div>
-            <h1 className={styles.headerTitle}>{tenant.name || "Unnamed Company"}</h1>
+            <h1 className={styles.headerTitle}>{tenant.name || t("companies.detail.unnamed")}</h1>
             <span className={styles.tierBadge} style={{ background: tc?.bg || "rgba(99,102,241,0.1)", color: tc?.text || "#6366f1" }}>
               <CreditCard size={12} />
-              {tenant.subscriptionTier ? tenant.subscriptionTier.charAt(0).toUpperCase() + tenant.subscriptionTier.slice(1) : "Unknown"}
+              {tierLabel(tenant.subscriptionTier)}
             </span>
             {!tenant.isActive && (
               <span className={styles.inactiveBadge}>
-                <XCircle size={12} /> Inactive
+                <XCircle size={12} /> {t("companies.detail.inactive")}
               </span>
             )}
           </div>
@@ -128,11 +139,11 @@ export default function CompanyDetailPage() {
         <div className={styles.headerActions}>
           <button className={styles.editBtn} onClick={() => router.push(`/dashboard/companies/${tenant.id}/edit`)}>
             <Edit3 size={15} />
-            Edit
+            {t("companies.detail.edit")}
           </button>
           <button className={styles.deleteBtn} onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={15} />
-            Delete
+            {t("companies.detail.delete")}
           </button>
         </div>
       </div>
@@ -153,8 +164,8 @@ export default function CompanyDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.infoIcon}><Package size={16} /></div>
           <div className={styles.infoContent}>
-            <span className={styles.infoLabel}>Billing</span>
-            <span className={styles.infoValue}>{tenant.billingCycle || "Monthly"}</span>
+            <span className={styles.infoLabel}>{t("companies.detail.billing")}</span>
+            <span className={styles.infoValue}>{tenant.billingCycle || t("companies.detail.monthly")}</span>
           </div>
         </div>
       </div>
@@ -164,7 +175,7 @@ export default function CompanyDetailPage() {
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <CheckCircle2 size={18} />
-            <h2 className={styles.sectionTitle}>Enabled Modules</h2>
+            <h2 className={styles.sectionTitle}>{t("companies.detail.enabledModules")}</h2>
           </div>
           <div className={styles.featuresGrid}>
             {Object.entries(tenant.features).map(([key, enabled]) => (
@@ -183,21 +194,21 @@ export default function CompanyDetailPage() {
           <Users size={20} className={styles.statIcon} />
           <div>
             <div className={styles.statValue}>—</div>
-            <div className={styles.statLabel}>Users</div>
+            <div className={styles.statLabel}>{t("companies.detail.users")}</div>
           </div>
         </div>
         <div className={styles.statCard}>
           <BarChart3 size={20} className={styles.statIcon} />
           <div>
             <div className={styles.statValue}>—</div>
-            <div className={styles.statLabel}>Active Trips</div>
+            <div className={styles.statLabel}>{t("companies.detail.activeTrips")}</div>
           </div>
         </div>
         <div className={styles.statCard}>
           <Activity size={20} className={styles.statIcon} />
           <div>
             <div className={styles.statValue}>—</div>
-            <div className={styles.statLabel}>Vehicles</div>
+            <div className={styles.statLabel}>{t("companies.detail.vehicles")}</div>
           </div>
         </div>
       </div>
@@ -208,16 +219,16 @@ export default function CompanyDetailPage() {
             <div className={styles.modalIcon}>
               <AlertTriangle size={24} />
             </div>
-            <h3 className={styles.modalTitle}>Delete Company</h3>
+            <h3 className={styles.modalTitle}>{t("companies.detail.deleteTitle")}</h3>
             <p className={styles.modalText}>
-              Are you sure you want to delete <strong>{tenant.name}</strong>? This will soft-delete the company and all its associated data will be deactivated.
+              {t("companies.detail.deleteTextA")} <strong>{tenant.name}</strong>{t("companies.detail.deleteTextB")}
             </p>
             <div className={styles.modalActions}>
               <button className={styles.modalCancel} onClick={() => setShowDeleteModal(false)}>
-                Cancel
+                {t("companies.detail.cancel")}
               </button>
               <button className={styles.modalConfirm} onClick={handleDelete} disabled={deleting}>
-                {deleting ? "Deleting..." : "Delete Company"}
+                {deleting ? t("companies.detail.deleting") : t("companies.detail.deleteCompany")}
               </button>
             </div>
           </div>

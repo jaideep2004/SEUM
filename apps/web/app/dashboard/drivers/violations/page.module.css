@@ -213,3 +213,6 @@
   border-radius: 4px;
   transition: width 0.5s ease;
 }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }

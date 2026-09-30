@@ -2,14 +2,15 @@ import { Router } from 'express';
 import multer from 'multer';
 import { authenticate, requireRole } from '../middleware/auth';
 import * as bookingController from '../controllers/bookingController';
+import { CAPABILITIES as CAP } from '../auth/roles';
 
 const router = Router();
 
-const BOOKING_WRITE = ['super_admin', 'company_admin', 'operations_manager', 'customer_service'];
-const BOOKING_READ = [...BOOKING_WRITE, 'finance_accountant', 'executive'];
-const SUPERVISOR_ROLES = ['super_admin', 'company_admin', 'operations_manager'];
+const BOOKING_WRITE = CAP.bookingsWrite;
+const BOOKING_READ = CAP.bookingsRead;
+const SUPERVISOR_ROLES = CAP.bookingsApprove;
 // Planning queue access
-const PLANNING_ROLES = ['super_admin', 'company_admin', 'operations_manager', 'fleet_manager'];
+const PLANNING_ROLES = [...CAP.bookingsApprove, ...CAP.fleetRead];
 
 const importUpload = multer({
   storage: multer.memoryStorage(),

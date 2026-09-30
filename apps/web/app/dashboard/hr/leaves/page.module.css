@@ -364,3 +364,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ─── RTL (Arabic) — mirrors physical left alignment when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .driverNameCell {
+  left: auto;
+  right: 0;
+}

@@ -77,3 +77,11 @@
 .fileLink:hover { text-decoration: underline; }
 .iconBtn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: transparent; color: var(--color-text-tertiary); cursor: pointer; transition: all 0.2s; }
 .iconBtn:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+/* ─── RTL (Arabic) — mirrors physical left/right alignment when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .infoRow span:last-child {
+  text-align: left;
+}

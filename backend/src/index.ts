@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import http from 'http';
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
+import { initSocketIO } from './realtime/socket';
 import authRoutes from './routes/auth';
 import tenantRoutes from './routes/tenants';
 import auditRoutes from './routes/audit';
@@ -41,6 +43,7 @@ import customerRoutes from './routes/customers';
 import bookingRoutes from './routes/bookings';
 import agentRoutes from './routes/agents';
 import communicationRoutes from './routes/communications';
+import gpsRoutes from './routes/gps';
 import { runReminderJob } from './services/customerCommunicationService';
 import { scheduleRecurringTripsCron } from './jobs/recurringTripsCron';
 
@@ -97,12 +100,24 @@ app.use('/api/v1/bookings/customers', customerRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/agents', agentRoutes);
 app.use('/api/v1/communications', communicationRoutes);
+app.use('/api/gps', gpsRoutes);
+app.use('/api/v1/gps', gpsRoutes);
 
 app.use(errorHandler);
 
 // Only listen directly when NOT on Vercel serverless
 if (!process.env.VERCEL) {
-  app.listen(config.port, () => {
+  const httpServer = http.createServer(app);
+
+  // Realtime layer (Phase 9.1) is optional-safe: the API must boot even when
+  // Socket.IO fails to initialize.
+  try {
+    initSocketIO(httpServer);
+  } catch (err) {
+    logger.warn({ err }, 'Realtime init failed; continuing without Socket.IO');
+  }
+
+  httpServer.listen(config.port, () => {
     logger.info({ port: config.port }, `SEUM API running on http://localhost:${config.port}`);
   });
 

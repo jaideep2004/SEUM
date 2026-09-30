@@ -12,18 +12,21 @@ interface PatternRow {
   specific_dates: string[] | null; notes: string | null; is_active: boolean;
   last_generated_at: string | null; created_by: string | null;
   trip_title: string | null; vehicle_type: string | null;
+  vehicle_count: number | null;
   group_leader: string | null; group_leader_no: string | null;
   nationality: string | null; agent: string | null; group_no: string | null;
-  no_of_pax: number | null; nusuk_info: any; flights: any; hotels: any;
+  no_of_pax: number | null; nusuk_info: any; groups: any; flights: any; hotels: any;
   created_at: string; updated_at: string;
 }
 
 function mapManifest(row: PatternRow) {
   return {
     tripTitle: row.trip_title, vehicleType: row.vehicle_type,
+    vehicleCount: row.vehicle_count,
     groupLeader: row.group_leader, groupLeaderNo: row.group_leader_no,
     nationality: row.nationality, agent: row.agent, groupNo: row.group_no,
     noOfPax: row.no_of_pax, nusukInfo: row.nusuk_info,
+    groups: row.groups || [],
     flights: row.flights, hotels: row.hotels,
   };
 }
@@ -67,19 +70,21 @@ export async function createPattern(tenantId: string, userId: string, input: Cre
      (id, tenant_id, route_id, bus_id, driver_id, trip_type, frequency,
       days_of_week, scheduled_start_time, scheduled_end_time,
       start_date, end_date, specific_dates, notes, is_active, created_by,
-      trip_title, vehicle_type, group_leader, group_leader_no, nationality,
-      agent, group_no, no_of_pax, nusuk_info, flights, hotels)
+      trip_title, vehicle_type, vehicle_count, group_leader, group_leader_no, nationality,
+      agent, group_no, no_of_pax, nusuk_info, groups, flights, hotels)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-             $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+             $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
      RETURNING *`,
     [id, tenantId, input.routeId || null, input.busId || null, input.driverId || null,
      input.tripType, input.frequency, input.daysOfWeek || null,
      input.scheduledStartTime, input.scheduledEndTime || null,
      input.startDate, input.endDate || null, input.specificDates || null,
      input.notes || null, input.isActive, userId,
-     input.tripTitle || null, input.vehicleType || null, input.groupLeader || null,
+     input.tripTitle || null, input.vehicleType || null, (input as any).vehicleCount ?? null,
+     input.groupLeader || null,
      input.groupLeaderNo || null, input.nationality || null, input.agent || null,
      input.groupNo || null, input.noOfPax ?? null, input.nusukInfo || null,
+     (input as any).groups ? JSON.stringify((input as any).groups) : null,
      input.flights ? JSON.stringify(input.flights) : null,
      input.hotels ? JSON.stringify(input.hotels) : null]
   );
@@ -216,9 +221,10 @@ export async function updatePattern(tenantId: string, patternId: string, input: 
     endDate: 'end_date', specificDates: 'specific_dates',
     notes: 'notes', isActive: 'is_active',
     tripTitle: 'trip_title', vehicleType: 'vehicle_type',
+    vehicleCount: 'vehicle_count',
     groupLeader: 'group_leader', groupLeaderNo: 'group_leader_no',
     nationality: 'nationality', agent: 'agent', groupNo: 'group_no',
-    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info',
+    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info', groups: 'groups',
   };
   const fields: string[] = [];
   const params: any[] = [];
@@ -227,7 +233,7 @@ export async function updatePattern(tenantId: string, patternId: string, input: 
     if ((input as any)[key] !== undefined) {
       fields.push(`${col} = $${idx++}`);
       const val = (input as any)[key];
-      if (col === 'nusuk_info') params.push(val ? JSON.stringify(val) : null);
+      if (col === 'nusuk_info' || col === 'groups') params.push(val ? JSON.stringify(val) : null);
       else params.push(val);
     }
   }
@@ -353,16 +359,17 @@ export async function generateTrips(tenantId: string, userId: string | null, pat
     await query(
       `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type,
         scheduled_date, scheduled_start_time, scheduled_end_time, notes, created_by,
-        trip_title, vehicle_type, group_leader, group_leader_no, nationality,
-        agent, group_no, no_of_pax, nusuk_info, flights, hotels)
+        trip_title, vehicle_type, vehicle_count, group_leader, group_leader_no, nationality,
+        agent, group_no, no_of_pax, nusuk_info, groups, flights, hotels)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`,
+               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
       [tripId, tenantId, pattern.route_id, pattern.bus_id, pattern.driver_id,
        pattern.trip_type, dateStr, pattern.scheduled_start_time,
        pattern.scheduled_end_time, `Auto-generated from pattern ${patternId}`, userId,
-       pattern.trip_title, pattern.vehicle_type, pattern.group_leader,
+       pattern.trip_title, pattern.vehicle_type, pattern.vehicle_count,
+       pattern.group_leader,
        pattern.group_leader_no, pattern.nationality, pattern.agent,
-       pattern.group_no, pattern.no_of_pax, pattern.nusuk_info,
+       pattern.group_no, pattern.no_of_pax, pattern.nusuk_info, pattern.groups,
        pattern.flights, pattern.hotels]
     );
 

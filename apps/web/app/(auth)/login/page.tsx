@@ -3,10 +3,13 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { API_URL } from "@/services/api";
+import { homeFor } from "@/lib/access";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import { Eye, EyeOff, MapPin, Shield, Camera, BarChart3 } from "lucide-react";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
+  const { lang, t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -30,29 +33,18 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.message || "Login failed");
+        setError(data.message || t("auth.login.failed"));
         return;
       }
 
       localStorage.setItem("seum_user", JSON.stringify(data.data.user));
 
-      const role = data.data.user.roles?.[0];
-      const dashboardMap: Record<string, string> = {
-        super_admin: "/dashboard",
-        company_admin: "/dashboard/company",
-        operations_manager: "/dashboard/operations",
-        fleet_manager: "/dashboard/fleet",
-        monitoring_control: "/dashboard/monitoring",
-        hr_manager: "/dashboard/hr/employees",
-        finance_accountant: "/dashboard/accounts",
-        customer_service: "/dashboard/bookings",
-        maintenance_workshop: "/dashboard/maintenance",
-        driver: "/dashboard/schedules",
-        executive: "/dashboard/company",
-      };
-      window.location.href = dashboardMap[role] || "/dashboard/company";
+      // Land on the first page this user's capabilities allow (see @/lib/access):
+      // super admin → platform dashboard, company admin → company dashboard,
+      // operations manager → operations dashboard, driver → their schedule.
+      window.location.href = homeFor(data.data.user.capabilities || []);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      setError(t("auth.login.connectError"));
     } finally {
       setLoading(false);
     }
@@ -77,18 +69,18 @@ export default function LoginPage() {
             </div>
             <div className={styles.brandText}>
               <span className={styles.brandName}>SEUM</span>
-              <span className={styles.brandSub}>SMART TRANSPORTATION ERP</span>
+              <span className={styles.brandSub}>{t("auth.login.brandSub")}</span>
             </div>
           </div>
 
           {/* Headline */}
           <h1 className={styles.headline}>
-            Intelligent Transportation.<br />
-            <span className={styles.headlineAccent}>Connected Operations.</span>
+            {t("auth.login.headlineA")}<br />
+            <span className={styles.headlineAccent}>{t("auth.login.headlineB")}</span>
           </h1>
           <div className={styles.headlineBar} />
           <p className={styles.headlineDesc}>
-            Real-time visibility, AI safety monitoring, fleet intelligence and complete ERP control in one unified platform.
+            {t("auth.login.headlineDesc")}
           </p>
 
          
@@ -97,28 +89,28 @@ export default function LoginPage() {
           <div className={styles.features}>
             <div className={styles.featureCard}>
               <MapPin size={20} />
-              <span className={styles.featureTitle}>Live Tracking</span>
-              <span className={styles.featureDesc}>Real-time GPS Monitoring</span>
+              <span className={styles.featureTitle}>{t("auth.login.featTrack")}</span>
+              <span className={styles.featureDesc}>{t("auth.login.featTrackDesc")}</span>
             </div>
             <div className={styles.featureCard}>
               <Shield size={20} />
-              <span className={styles.featureTitle}>AI Safety</span>
-              <span className={styles.featureDesc}>DMS, ADAS & Smart Alerts</span>
+              <span className={styles.featureTitle}>{t("auth.login.featSafety")}</span>
+              <span className={styles.featureDesc}>{t("auth.login.featSafetyDesc")}</span>
             </div>
             <div className={styles.featureCard}>
               <Camera size={20} />
-              <span className={styles.featureTitle}>CCTV Monitoring</span>
-              <span className={styles.featureDesc}>Live View & Video Playback</span>
+              <span className={styles.featureTitle}>{t("auth.login.featCctv")}</span>
+              <span className={styles.featureDesc}>{t("auth.login.featCctvDesc")}</span>
             </div>
             <div className={styles.featureCard}>
               <BarChart3 size={20} />
-              <span className={styles.featureTitle}>Smart Analytics</span>
-              <span className={styles.featureDesc}>Powerful Reports & KPIs</span>
+              <span className={styles.featureTitle}>{t("auth.login.featAnalytics")}</span>
+              <span className={styles.featureDesc}>{t("auth.login.featAnalyticsDesc")}</span>
             </div>
           </div>
 
           {/* Footer */}
-          <p className={styles.leftFooter}>© 2025 SEUM Technology. All rights reserved.</p>
+          <p className={styles.leftFooter}>{t("auth.login.leftFooter")}</p>
         </div>
       </div>
 
@@ -131,7 +123,7 @@ export default function LoginPage() {
             <line x1="2" y1="12" x2="22" y2="12" />
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
           </svg>
-          <span>English</span>
+          <span>{t("auth.login.english")}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -151,12 +143,12 @@ export default function LoginPage() {
             </svg>
           </div>
 
-          <h2 className={styles.formTitle}>Welcome Back</h2>
-          <p className={styles.formSubtitle}>Sign in to your SEUM account</p>
+          <h2 className={styles.formTitle}>{t("auth.login.title")}</h2>
+          <p className={styles.formSubtitle}>{t("auth.signInSubtitle")}</p>
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
             <div className={styles.field}>
-              <label htmlFor="email" className={styles.label}>Email Address</label>
+              <label htmlFor="email" className={styles.label}>{t("auth.login.emailLabel")}</label>
               <div className={styles.inputWrap}>
                 <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -177,7 +169,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="password" className={styles.label}>Password</label>
+              <label htmlFor="password" className={styles.label}>{t("auth.password")}</label>
               <div className={styles.inputWrap}>
                 <svg className={styles.inputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -205,7 +197,7 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.forgotRow}>
-              <Link href="/forgot-password" className={styles.forgotLink}>Forgot Password?</Link>
+              <Link href="/forgot-password" className={styles.forgotLink}>{t("auth.login.forgot")}</Link>
             </div>
 
             <label className={styles.checkbox}>
@@ -216,7 +208,7 @@ export default function LoginPage() {
                 className={styles.checkboxInput}
               />
               <span className={styles.checkboxCustom} />
-              <span className={styles.checkboxLabel}>Remember me</span>
+              <span className={styles.checkboxLabel}>{t("auth.login.remember")}</span>
             </label>
 
             {error && (
@@ -240,13 +232,13 @@ export default function LoginPage() {
                   <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
               )}
-              {loading ? "Signing in…" : "Sign In"}
+              {loading ? t("auth.login.signingIn") : t("auth.signIn")}
             </button>
           </form>
 
           {/* Divider */}
           <div className={styles.divider}>
-            <span>or continue with</span>
+            <span>{t("auth.login.orContinue")}</span>
           </div>
 
           {/* Social Login */}
@@ -273,7 +265,7 @@ export default function LoginPage() {
           </div>
 
           <p className={styles.signupText}>
-            New to SEUM? <a href="#" className={styles.signupLink}>Contact Your Administrator</a>
+            {t("auth.login.newToSeum")}<a href="#" className={styles.signupLink}>{t("auth.login.contactAdmin")}</a>
           </p>
         </div>
       </div>

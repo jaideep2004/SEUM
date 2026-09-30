@@ -4,9 +4,11 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Mail, ArrowLeft, CheckCircle, AlertCircle, Bus } from "lucide-react";
 import { API_URL } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 export default function ForgotPasswordPage() {
+  const { lang, t } = useLanguage();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -27,13 +29,13 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.message || "Request failed");
+        setError(data.message || t("auth.forgot.failed"));
         return;
       }
 
       setSent(true);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      setError(t("auth.login.connectError"));
     } finally {
       setLoading(false);
     }
@@ -49,10 +51,10 @@ export default function ForgotPasswordPage() {
             </div>
             <span className={styles.logoText}>SEUM</span>
           </div>
-          <div className={styles.brandText}>Intelligent Transportation</div>
-          <h1 className={styles.headline}>Forgot your password?</h1>
+          <div className={styles.brandText}>{t("auth.forgot.brand")}</div>
+          <h1 className={styles.headline}>{t("auth.forgot.headline")}</h1>
           <p className={styles.subhead}>
-            No worries. Enter your email and we&apos;ll send you a reset link.
+            {t("auth.forgot.subhead")}
           </p>
         </div>
       </div>
@@ -68,24 +70,23 @@ export default function ForgotPasswordPage() {
 
           {sent ? (
             <>
-              <div className={styles.cardTitle}>Check your email</div>
+              <div className={styles.cardTitle}>{t("auth.forgot.checkEmail")}</div>
               <div className={styles.successBox}>
                 <CheckCircle size={20} />
                 <div className={styles.successText}>
-                  If an account exists with <strong>{email}</strong>, we&apos;ve sent a password
-                  reset link. Please check your inbox and spam folder.
+                  {t("auth.forgot.sentA")}<strong>{email}</strong>{t("auth.forgot.sentB")}
                 </div>
               </div>
               <Link href="/login" className={styles.backLink}>
                 <ArrowLeft size={14} />
-                Back to login
+                {t("auth.forgot.backLogin")}
               </Link>
             </>
           ) : (
             <>
-              <div className={styles.cardTitle}>Reset password</div>
+              <div className={styles.cardTitle}>{t("auth.forgot.resetTitle")}</div>
               <div className={styles.cardDesc}>
-                Enter the email address associated with your account.
+                {t("auth.forgot.cardDesc")}
               </div>
 
               {error && (
@@ -97,12 +98,12 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit}>
                 <div className={styles.field}>
-                  <label className={styles.label}>Email Address</label>
+                  <label className={styles.label}>{t("auth.login.emailLabel")}</label>
                   <div className={styles.inputWrapper}>
                     <input
                       className={styles.input}
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t("auth.forgot.emailPh")}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -116,13 +117,13 @@ export default function ForgotPasswordPage() {
                   ) : (
                     <Mail size={16} />
                   )}
-                  {loading ? "Sending..." : "Send Reset Link"}
+                  {loading ? t("auth.forgot.sending") : t("auth.forgot.sendLink")}
                 </button>
               </form>
 
               <Link href="/login" className={styles.backLink}>
                 <ArrowLeft size={14} />
-                Back to login
+                {t("auth.forgot.backLogin")}
               </Link>
             </>
           )}

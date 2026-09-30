@@ -139,6 +139,35 @@
   gap: 2px;
 }
 
+/* Capability-driven nav groups (see @/lib/access) */
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.navSection:first-child {
+  margin-top: 4px;
+}
+
+.navSectionLabel {
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-sidebar-text);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.sidebarCollapsed .navSectionLabel {
+  opacity: 0;
+  height: 8px;
+  padding: 0;
+}
+
 .navItem {
   display: flex;
   align-items: center;
@@ -748,6 +777,59 @@
   .langBtn,
   .headerUserInfo {
     display: none;
+  }
+}
+
+/* ─── RTL (Arabic) — mirrors the shell when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .sidebar {
+  left: auto;
+  right: 0;
+}
+:global([dir="rtl"]) .mainArea {
+  margin-left: 0;
+  margin-right: 260px;
+}
+:global([dir="rtl"]) .sidebarCollapsed ~ .mainArea {
+  margin-right: 0;
+}
+:global([dir="rtl"]) .sidebarCollapsed > * {
+  transform: translateX(16px);
+}
+:global([dir="rtl"]) .navItemActive::before {
+  left: auto;
+  right: -12px;
+  border-radius: 3px 0 0 3px;
+}
+:global([dir="rtl"]) .navCheck,
+:global([dir="rtl"]) .navBadge {
+  margin-left: 0;
+  margin-right: auto;
+}
+:global([dir="rtl"]) .notifDot {
+  right: auto;
+  left: 5px;
+}
+:global([dir="rtl"]) .notifDropdown,
+:global([dir="rtl"]) .profileDropdown {
+  right: auto;
+  left: 0;
+}
+:global([dir="rtl"]) .companySwitcher,
+:global([dir="rtl"]) .navSectionLabel {
+  text-align: right;
+}
+:global([dir="rtl"]) .collapseBtn svg {
+  transform: scaleX(-1);
+}
+@media (max-width: 768px) {
+  :global([dir="rtl"]) .mainArea {
+    margin-right: 0;
+  }
+  :global([dir="rtl"]) .sidebar {
+    transform: translateX(100%);
+  }
+  :global([dir="rtl"]) .sidebar:not(.sidebarCollapsed) {
+    transform: translateX(0);
   }
 }
 

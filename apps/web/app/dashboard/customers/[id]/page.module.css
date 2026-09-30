@@ -405,3 +405,13 @@
   .profileCard { flex-direction: column; }
   .formRow { grid-template-columns: 1fr; }
 }
+
+/* ─── RTL (Arabic) — mirrors physical left/right when <html dir="rtl"> ─── */
+:global([dir="rtl"]) .table th {
+  text-align: right;
+}
+:global([dir="rtl"]) .notes {
+  border-left: none;
+  border-right: 3px solid var(--color-primary, #1d4ed8);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}

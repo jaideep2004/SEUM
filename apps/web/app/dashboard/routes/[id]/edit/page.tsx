@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -10,9 +11,24 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 const ROUTE_TYPES = ["regular", "hajj", "umrah", "charter", "shuttle"] as const;
 const STATUS_OPTIONS = ["active", "inactive", "discontinued"] as const;
 
+const ROUTE_TYPE_KEYS: Record<string, string> = {
+  regular: "routes.edit.typeRegular",
+  hajj: "routes.edit.typeHajj",
+  umrah: "routes.edit.typeUmrah",
+  charter: "routes.edit.typeCharter",
+  shuttle: "routes.edit.typeShuttle",
+};
+
+const STATUS_KEYS: Record<string, string> = {
+  active: "routes.edit.stActive",
+  inactive: "routes.edit.stInactive",
+  discontinued: "routes.edit.stDiscontinued",
+};
+
 export default function EditRoutePage() {
   const { id } = useParams();
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [form, setForm] = useState({
     name: "",
     code: "",
@@ -86,10 +102,10 @@ export default function EditRoutePage() {
       if (json.success) {
         router.push(`/dashboard/routes/${id}`);
       } else {
-        setError(json.error?.message || "Failed to update route");
+        setError(json.error?.message || t("routes.edit.failedUpdate"));
       }
     } catch {
-      setError("Network error");
+      setError(t("routes.edit.networkError"));
     } finally {
       setSaving(false);
     }
@@ -98,7 +114,7 @@ export default function EditRoutePage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.loadingState}><div className={styles.spinner} /> Loading...</div>
+        <div className={styles.loadingState}><div className={styles.spinner} /> {t("common.loading")}</div>
       </div>
     );
   }
@@ -106,60 +122,60 @@ export default function EditRoutePage() {
   return (
     <div className={styles.page}>
       <button className={styles.backBtn} onClick={() => router.push(`/dashboard/routes/${id}`)}>
-        <ArrowLeft size={14} /> Back
+        <ArrowLeft size={14} /> {t("routes.edit.back")}
       </button>
 
-      <h1 className={styles.pageTitle}>Edit Route</h1>
+      <h1 className={styles.pageTitle}>{t("routes.edit.title")}</h1>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.formGrid}>
           <div className={styles.field}>
-            <label>Route Name</label>
+            <label>{t("routes.edit.nameLabel")}</label>
             <input value={form.name} onChange={(e) => update("name", e.target.value)} required />
           </div>
           <div className={styles.field}>
-            <label>Route Code</label>
+            <label>{t("routes.edit.codeLabel")}</label>
             <input value={form.code} onChange={(e) => update("code", e.target.value)} required />
           </div>
           <div className={styles.field}>
-            <label>Origin</label>
+            <label>{t("routes.edit.originLabel")}</label>
             <input value={form.origin} onChange={(e) => update("origin", e.target.value)} required />
           </div>
           <div className={styles.field}>
-            <label>Destination</label>
+            <label>{t("routes.edit.destLabel")}</label>
             <input value={form.destination} onChange={(e) => update("destination", e.target.value)} required />
           </div>
           <div className={styles.field}>
-            <label>Distance (km)</label>
+            <label>{t("routes.edit.distLabel")}</label>
             <input type="number" value={form.distanceKm} onChange={(e) => update("distanceKm", e.target.value)} min={0} step="0.1" />
           </div>
           <div className={styles.field}>
-            <label>Duration (min)</label>
+            <label>{t("routes.edit.durLabel")}</label>
             <input type="number" value={form.estimatedDurationMinutes} onChange={(e) => update("estimatedDurationMinutes", e.target.value)} min={1} />
           </div>
           <div className={styles.field}>
-            <label>Route Type</label>
+            <label>{t("routes.edit.typeLabel")}</label>
             <select value={form.routeType} onChange={(e) => update("routeType", e.target.value)}>
-              {ROUTE_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+              {ROUTE_TYPES.map((rt) => <option key={rt} value={rt}>{ROUTE_TYPE_KEYS[rt] ? t(ROUTE_TYPE_KEYS[rt]) : rt}</option>)}
             </select>
           </div>
           <div className={styles.field}>
-            <label>Status</label>
+            <label>{t("routes.edit.statusLabel")}</label>
             <select value={form.status} onChange={(e) => update("status", e.target.value)}>
-              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_KEYS[s] ? t(STATUS_KEYS[s]) : s}</option>)}
             </select>
           </div>
         </div>
         <div className={styles.field}>
-          <label>Description</label>
+          <label>{t("routes.edit.descLabel")}</label>
           <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} />
         </div>
 
         <div className={styles.buttonRow}>
-          <button type="button" className={styles.cancelBtn} onClick={() => router.push(`/dashboard/routes/${id}`)}>Cancel</button>
-          <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
+          <button type="button" className={styles.cancelBtn} onClick={() => router.push(`/dashboard/routes/${id}`)}>{t("common.cancel")}</button>
+          <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? t("routes.edit.saving") : t("routes.edit.saveChanges")}</button>
         </div>
       </form>
     </div>

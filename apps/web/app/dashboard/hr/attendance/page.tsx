@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Clock, LogOut, CalendarDays, Users, Search } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -13,8 +14,12 @@ const STATUS_COLORS: Record<string, string> = {
   on_leave: "#6366f1",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  present: "Present", absent: "Absent", late: "Late", half_day: "Half Day", on_leave: "On Leave",
+const STATUS_KEYS: Record<string, string> = {
+  present: "hr.attendance.stPresent",
+  absent: "hr.attendance.stAbsent",
+  late: "hr.attendance.stLate",
+  half_day: "hr.attendance.stHalfDay",
+  on_leave: "hr.attendance.stOnLeave",
 };
 
 function getToken() {
@@ -23,6 +28,8 @@ function getToken() {
 }
 
 export default function EmployeeAttendancePage() {
+  const { lang, t } = useLanguage();
+  void formatCurrency;
   const today = new Date().toISOString().slice(0, 10);
   const [roster, setRoster] = useState<any[]>([]);
   const [todayRecords, setTodayRecords] = useState<any[]>([]);
@@ -111,54 +118,54 @@ export default function EmployeeAttendancePage() {
   const notCheckedIn = mergedRoster.filter((e: any) => !e.todayRecord?.checkInTime).length;
 
   const fmtTime = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—";
+    iso ? new Date(iso).toLocaleTimeString(lang === "ar" ? "ar-SA-u-nu-latn" : "en-US", { hour: "2-digit", minute: "2-digit" }) : "—";
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.pageTitle}>Employee Attendance</h1>
-          <p className={styles.pageDesc}>Check-in/out interface, daily roster, and monthly summary</p>
+          <h1 className={styles.pageTitle}>{t("hr.attendance.title")}</h1>
+          <p className={styles.pageDesc}>{t("hr.attendance.desc")}</p>
         </div>
       </div>
 
       {/* ─── Today: Check-in/out interface ─── */}
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}><Clock size={14} /> Today ({new Date(today).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })})</h2>
+          <h2 className={styles.sectionTitle}><Clock size={14} /> {t("common.today")} ({formatDate(today, lang)})</h2>
         </div>
         <div className={styles.summaryCards}>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue}>{mergedRoster.length}</div>
-            <div className={styles.summaryLabel}>Active Employees</div>
+            <div className={styles.summaryValue}>{formatNumber(mergedRoster.length, lang)}</div>
+            <div className={styles.summaryLabel}>{t("hr.attendance.sumActive")}</div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue} style={{ color: "#059669" }}>{checkedInCount}</div>
-            <div className={styles.summaryLabel}>Checked In</div>
+            <div className={styles.summaryValue} style={{ color: "#059669" }}>{formatNumber(checkedInCount, lang)}</div>
+            <div className={styles.summaryLabel}>{t("hr.attendance.sumCheckedIn")}</div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue} style={{ color: "#d97706" }}>{lateCount}</div>
-            <div className={styles.summaryLabel}>Late</div>
+            <div className={styles.summaryValue} style={{ color: "#d97706" }}>{formatNumber(lateCount, lang)}</div>
+            <div className={styles.summaryLabel}>{t("hr.attendance.sumLate")}</div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue} style={{ color: "#6b7280" }}>{notCheckedIn}</div>
-            <div className={styles.summaryLabel}>Not Checked In</div>
+            <div className={styles.summaryValue} style={{ color: "#6b7280" }}>{formatNumber(notCheckedIn, lang)}</div>
+            <div className={styles.summaryLabel}>{t("hr.attendance.sumNotIn")}</div>
           </div>
         </div>
 
         {mergedRoster.length === 0 ? (
-          <div className={styles.emptyState}><Users size={32} style={{ opacity: 0.3 }} /><p>No active employees yet — add employees to enable check-in/out.</p></div>
+          <div className={styles.emptyState}><Users size={32} style={{ opacity: 0.3 }} /><p>{t("hr.attendance.emptyNoEmp")}</p></div>
         ) : (
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Status</th>
-                  <th>Check In</th>
-                  <th>Check Out</th>
-                  <th>Actions</th>
+                  <th>{t("hr.attendance.colEmployee")}</th>
+                  <th>{t("hr.attendance.colDepartment")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("hr.attendance.colCheckIn")}</th>
+                  <th>{t("hr.attendance.colCheckOut")}</th>
+                  <th>{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,7 +175,7 @@ export default function EmployeeAttendancePage() {
                       <div className={styles.personCell}>
                         <div className={styles.avatar}>{e.name?.charAt(0).toUpperCase() || "?"}</div>
                         <div className={styles.personInfo}>
-                          <span className={styles.personName}>{e.name || "Unknown"}</span>
+                          <span className={styles.personName}>{e.name || t("hr.common.unknown")}</span>
                           <span className={styles.personCode}>{e.employeeCode || e.id.slice(0, 8)}</span>
                         </div>
                       </div>
@@ -177,7 +184,7 @@ export default function EmployeeAttendancePage() {
                     <td>
                       {e.todayRecord ? (
                         <span className={styles.statusBadge} style={{ background: (STATUS_COLORS[e.todayRecord.status] || "#6b7280") + "20", color: STATUS_COLORS[e.todayRecord.status] || "#6b7280" }}>
-                          {STATUS_LABELS[e.todayRecord.status] || e.todayRecord.status}
+                          {t(STATUS_KEYS[e.todayRecord.status] || e.todayRecord.status)}
                         </span>
                       ) : (
                         <span className={styles.notRecorded}>—</span>
@@ -193,7 +200,7 @@ export default function EmployeeAttendancePage() {
                             onClick={() => handleCheckIn(e.id)}
                             disabled={actionLoading === e.id}
                           >
-                            <Clock size={12} /> In
+                            <Clock size={12} /> {t("hr.attendance.btnIn")}
                           </button>
                         )}
                         {e.todayRecord?.checkInTime && !e.todayRecord?.checkOutTime && (
@@ -202,7 +209,7 @@ export default function EmployeeAttendancePage() {
                             onClick={() => handleCheckOut(e.id)}
                             disabled={actionLoading === e.id}
                           >
-                            <LogOut size={12} /> Out
+                            <LogOut size={12} /> {t("hr.attendance.btnOut")}
                           </button>
                         )}
                       </div>
@@ -219,36 +226,36 @@ export default function EmployeeAttendancePage() {
       {monthlySummary && (
         <div className={styles.sectionCard}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}><CalendarDays size={14} /> Monthly Summary — {new Date(monthlySummary.year, monthlySummary.month - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</h2>
+            <h2 className={styles.sectionTitle}><CalendarDays size={14} /> {t("hr.attendance.monthlySummary")} — {formatDate(new Date(monthlySummary.year, monthlySummary.month - 1, 1), lang)}</h2>
           </div>
           <div className={styles.summaryCards}>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue}>{monthlySummary.totalEmployees}</div>
-              <div className={styles.summaryLabel}>Active Employees</div>
+              <div className={styles.summaryValue}>{formatNumber(monthlySummary.totalEmployees, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumActive")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ color: "#059669" }}>{monthlySummary.present}</div>
-              <div className={styles.summaryLabel}>Present</div>
+              <div className={styles.summaryValue} style={{ color: "#059669" }}>{formatNumber(monthlySummary.present, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumPresent")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ color: "#dc2626" }}>{monthlySummary.absent}</div>
-              <div className={styles.summaryLabel}>Absent</div>
+              <div className={styles.summaryValue} style={{ color: "#dc2626" }}>{formatNumber(monthlySummary.absent, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumAbsent")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ color: "#d97706" }}>{monthlySummary.late}</div>
-              <div className={styles.summaryLabel}>Late</div>
+              <div className={styles.summaryValue} style={{ color: "#d97706" }}>{formatNumber(monthlySummary.late, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumLate")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ color: "#f59e0b" }}>{monthlySummary.halfDay}</div>
-              <div className={styles.summaryLabel}>Half Day</div>
+              <div className={styles.summaryValue} style={{ color: "#f59e0b" }}>{formatNumber(monthlySummary.halfDay, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumHalfDay")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue} style={{ color: "#6366f1" }}>{monthlySummary.onLeave}</div>
-              <div className={styles.summaryLabel}>On Leave</div>
+              <div className={styles.summaryValue} style={{ color: "#6366f1" }}>{formatNumber(monthlySummary.onLeave, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumOnLeave")}</div>
             </div>
             <div className={styles.summaryCard}>
-              <div className={styles.summaryValue}>{monthlySummary.totalRecords}</div>
-              <div className={styles.summaryLabel}>Total Records</div>
+              <div className={styles.summaryValue}>{formatNumber(monthlySummary.totalRecords, lang)}</div>
+              <div className={styles.summaryLabel}>{t("hr.attendance.sumTotalRecords")}</div>
             </div>
           </div>
         </div>
@@ -257,73 +264,73 @@ export default function EmployeeAttendancePage() {
       {/* ─── Records table with filters ─── */}
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Records</h2>
+          <h2 className={styles.sectionTitle}>{t("hr.attendance.secRecords")}</h2>
         </div>
         <div className={styles.filters}>
           <div className={styles.filterItem}>
-            <label>Employee</label>
+            <label>{t("hr.attendance.fEmployee")}</label>
             <select value={employeeFilter} onChange={(e) => setEmployeeFilter(e.target.value)}>
-              <option value="">All Employees</option>
-              {roster.map((e: any) => <option key={e.id} value={e.id}>{e.name} ({e.employeeCode || "no code"})</option>)}
+              <option value="">{t("hr.attendance.allEmployees")}</option>
+              {roster.map((e: any) => <option key={e.id} value={e.id}>{e.name} ({e.employeeCode || t("hr.common.noCode")})</option>)}
             </select>
           </div>
           <div className={styles.filterItem}>
-            <label>Status</label>
+            <label>{t("hr.attendance.fStatus")}</label>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="">All Status</option>
-              {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              <option value="">{t("hr.attendance.allStatus")}</option>
+              {Object.entries(STATUS_KEYS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
             </select>
           </div>
           <div className={styles.filterItem}>
-            <label>From</label>
+            <label>{t("hr.attendance.fFrom")}</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div className={styles.filterItem}>
-            <label>To</label>
+            <label>{t("hr.attendance.fTo")}</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </div>
         </div>
 
         {loading ? (
-          <div className={styles.loading}>Loading records...</div>
+          <div className={styles.loading}>{t("hr.attendance.loading")}</div>
         ) : records.length === 0 ? (
           <div className={styles.emptyState}>
             <Search size={32} style={{ opacity: 0.3 }} />
-            <p>No attendance records for the selected filters</p>
+            <p>{t("hr.attendance.empty")}</p>
           </div>
         ) : (
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Status</th>
-                  <th>Check In</th>
-                  <th>Check Out</th>
-                  <th>Late (min)</th>
+                  <th>{t("hr.attendance.colDate")}</th>
+                  <th>{t("hr.attendance.colEmployee")}</th>
+                  <th>{t("hr.attendance.colDepartment")}</th>
+                  <th>{t("common.status")}</th>
+                  <th>{t("hr.attendance.colCheckIn")}</th>
+                  <th>{t("hr.attendance.colCheckOut")}</th>
+                  <th>{t("hr.attendance.colLateMin")}</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((r: any) => (
                   <tr key={r.id}>
-                    <td className={styles.dateCell}>{new Date(r.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                    <td className={styles.dateCell}>{formatDate(r.date, lang)}</td>
                     <td>
                       <div className={styles.personInfo}>
-                        <span className={styles.personName}>{r.employee?.name || "Unknown"}</span>
+                        <span className={styles.personName}>{r.employee?.name || t("hr.common.unknown")}</span>
                         <span className={styles.personCode}>{r.employee?.employeeCode || r.employeeId.slice(0, 8)}</span>
                       </div>
                     </td>
                     <td className={styles.deptCell}>{r.employee?.department?.replace("_", " ") || "—"}</td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: (STATUS_COLORS[r.status] || "#6b7280") + "20", color: STATUS_COLORS[r.status] || "#6b7280" }}>
-                        {STATUS_LABELS[r.status] || r.status}
+                        {t(STATUS_KEYS[r.status] || r.status)}
                       </span>
                     </td>
                     <td className={styles.timeCell}>{fmtTime(r.checkInTime)}</td>
                     <td className={styles.timeCell}>{fmtTime(r.checkOutTime)}</td>
-                    <td>{r.lateMinutes || 0}</td>
+                    <td>{formatNumber(r.lateMinutes || 0, lang)}</td>
                   </tr>
                 ))}
               </tbody>

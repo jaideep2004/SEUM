@@ -15,6 +15,7 @@ import {
 import DonutChart from "@/components/dashboard/DonutChart";
 import Sparkline from "@/components/dashboard/Sparkline";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency, localeOf } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface Tenant {
@@ -43,18 +44,19 @@ interface Plan {
   priceMonthly: number;
 }
 
-const ROLE_LABELS: { role: string; label: string }[] = [
-  { role: "company_admin", label: "Company Admins" },
-  { role: "operations_manager", label: "Operations" },
-  { role: "fleet_manager", label: "Fleet Managers" },
-  { role: "hr_manager", label: "HR Managers" },
-  { role: "finance_accountant", label: "Finance" },
-  { role: "driver", label: "Drivers" },
+const ROLE_LABELS: { role: string; key: string }[] = [
+  { role: "company_admin", key: "home.platform.roleCompanyAdmin" },
+  { role: "operations_manager", key: "home.platform.roleOperations" },
+  { role: "fleet_manager", key: "home.platform.roleFleet" },
+  { role: "hr_manager", key: "home.platform.roleHr" },
+  { role: "finance_accountant", key: "home.platform.roleFinance" },
+  { role: "driver", key: "home.platform.roleDriver" },
 ];
 
 const dateOnly = (iso: string) => iso?.slice(0, 10) ?? "";
 
 export default function SuperAdminDashboard() {
+  const { lang, t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [userTotal, setUserTotal] = useState(0);
@@ -101,10 +103,10 @@ export default function SuperAdminDashboard() {
     const months: { key: string; label: string; count: number }[] = [];
     for (let i = 7; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleString("en", { month: "short" }), count: 0 });
+      months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleString(localeOf(lang), { month: "short" }), count: 0 });
     }
-    for (const t of tenants) {
-      const key = dateOnly(t.createdAt)?.slice(0, 7);
+    for (const tn of tenants) {
+      const key = dateOnly(tn.createdAt)?.slice(0, 7);
       const bucket = months.find((m) => m.key === key);
       if (bucket) bucket.count++;
     }
@@ -116,7 +118,7 @@ export default function SuperAdminDashboard() {
     const now = new Date();
     for (let i = 13; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      days.push({ date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, label: d.toLocaleString("en", { day: "numeric", month: "short" }), count: 0 });
+      days.push({ date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, label: d.toLocaleString(localeOf(lang), { day: "numeric", month: "short" }), count: 0 });
     }
     for (const a of audit) {
       const day = days.find((d) => d.date === dateOnly(a.createdAt));
@@ -128,9 +130,9 @@ export default function SuperAdminDashboard() {
   const actMax = Math.max(...auditDaily.map((d) => d.count), 1);
   const kpiCards = [
     {
-      label: "Total Companies",
-      value: String(tenants.length),
-      change: `${activeSubs} active`,
+      label: t("home.platform.totalCompanies"),
+      value: formatNumber(tenants.length, lang),
+      change: `${formatNumber(activeSubs, lang)} ${t("home.platform.activeSuffix")}`,
       trend: "up" as const,
       icon: Building2,
       color: "#2563eb",
@@ -138,9 +140,9 @@ export default function SuperAdminDashboard() {
       sparkData: signupsByMonth.map((m) => m.count),
     },
     {
-      label: "Platform Users",
-      value: String(userTotal),
-      change: `across ${tenants.length} companies`,
+      label: t("home.platform.platformUsers"),
+      value: formatNumber(userTotal, lang),
+      change: `${t("home.platform.acrossA")}${formatNumber(tenants.length, lang)}${t("home.platform.acrossB")}`,
       trend: "up" as const,
       icon: Users,
       color: "#10b981",
@@ -148,9 +150,9 @@ export default function SuperAdminDashboard() {
       sparkData: auditDaily.map((d) => d.count),
     },
     {
-      label: "Active Subscriptions",
-      value: String(activeSubs),
-      change: tenants.length > 0 ? `${Math.round((activeSubs / tenants.length) * 100)}% of total` : "no companies yet",
+      label: t("home.platform.activeSubs"),
+      value: formatNumber(activeSubs, lang),
+      change: tenants.length > 0 ? `${Math.round((activeSubs / tenants.length) * 100)}% ${t("home.platform.ofTotal")}` : t("home.platform.noCompaniesYet"),
       trend: "up" as const,
       icon: Activity,
       color: "#6366f1",
@@ -158,9 +160,9 @@ export default function SuperAdminDashboard() {
       sparkData: signupsByMonth.map((m) => m.count),
     },
     {
-      label: "Recent Actions",
-      value: String(auditTotal),
-      change: `logged activity`,
+      label: t("home.platform.recentActions"),
+      value: formatNumber(auditTotal, lang),
+      change: t("home.platform.loggedActivity"),
       trend: "up" as const,
       icon: BarChart3,
       color: "#f59e0b",
@@ -171,8 +173,8 @@ export default function SuperAdminDashboard() {
 
   const tierCounts = (() => {
     const map: Record<string, number> = {};
-    for (const t of tenants) {
-      const tier = t.subscriptionTier || "Unassigned";
+    for (const tenant of tenants) {
+      const tier = tenant.subscriptionTier || t("home.platform.unassigned");
       map[tier] = (map[tier] || 0) + 1;
     }
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
@@ -181,9 +183,9 @@ export default function SuperAdminDashboard() {
 
   const billingCounts = (() => {
     const m = { Monthly: 0, Yearly: 0, "Not Set": 0 };
-    for (const t of tenants) {
-      if (t.billingCycle === "monthly") m.Monthly++;
-      else if (t.billingCycle === "yearly") m.Yearly++;
+    for (const tenant of tenants) {
+      if (tenant.billingCycle === "monthly") m.Monthly++;
+      else if (tenant.billingCycle === "yearly") m.Yearly++;
       else m["Not Set"]++;
     }
     return m;
@@ -195,13 +197,13 @@ export default function SuperAdminDashboard() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Super Admin Dashboard</h1>
-          <p className={styles.pageDesc}>Overview of SEUM Platform</p>
+          <h1 className={styles.pageTitle}>{t("home.platform.title")}</h1>
+          <p className={styles.pageDesc}>{t("home.platform.desc")}</p>
         </div>
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading platform overview...</div>
+        <div className={styles.loading}>{t("home.platform.loading")}</div>
       ) : (
         <>
           <div className={styles.kpiGrid4}>
@@ -227,10 +229,10 @@ export default function SuperAdminDashboard() {
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <div>
-                  <h2 className={styles.cardTitle}>Platform Activity</h2>
-                  <p className={styles.cardSubtext}>Actions logged per day · last 14 days</p>
+                  <h2 className={styles.cardTitle}>{t("home.platform.activity")}</h2>
+                  <p className={styles.cardSubtext}>{t("home.platform.activitySub")}</p>
                 </div>
-                <span className={styles.revenueValue}>{auditTotal.toLocaleString()}</span>
+                <span className={styles.revenueValue}>{formatNumber(auditTotal, lang)}</span>
               </div>
               <div className={styles.lineChartArea}>
                 {auditTotal > 0 ? (
@@ -268,37 +270,37 @@ export default function SuperAdminDashboard() {
                     ))}
                   </svg>
                 ) : (
-                  <div className={styles.cardSubtext} style={{ paddingTop: 56, textAlign: "center" }}>No activity logged yet</div>
+                  <div className={styles.cardSubtext} style={{ paddingTop: 56, textAlign: "center" }}>{t("home.platform.noActivity")}</div>
                 )}
               </div>
             </div>
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Subscriptions Overview</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.subsOverview")}</h2>
               </div>
               <div className={styles.donutCenter}>
                 <DonutChart
                   segments={[
-                    { label: "Active", value: activeSubs, color: "#2563eb" },
-                    { label: "Inactive", value: tenants.length - activeSubs, color: "#ef4444" },
+                    { label: t("home.platform.activeSeg"), value: activeSubs, color: "#2563eb" },
+                    { label: t("home.platform.inactiveSeg"), value: tenants.length - activeSubs, color: "#ef4444" },
                   ].filter((s) => s.value > 0)}
                   size={140}
                   thickness={18}
-                  centerValue={String(tenants.length)}
-                  centerLabel="Total"
+                  centerValue={formatNumber(tenants.length, lang)}
+                  centerLabel={t("home.platform.totalLabel")}
                 />
               </div>
               <div className={styles.donutLegend}>
                 <div className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: "#2563eb" }} />
-                  <span className={styles.legendLabel}>Active</span>
-                  <span className={styles.legendValue}>{activeSubs}</span>
+                  <span className={styles.legendLabel}>{t("home.platform.activeSeg")}</span>
+                  <span className={styles.legendValue}>{formatNumber(activeSubs, lang)}</span>
                 </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: "#ef4444" }} />
-                  <span className={styles.legendLabel}>Inactive</span>
-                  <span className={styles.legendValue}>{tenants.length - activeSubs}</span>
+                  <span className={styles.legendLabel}>{t("home.platform.inactiveSeg")}</span>
+                  <span className={styles.legendValue}>{formatNumber(tenants.length - activeSubs, lang)}</span>
                 </div>
               </div>
             </div>
@@ -307,33 +309,33 @@ export default function SuperAdminDashboard() {
           <div className={styles.grid2Col}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Recent Companies</h2>
-                <span className={styles.cardAction}>View All <ChevronRight size={14} /></span>
+                <h2 className={styles.cardTitle}>{t("home.platform.recentCompanies")}</h2>
+                <span className={styles.cardAction}>{t("home.platform.viewAll")}<ChevronRight size={14} /></span>
               </div>
               <div className={styles.companyList}>
-                {tenants.slice(0, 5).map((t) => (
-                  <div key={t.id} className={styles.companyRow}>
+                {tenants.slice(0, 5).map((tn) => (
+                  <div key={tn.id} className={styles.companyRow}>
                     <div className={styles.companyAvatar}>
                       <Building2 size={16} />
                     </div>
                     <div className={styles.companyInfo}>
-                      <span className={styles.companyName}>{t.name}</span>
-                      <span className={styles.companyMeta}>{t.subscriptionTier || "No tier"} · joined {dateOnly(t.createdAt)}</span>
+                      <span className={styles.companyName}>{tn.name}</span>
+                      <span className={styles.companyMeta}>{tn.subscriptionTier || t("home.platform.noTier")} · {t("home.platform.joinedW")} {formatDate(tn.createdAt, lang)}</span>
                     </div>
-                    <span className={`${styles.badge} ${t.isActive ? styles.badgeSuccess : styles.badgeWarning}`}>
-                      {t.isActive ? "Active" : "Inactive"}
+                    <span className={`${styles.badge} ${tn.isActive ? styles.badgeSuccess : styles.badgeWarning}`}>
+                      {tn.isActive ? t("home.platform.activeSeg") : t("home.platform.inactiveSeg")}
                     </span>
                   </div>
                 ))}
                 {tenants.length === 0 && (
-                  <div className={styles.cardSubtext} style={{ padding: 12 }}>No companies registered yet</div>
+                  <div className={styles.cardSubtext} style={{ padding: 12 }}>{t("home.platform.noCompaniesReg")}</div>
                 )}
               </div>
             </div>
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Tenants by Plan</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.tenantsByPlan")}</h2>
               </div>
               <div className={styles.moduleList}>
                 {tierCounts.map(([tier, count]) => (
@@ -342,11 +344,11 @@ export default function SuperAdminDashboard() {
                     <div className={styles.moduleBarWrap}>
                       <div className={styles.moduleBar} style={{ width: `${(count / maxTier) * 100}%` }} />
                     </div>
-                    <span className={styles.moduleValue}>{count}</span>
+                    <span className={styles.moduleValue}>{formatNumber(count, lang)}</span>
                   </div>
                 ))}
                 {tierCounts.length === 0 && (
-                  <div className={styles.cardSubtext} style={{ padding: 12 }}>No companies yet</div>
+                  <div className={styles.cardSubtext} style={{ padding: 12 }}>{t("home.platform.noCompanies")}</div>
                 )}
               </div>
             </div>
@@ -355,25 +357,25 @@ export default function SuperAdminDashboard() {
           <div className={styles.grid3Col}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Recent Activity</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.recentActivity")}</h2>
               </div>
               <div className={styles.healthList}>
                 {audit.slice(0, 5).map((a) => (
                   <div key={a.id} className={styles.healthRow}>
                     <CheckCircle2 size={16} style={{ color: "#10b981" }} />
                     <span className={styles.healthName}>{a.action} · {a.resource}</span>
-                    <span className={styles.healthStatus} style={{ color: "#64748b" }}>{a.actorName || "System"}</span>
+                    <span className={styles.healthStatus} style={{ color: "#64748b" }}>{a.actorName || t("admin.audit.system")}</span>
                   </div>
                 ))}
                 {audit.length === 0 && (
-                  <div className={styles.cardSubtext} style={{ padding: 12 }}>No activity yet</div>
+                  <div className={styles.cardSubtext} style={{ padding: 12 }}>{t("home.platform.noActivityYet")}</div>
                 )}
               </div>
             </div>
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Plan Limits</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.planLimits")}</h2>
               </div>
               <div className={styles.healthList}>
                 {plans.map((p) => (
@@ -381,37 +383,37 @@ export default function SuperAdminDashboard() {
                     <ShieldCheck size={16} style={{ color: "#6366f1" }} />
                     <span className={styles.healthName}>{p.name}</span>
                     <span className={styles.healthStatus} style={{ color: "#64748b" }}>
-                      {p.maxUsers} users · {p.maxVehicles} buses
+                      {formatNumber(p.maxUsers, lang)} {t("home.platform.usersW")} · {formatNumber(p.maxVehicles, lang)} {t("home.platform.busesW")}
                     </span>
                   </div>
                 ))}
                 {plans.length === 0 && (
-                  <div className={styles.cardSubtext} style={{ padding: 12 }}>No plans defined yet</div>
+                  <div className={styles.cardSubtext} style={{ padding: 12 }}>{t("home.platform.noPlans")}</div>
                 )}
               </div>
             </div>
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Recent Signups</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.recentSignups")}</h2>
               </div>
               <div className={styles.companyList}>
-                {tenants.slice(0, 5).map((t) => (
-                  <div key={t.id} className={styles.companyRow}>
+                {tenants.slice(0, 5).map((tn) => (
+                  <div key={tn.id} className={styles.companyRow}>
                     <div className={styles.companyAvatar}>
                       <CalendarClock size={16} />
                     </div>
                     <div className={styles.companyInfo}>
-                      <span className={styles.companyName}>{t.name}</span>
-                      <span className={styles.companyMeta}>{t.billingCycle === "monthly" ? "Monthly billing" : t.billingCycle === "yearly" ? "Yearly billing" : "Billing not set"}</span>
+                      <span className={styles.companyName}>{tn.name}</span>
+                      <span className={styles.companyMeta}>{tn.billingCycle === "monthly" ? t("home.platform.monthlyBilling") : tn.billingCycle === "yearly" ? t("home.platform.yearlyBilling") : t("home.platform.billingNotSet")}</span>
                     </div>
                     <span className={styles.badge} style={{ background: "var(--color-bg-subtle)", color: "var(--color-text-secondary)" }}>
-                      {dateOnly(t.createdAt)}
+                      {formatDate(tn.createdAt, lang)}
                     </span>
                   </div>
                 ))}
                 {tenants.length === 0 && (
-                  <div className={styles.cardSubtext} style={{ padding: 12 }}>No signups yet</div>
+                  <div className={styles.cardSubtext} style={{ padding: 12 }}>{t("home.platform.noSignups")}</div>
                 )}
               </div>
             </div>
@@ -420,45 +422,45 @@ export default function SuperAdminDashboard() {
           <div className={styles.grid3Col}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Billing Cycles</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.billingCycles")}</h2>
               </div>
               <div className={styles.donutCenter}>
                 <DonutChart
                   segments={[
-                    { label: "Monthly", value: billingCounts.Monthly, color: "#2563eb" },
-                    { label: "Yearly", value: billingCounts.Yearly, color: "#10b981" },
-                    { label: "Not Set", value: billingCounts["Not Set"], color: "#94a3b8" },
+                    { label: t("home.platform.monthly"), value: billingCounts.Monthly, color: "#2563eb" },
+                    { label: t("home.platform.yearly"), value: billingCounts.Yearly, color: "#10b981" },
+                    { label: t("home.platform.notSet"), value: billingCounts["Not Set"], color: "#94a3b8" },
                   ].filter((s) => s.value > 0)}
                   size={140}
                   thickness={18}
-                  centerValue={String(tenants.length)}
-                  centerLabel="Companies"
+                  centerValue={formatNumber(tenants.length, lang)}
+                  centerLabel={t("home.platform.companiesLabel")}
                 />
               </div>
               <div className={styles.donutLegend}>
                 <div className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: "#2563eb" }} />
-                  <span className={styles.legendLabel}>Monthly</span>
-                  <span className={styles.legendValue}>{billingCounts.Monthly}</span>
+                  <span className={styles.legendLabel}>{t("home.platform.monthly")}</span>
+                  <span className={styles.legendValue}>{formatNumber(billingCounts.Monthly, lang)}</span>
                 </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: "#10b981" }} />
-                  <span className={styles.legendLabel}>Yearly</span>
-                  <span className={styles.legendValue}>{billingCounts.Yearly}</span>
+                  <span className={styles.legendLabel}>{t("home.platform.yearly")}</span>
+                  <span className={styles.legendValue}>{formatNumber(billingCounts.Yearly, lang)}</span>
                 </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendDot} style={{ background: "#94a3b8" }} />
-                  <span className={styles.legendLabel}>Not Set</span>
-                  <span className={styles.legendValue}>{billingCounts["Not Set"]}</span>
+                  <span className={styles.legendLabel}>{t("home.platform.notSet")}</span>
+                  <span className={styles.legendValue}>{formatNumber(billingCounts["Not Set"], lang)}</span>
                 </div>
               </div>
             </div>
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>Online Companies</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.onlineCompanies")}</h2>
                 <span className={`${styles.badge} ${styles.badgeSuccess}`}>
-                  <Bus size={12} style={{ marginRight: 4 }} /> {activeSubs} online
+                  <Bus size={12} style={{ marginRight: 4 }} /> {formatNumber(activeSubs, lang)} {t("home.platform.onlineW")}
                 </span>
               </div>
               <div className={styles.worldMap}>
@@ -490,16 +492,16 @@ export default function SuperAdminDashboard() {
 
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>User Accounts by Role</h2>
+                <h2 className={styles.cardTitle}>{t("home.platform.usersByRole")}</h2>
               </div>
               <div className={styles.moduleList}>
-                {ROLE_LABELS.map(({ role, label }) => (
+                {ROLE_LABELS.map(({ role, key }) => (
                   <div key={role} className={styles.moduleRow}>
-                    <span className={styles.moduleName}>{label}</span>
+                    <span className={styles.moduleName}>{t(key)}</span>
                     <div className={styles.moduleBarWrap}>
                       <div className={styles.moduleBar} style={{ width: `${((roleCounts[role] || 0) / maxRole) * 100}%` }} />
                     </div>
-                    <span className={styles.moduleValue}>{roleCounts[role] || 0}</span>
+                    <span className={styles.moduleValue}>{formatNumber(roleCounts[role] || 0, lang)}</span>
                   </div>
                 ))}
               </div>
@@ -507,10 +509,10 @@ export default function SuperAdminDashboard() {
           </div>
 
           <footer className={styles.footer}>
-            <span>© 2025 SEUM Technology · v2.1.0</span>
+            <span>{t("home.platform.footer")}</span>
             <div className={styles.footerLinks}>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
+              <a href="#">{t("home.platform.privacy")}</a>
+              <a href="#">{t("home.platform.terms")}</a>
             </div>
           </footer>
         </>

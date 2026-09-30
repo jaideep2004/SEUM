@@ -101,3 +101,13 @@
 .modalConfirm { padding: 8px 16px; border: none; border-radius: var(--radius-sm); background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
 .modalConfirm:hover { filter: brightness(1.1); }
 .modalConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Live realtime feed */
+.connDot { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: var(--color-bg-subtle); color: var(--color-text-tertiary); border: 1px solid var(--color-border); }
+.connOn { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.feedList { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.feedItem { padding: 8px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 2px; }
+.feedGeofence { border-left: 3px solid #2563eb; background: #eff6ff; }
+.feedDelay { border-left: 3px solid #f59e0b; background: #fffbeb; }
+.feedTitle { font-size: 11px; font-weight: 600; color: var(--color-text); }
+.feedTime { font-size: 10px; color: var(--color-text-tertiary); }

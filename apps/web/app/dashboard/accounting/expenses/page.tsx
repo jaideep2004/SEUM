@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Plus, X, CheckCircle, DollarSign, Upload } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -10,10 +11,6 @@ function getToken() {
   return localStorage.getItem("seum_access_token");
 }
 
-function formatCurrency(v: number) {
-  return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 const CATEGORIES = ["fuel","maintenance","salary","tolls","parking","permits","insurance","utilities","office","other"];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -21,6 +18,30 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function ExpensesPage() {
+  const { lang, t } = useLanguage();
+  const money = (v: number) => formatCurrency(v, lang);
+  const CAT_LABELS: Record<string, string> = {
+    fuel: t("finance.expenses.catFuel"),
+    maintenance: t("finance.expenses.catMaintenance"),
+    salary: t("finance.expenses.catSalary"),
+    tolls: t("finance.expenses.catTolls"),
+    parking: t("finance.expenses.catParking"),
+    permits: t("finance.expenses.catPermits"),
+    insurance: t("finance.expenses.catInsurance"),
+    utilities: t("finance.expenses.catUtilities"),
+    office: t("finance.expenses.catOffice"),
+    other: t("finance.expenses.catOther"),
+  };
+  const STATUS_LABELS: Record<string, string> = {
+    pending: t("finance.expenses.statusPending"),
+    approved: t("finance.expenses.statusApproved"),
+    reimbursed: t("finance.expenses.statusReimbursed"),
+  };
+  const STATUS_CAP_LABELS: Record<string, string> = {
+    pending: t("finance.expenses.statusPendingCap"),
+    approved: t("finance.expenses.statusApprovedCap"),
+    reimbursed: t("finance.expenses.statusReimbursedCap"),
+  };
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState({ total: 0, page: 1, pageSize: 20 });
@@ -158,57 +179,57 @@ export default function ExpensesPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1>Expenses</h1>
+        <h1>{t("finance.expenses.title")}</h1>
         <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={openCreate}>
-          <Plus size={14} /> Record Expense
+          <Plus size={14} /> {t("finance.expenses.new")}
         </button>
       </div>
 
       <div className={styles.filters}>
         <select value={filters.expense_category} onChange={e => setFilters({ ...filters, expense_category: e.target.value })}>
-          <option value="">All Categories</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+          <option value="">{t("finance.expenses.allCategories")}</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
         </select>
         <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}>
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="reimbursed">Reimbursed</option>
+          <option value="">{t("finance.expenses.allStatuses")}</option>
+          <option value="pending">{STATUS_CAP_LABELS.pending}</option>
+          <option value="approved">{STATUS_CAP_LABELS.approved}</option>
+          <option value="reimbursed">{STATUS_CAP_LABELS.reimbursed}</option>
         </select>
         <input type="date" value={filters.start_date} onChange={e => setFilters({ ...filters, start_date: e.target.value })} />
         <input type="date" value={filters.end_date} onChange={e => setFilters({ ...filters, end_date: e.target.value })} />
-        <button className={styles.filterBtn} onClick={() => fetchExpenses()}>Apply</button>
+        <button className={styles.filterBtn} onClick={() => fetchExpenses()}>{t("finance.expenses.apply")}</button>
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading expenses...</div>
+        <div className={styles.loading}>{t("finance.expenses.loading")}</div>
       ) : expenses.length === 0 ? (
-        <div className={styles.loading}>No expenses found</div>
+        <div className={styles.loading}>{t("finance.expenses.empty")}</div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Bus</th>
-                <th>Driver</th>
-                <th>Status</th>
+                <th>{t("finance.expenses.colDate")}</th>
+                <th>{t("finance.expenses.colCategory")}</th>
+                <th>{t("finance.expenses.colDescription")}</th>
+                <th>{t("finance.expenses.colAmount")}</th>
+                <th>{t("finance.expenses.colBus")}</th>
+                <th>{t("finance.expenses.colDriver")}</th>
+                <th>{t("finance.expenses.colStatus")}</th>
               </tr>
             </thead>
             <tbody>
               {expenses.map(exp => (
                 <tr key={exp.id} onClick={() => openDetail(exp)}>
-                  <td>{exp.date}</td>
+                  <td>{formatDate(exp.date, lang)}</td>
                   <td><span className={styles.catBadge}>{exp.expenseCategory}</span></td>
                   <td>{exp.description || "—"}</td>
-                  <td style={{ fontWeight: 600 }}>{formatCurrency(exp.amount)}</td>
+                  <td style={{ fontWeight: 600 }}>{money(exp.amount)}</td>
                   <td>{exp.busPlate || "—"}</td>
                   <td>{exp.driverName || "—"}</td>
                   <td>
-                    <span className={`${styles.statusBadge} ${STATUS_STYLES[exp.status] || ""}`}>{exp.status}</span>
+                    <span className={`${styles.statusBadge} ${STATUS_STYLES[exp.status] || ""}`}>{STATUS_LABELS[exp.status] || exp.status}</span>
                   </td>
                 </tr>
               ))}
@@ -221,48 +242,48 @@ export default function ExpensesPage() {
       {createOpen && (
         <div className={styles.overlay} onClick={() => setCreateOpen(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2>Record Expense</h2>
+            <h2>{t("finance.expenses.modalTitle")}</h2>
             <form onSubmit={handleCreate}>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Category *</label>
+                  <label>{t("finance.expenses.fCategory")}</label>
                   <select value={form.expense_category} onChange={e => setForm({ ...form, expense_category: e.target.value })}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                    {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label>Amount *</label>
+                  <label>{t("finance.expenses.fAmount")}</label>
                   <input type="number" step="0.01" min="0.01" value={form.amount || ""} onChange={e => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })} required />
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Date *</label>
+                <label>{t("finance.expenses.fDate")}</label>
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
               </div>
               <div className={styles.field}>
-                <label>Description</label>
+                <label>{t("finance.expenses.fDescription")}</label>
                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Bus</label>
+                  <label>{t("finance.expenses.fBus")}</label>
                   <select value={form.bus_id} onChange={e => setForm({ ...form, bus_id: e.target.value })}>
-                    <option value="">None</option>
+                    <option value="">{t("finance.expenses.none")}</option>
                     {buses.map(b => <option key={b.id} value={b.id}>{b.plateNumber} — {b.model}</option>)}
                   </select>
                 </div>
                 <div className={styles.field}>
-                  <label>Driver</label>
+                  <label>{t("finance.expenses.fDriver")}</label>
                   <select value={form.driver_id} onChange={e => setForm({ ...form, driver_id: e.target.value })}>
-                    <option value="">None</option>
+                    <option value="">{t("finance.expenses.none")}</option>
                     {drivers.map(dv => <option key={dv.id} value={dv.id}>{dv.name}{dv.employeeCode ? ` (${dv.employeeCode})` : ""}</option>)}
                   </select>
                 </div>
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setCreateOpen(false)}>Cancel</button>
+                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setCreateOpen(false)}>{t("finance.expenses.cancel")}</button>
                 <button type="submit" className={`${styles.actionBtn} ${styles.primaryBtn}`} disabled={actionLoading || !form.amount}>
-                  {actionLoading ? "Saving..." : "Record Expense"}
+                  {actionLoading ? t("finance.expenses.saving") : t("finance.expenses.create")}
                 </button>
               </div>
             </form>
@@ -275,64 +296,64 @@ export default function ExpensesPage() {
         <div className={styles.slideover} onClick={() => setDetailTarget(null)}>
           <div className={styles.slideoverPanel} onClick={e => e.stopPropagation()}>
             <div className={styles.slideoverHeader}>
-              <h2>{detailTarget.expenseCategory} — {formatCurrency(detailTarget.amount)}</h2>
+              <h2>{detailTarget.expenseCategory} — {money(detailTarget.amount)}</h2>
               <button className={styles.closeBtn} onClick={() => setDetailTarget(null)}><X size={18} /></button>
             </div>
 
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Category</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoCategory")}</span>
               <span className={styles.infoValue}><span className={styles.catBadge}>{detailTarget.expenseCategory}</span></span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Amount</span>
-              <span className={styles.infoValue} style={{ fontWeight: 700 }}>{formatCurrency(detailTarget.amount)}</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoAmount")}</span>
+              <span className={styles.infoValue} style={{ fontWeight: 700 }}>{money(detailTarget.amount)}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Date</span>
-              <span className={styles.infoValue}>{detailTarget.date}</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoDate")}</span>
+              <span className={styles.infoValue}>{formatDate(detailTarget.date, lang)}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Status</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoStatus")}</span>
               <span className={styles.infoValue}>
-                <span className={`${styles.statusBadge} ${STATUS_STYLES[detailTarget.status] || ""}`}>{detailTarget.status}</span>
+                <span className={`${styles.statusBadge} ${STATUS_STYLES[detailTarget.status] || ""}`}>{STATUS_LABELS[detailTarget.status] || detailTarget.status}</span>
               </span>
             </div>
             {detailTarget.description && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Description</span>
+                <span className={styles.infoLabel}>{t("finance.expenses.infoDescription")}</span>
                 <span className={styles.infoValue}>{detailTarget.description}</span>
               </div>
             )}
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Bus</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoBus")}</span>
               <span className={styles.infoValue}>{detailTarget.busPlate || detailTarget.busId?.slice(0, 8) || "—"}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Driver</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.infoDriver")}</span>
               <span className={styles.infoValue}>{detailTarget.driverName || detailTarget.driverId?.slice(0, 8) || "—"}</span>
             </div>
             {detailTarget.paidByName && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Paid By</span>
+                <span className={styles.infoLabel}>{t("finance.expenses.paidBy")}</span>
                 <span className={styles.infoValue}>{detailTarget.paidByName}</span>
               </div>
             )}
             {detailTarget.approvedByName && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Approved By</span>
+                <span className={styles.infoLabel}>{t("finance.expenses.approvedBy")}</span>
                 <span className={styles.infoValue}>{detailTarget.approvedByName}</span>
               </div>
             )}
 
             {/* Receipt */}
             <div style={{ marginTop: 16 }}>
-              <span className={styles.infoLabel}>Receipt</span>
+              <span className={styles.infoLabel}>{t("finance.expenses.receipt")}</span>
               {detailTarget.receiptUrl ? (
-                <img src={detailTarget.receiptUrl} alt="Receipt" className={styles.receiptImg} />
+                <img src={detailTarget.receiptUrl} alt={t("finance.expenses.receiptAlt")} className={styles.receiptImg} />
               ) : (
                 <div style={{ marginTop: 8 }}>
                   <label className={`${styles.actionBtn} ${styles.secondaryBtn}`} style={{ cursor: "pointer" }}>
-                    <Upload size={14} /> Upload Receipt
+                    <Upload size={14} /> {t("finance.expenses.uploadReceipt")}
                     <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleReceiptUpload} />
                   </label>
                 </div>
@@ -343,12 +364,12 @@ export default function ExpensesPage() {
             <div className={styles.actionsRow}>
               {detailTarget.status === "pending" && (
                 <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => setConfirmAction({ type: "approve", expense: detailTarget })}>
-                  <CheckCircle size={14} /> Approve
+                  <CheckCircle size={14} /> {t("finance.expenses.approve")}
                 </button>
               )}
               {detailTarget.status === "approved" && (
                 <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => setConfirmAction({ type: "reimburse", expense: detailTarget })}>
-                  <DollarSign size={14} /> Reimburse
+                  <DollarSign size={14} /> {t("finance.expenses.reimburse")}
                 </button>
               )}
             </div>
@@ -360,15 +381,15 @@ export default function ExpensesPage() {
       {confirmAction && (
         <div className={styles.confirmOverlay} onClick={() => setConfirmAction(null)}>
           <div className={styles.confirmModal} onClick={e => e.stopPropagation()}>
-            <h3>{confirmAction.type === "approve" ? "Approve Expense" : "Reimburse Expense"}</h3>
+            <h3>{confirmAction.type === "approve" ? t("finance.expenses.approveTitle") : t("finance.expenses.reimburseTitle")}</h3>
             <p>
-              {confirmAction.type === "approve" && `Approve ${confirmAction.expense.expenseCategory} expense of ${formatCurrency(confirmAction.expense.amount)}?`}
-              {confirmAction.type === "reimburse" && `Mark ${confirmAction.expense.expenseCategory} expense of ${formatCurrency(confirmAction.expense.amount)} as reimbursed?`}
+              {confirmAction.type === "approve" && <>{t("finance.expenses.confirmApprovePre")} {confirmAction.expense.expenseCategory} {t("finance.expenses.confirmMid")} {money(confirmAction.expense.amount)}?</>}
+              {confirmAction.type === "reimburse" && <>{t("finance.expenses.confirmReimbursePre")} {confirmAction.expense.expenseCategory} {t("finance.expenses.confirmMid")} {money(confirmAction.expense.amount)} {t("finance.expenses.confirmReimburseSuf")}</>}
             </p>
             <div className={styles.confirmActions}>
-              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setConfirmAction(null)}>Cancel</button>
+              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setConfirmAction(null)}>{t("finance.expenses.cancel")}</button>
               <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={handleAction} disabled={actionLoading}>
-                {actionLoading ? "Processing..." : "Confirm"}
+                {actionLoading ? t("finance.expenses.processing") : t("finance.expenses.confirm")}
               </button>
             </div>
           </div>

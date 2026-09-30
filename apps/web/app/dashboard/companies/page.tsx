@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import {
   Building2,
   Search,
@@ -35,6 +36,7 @@ const tierColors: Record<string, { bg: string; text: string }> = {
 };
 
 export default function CompaniesPage() {
+  const { lang, t } = useLanguage();
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,11 +50,11 @@ export default function CompaniesPage() {
       const data = await api.get<any[]>("/tenants?isActive=true");
       setTenants(data);
     } catch (err: any) {
-      setError(err.message || "Failed to load companies");
+      setError(err.message || t("companies.list.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchTenants(); }, [fetchTenants]);
 
@@ -60,19 +62,29 @@ export default function CompaniesPage() {
     ? tenants.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) || (t.contactEmail || "").toLowerCase().includes(search.toLowerCase()) || (t.domain || "").toLowerCase().includes(search.toLowerCase()))
     : tenants;
 
+  const tierLabel = (tier: string | null | undefined) => {
+    if (!tier) return t("companies.list.unknown");
+    const map: Record<string, string> = {
+      starter: t("companies.tierStarter"),
+      professional: t("companies.tierProfessional"),
+      enterprise: t("companies.tierEnterprise"),
+    };
+    return map[tier] || tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <Building2 size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Companies</h1>
+          <h1 className={styles.headerTitle}>{t("companies.list.title")}</h1>
           <p className={styles.headerSub}>
-            {tenants.length} compan{tenants.length !== 1 ? "ies" : "y"}
+            {tenants.length} {tenants.length !== 1 ? t("companies.list.companiesCount") : t("companies.list.companyCount")}
           </p>
         </div>
         <button className={styles.addBtn} onClick={() => router.push("/dashboard/companies/new")}>
           <Plus size={16} />
-          Add Company
+          {t("companies.list.add")}
         </button>
       </div>
 
@@ -81,7 +93,7 @@ export default function CompaniesPage() {
           <Search size={16} className={styles.searchIcon} />
           <input
             className={styles.searchInput}
-            placeholder="Search by name, domain, or email..."
+            placeholder={t("companies.list.searchPh")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -91,7 +103,7 @@ export default function CompaniesPage() {
       {error && <div className={styles.error}>{error}</div>}
 
       {loading ? (
-        <div className={styles.empty}>Loading companies...</div>
+        <div className={styles.empty}>{t("companies.list.loading")}</div>
       ) : (
         <div className={styles.cardGrid}>
           {filtered.map((tenant) => {
@@ -113,7 +125,7 @@ export default function CompaniesPage() {
                   {!tenant.isActive && (
                     <span className={styles.inactiveBadge}>
                       <XCircle size={12} />
-                      Inactive
+                      {t("companies.list.inactive")}
                     </span>
                   )}
                 </div>
@@ -121,30 +133,30 @@ export default function CompaniesPage() {
                 <div className={styles.cardBody}>
                   <div className={styles.cardRow}>
                     <Users size={14} />
-                    <span>{tenant.userCount ?? "—"} users</span>
+                    <span>{tenant.userCount ?? "—"} {t("companies.list.users")}</span>
                   </div>
                   {tenant.contactEmail && (
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>Contact:</span>
+                      <span className={styles.cardLabel}>{t("companies.list.contact")}</span>
                       <span>{tenant.contactEmail}</span>
                     </div>
                   )}
                   {tenant.contactPhone && (
                     <div className={styles.cardRow}>
-                      <span className={styles.cardLabel}>Phone:</span>
+                      <span className={styles.cardLabel}>{t("companies.list.phone")}</span>
                       <span>{tenant.contactPhone}</span>
                     </div>
                   )}
                   <div className={styles.cardRow}>
                     <Calendar size={14} />
-                    <span>Created {new Date(tenant.createdAt).toLocaleDateString()}</span>
+                    <span>{t("companies.list.created")} {formatDate(tenant.createdAt, lang)}</span>
                   </div>
                 </div>
 
                 <div className={styles.cardFooter}>
                   <span className={styles.tierBadge} style={{ background: tc?.bg || "rgba(99,102,241,0.1)", color: tc?.text || "#6366f1" }}>
                     <CreditCard size={12} />
-                    {tenant.subscriptionTier ? tenant.subscriptionTier.charAt(0).toUpperCase() + tenant.subscriptionTier.slice(1) : "Unknown"}
+                    {tierLabel(tenant.subscriptionTier)}
                   </span>
                   <span className={styles.cardArrow}>
                     <ChevronRight size={16} />
@@ -157,7 +169,7 @@ export default function CompaniesPage() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <div className={styles.empty}>No companies found</div>
+        <div className={styles.empty}>{t("companies.list.noCompanies")}</div>
       )}
     </div>
   );

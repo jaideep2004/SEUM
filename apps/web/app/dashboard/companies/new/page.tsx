@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import { ArrowLeft, Building2, Save } from "lucide-react";
 import styles from "./page.module.css";
 
 const TIERS = ["starter", "professional", "enterprise"] as const;
 
 export default function NewCompanyPage() {
+  const { lang, t } = useLanguage();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -23,10 +25,19 @@ export default function NewCompanyPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const tierLabel = (tier: string) => {
+    const map: Record<string, string> = {
+      starter: t("companies.tierStarter"),
+      professional: t("companies.tierProfessional"),
+      enterprise: t("companies.tierEnterprise"),
+    };
+    return map[tier] || tier.charAt(0).toUpperCase() + tier.slice(1);
+  };
+
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.name.trim()) next.name = "Name is required";
-    if (!form.contactEmail.trim()) next.contactEmail = "Email is required";
+    if (!form.name.trim()) next.name = t("companies.new.nameRequired");
+    if (!form.contactEmail.trim()) next.contactEmail = t("companies.new.emailRequired");
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -44,7 +55,7 @@ export default function NewCompanyPage() {
       const tenant: any = await api.post("/tenants", form);
       router.push(`/dashboard/companies/${tenant.id}`);
     } catch (err: any) {
-      setError(err.message || "Failed to create company");
+      setError(err.message || t("companies.new.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -55,11 +66,11 @@ export default function NewCompanyPage() {
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => router.push("/dashboard/companies")}>
           <ArrowLeft size={18} />
-          Back to Companies
+          {t("companies.new.back")}
         </button>
         <div className={styles.headerInfo}>
           <Building2 size={20} className={styles.headerIcon} />
-          <h1 className={styles.headerTitle}>Create Company</h1>
+          <h1 className={styles.headerTitle}>{t("companies.new.title")}</h1>
         </div>
       </div>
 
@@ -68,12 +79,12 @@ export default function NewCompanyPage() {
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.field}>
           <label className={styles.label}>
-            Name <span className={styles.required}>*</span>
+            {t("companies.new.name")} <span className={styles.required}>*</span>
           </label>
           <input
             className={`${styles.input} ${errors.name ? styles.inputError : ""}`}
             name="name"
-            placeholder="Company name"
+            placeholder={t("companies.new.namePh")}
             value={form.name}
             onChange={handleChange}
           />
@@ -81,7 +92,7 @@ export default function NewCompanyPage() {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Domain</label>
+          <label className={styles.label}>{t("companies.new.domain")}</label>
           <input
             className={styles.input}
             name="domain"
@@ -94,7 +105,7 @@ export default function NewCompanyPage() {
         <div className={styles.row}>
           <div className={styles.field}>
             <label className={styles.label}>
-              Contact Email <span className={styles.required}>*</span>
+              {t("companies.new.contactEmail")} <span className={styles.required}>*</span>
             </label>
             <input
               className={`${styles.input} ${errors.contactEmail ? styles.inputError : ""}`}
@@ -108,7 +119,7 @@ export default function NewCompanyPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Contact Phone</label>
+            <label className={styles.label}>{t("companies.new.contactPhone")}</label>
             <input
               className={styles.input}
               name="contactPhone"
@@ -120,7 +131,7 @@ export default function NewCompanyPage() {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Subscription Tier</label>
+          <label className={styles.label}>{t("companies.new.tier")}</label>
           <select
             className={styles.select}
             name="subscriptionTier"
@@ -129,7 +140,7 @@ export default function NewCompanyPage() {
           >
             {TIERS.map((tier) => (
               <option key={tier} value={tier}>
-                {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                {tierLabel(tier)}
               </option>
             ))}
           </select>
@@ -141,11 +152,11 @@ export default function NewCompanyPage() {
             className={styles.cancelBtn}
             onClick={() => router.push("/dashboard/companies")}
           >
-            Cancel
+            {t("companies.new.cancel")}
           </button>
           <button type="submit" className={styles.submitBtn} disabled={submitting}>
             <Save size={15} />
-            {submitting ? "Creating..." : "Create Company"}
+            {submitting ? t("companies.new.creating") : t("companies.new.create")}
           </button>
         </div>
       </form>

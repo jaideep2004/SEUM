@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserPlus, Search, AlertTriangle, User, Phone, Calendar, ExternalLink, Camera, FileText, Filter } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -12,11 +13,12 @@ const STATUS_COLORS: Record<string, string> = {
   active: "#10b981", suspended: "#f59e0b", terminated: "#ef4444", on_leave: "#3b82f6",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Active", suspended: "Suspended", terminated: "Terminated", on_leave: "On Leave",
+const STATUS_KEYS: Record<string, string> = {
+  active: "drivers.status.active", suspended: "drivers.status.suspended", terminated: "drivers.status.terminated", on_leave: "drivers.status.onLeave",
 };
 
 export default function DriversListPage() {
+  const { lang, t } = useLanguage();
   const router = useRouter();
   const [drivers, setDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,17 +72,17 @@ export default function DriversListPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>Drivers</h1>
-          <p className={styles.pageDesc}>Manage driver profiles, documents, and licenses</p>
+          <h1 className={styles.pageTitle}>{t("drivers.list.title")}</h1>
+          <p className={styles.pageDesc}>{t("drivers.list.desc")}</p>
         </div>
         <div className={styles.headerActions}>
           {totalExpiring > 0 && (
             <button className={styles.expiryToggle} onClick={() => setShowExpiryAlert(!showExpiryAlert)}>
-              <AlertTriangle size={14} /> {totalExpiring} Expiring
+              <AlertTriangle size={14} /> {totalExpiring} {t("drivers.list.expiringWord")}
             </button>
           )}
           <Link href="/dashboard/drivers/new" className={styles.addBtn}>
-            <UserPlus size={14} /> Add Driver
+            <UserPlus size={14} /> {t("drivers.list.addDriver")}
           </Link>
         </div>
       </div>
@@ -89,8 +91,8 @@ export default function DriversListPage() {
         <div className={styles.expiryBanner}>
           <AlertTriangle size={16} />
           <span>
-            {expiringLicense.length > 0 && <>{expiringLicense.length} license{expiringLicense.length !== 1 ? 's' : ''} expiring within 30 days. </>}
-            {expiringMedical.length > 0 && <>{expiringMedical.length} medical fitness record{expiringMedical.length !== 1 ? 's' : ''} expiring within 30 days.</>}
+            {expiringLicense.length > 0 && <>{expiringLicense.length} {expiringLicense.length !== 1 ? t("drivers.list.licensePl") : t("drivers.list.licenseSg")} {t("drivers.list.expiringWithin30")} </>}
+            {expiringMedical.length > 0 && <>{expiringMedical.length} {expiringMedical.length !== 1 ? t("drivers.list.medicalPl") : t("drivers.list.medicalSg")} {t("drivers.list.expiringWithin30")}</>}
           </span>
           <button className={styles.expiryClose} onClick={() => setShowExpiryAlert(false)}>×</button>
         </div>
@@ -99,27 +101,27 @@ export default function DriversListPage() {
       <div className={styles.filters}>
         <div className={styles.searchWrap}>
           <Search size={13} className={styles.searchIcon} />
-          <input className={styles.searchInput} placeholder="Search name, email, employee code..." value={search}
+          <input className={styles.searchInput} placeholder={t("drivers.list.searchPh")} value={search}
             onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} />
         </div>
         <select className={styles.statusSelect} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="terminated">Terminated</option>
-          <option value="on_leave">On Leave</option>
+          <option value="">{t("drivers.list.allStatus")}</option>
+          <option value="active">{t("drivers.status.active")}</option>
+          <option value="suspended">{t("drivers.status.suspended")}</option>
+          <option value="terminated">{t("drivers.status.terminated")}</option>
+          <option value="on_leave">{t("drivers.status.onLeave")}</option>
         </select>
       </div>
 
       {loading ? (
-        <p className={styles.loading}>Loading drivers...</p>
+        <p className={styles.loading}>{t("drivers.list.loading")}</p>
       ) : drivers.length === 0 ? (
         <div className={styles.emptyState}>
           <User size={48} className={styles.emptyIcon} />
-          <h3>No Drivers Found</h3>
-          <p>{search || statusFilter ? "Try different search criteria" : "Add your first driver to get started"}</p>
+          <h3>{t("drivers.list.emptyTitle")}</h3>
+          <p>{search || statusFilter ? t("drivers.list.emptyFiltered") : t("drivers.list.emptyHint")}</p>
           {!search && !statusFilter && (
-            <Link href="/dashboard/drivers/new" className={styles.emptyAddBtn}>Add Driver</Link>
+            <Link href="/dashboard/drivers/new" className={styles.emptyAddBtn}>{t("drivers.list.addDriver")}</Link>
           )}
         </div>
       ) : (
@@ -128,12 +130,12 @@ export default function DriversListPage() {
             <thead>
               <tr>
                 <th style={{ width: 44 }}></th>
-                <th>Name / Email</th>
-                <th>Employee Code</th>
-                <th>License</th>
-                <th>Nationality</th>
-                <th>Status</th>
-                <th>Expiry Alerts</th>
+                <th>{t("drivers.list.colName")}</th>
+                <th>{t("drivers.list.colEmpCode")}</th>
+                <th>{t("drivers.list.colLicense")}</th>
+                <th>{t("drivers.list.colNationality")}</th>
+                <th>{t("drivers.list.colStatus")}</th>
+                <th>{t("drivers.list.colExpiryAlerts")}</th>
                 <th style={{ width: 40 }}></th>
               </tr>
             </thead>
@@ -157,20 +159,20 @@ export default function DriversListPage() {
                       <span>{d.licenseNumber || "—"}</span>
                       {d.licenseExpiry && (
                         <span className={`${styles.expiryDate} ${isExpiring(d.licenseExpiry) ? styles.expirySoon : ""}`}>
-                          Exp: {new Date(d.licenseExpiry).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          {t("drivers.list.expPrefix")} {formatDate(d.licenseExpiry, lang)}
                         </span>
                       )}
                     </td>
                     <td>{d.nationality || "—"}</td>
                     <td>
                       <span className={styles.statusBadge} style={{ background: (STATUS_COLORS[d.status] || "#6b7280") + "18", color: STATUS_COLORS[d.status] || "#6b7280" }}>
-                        {STATUS_LABELS[d.status] || d.status}
+                        {t(STATUS_KEYS[d.status] || d.status)}
                       </span>
                     </td>
                     <td>
                       <div className={styles.expiryChips}>
-                        {licExpiring && <span className={styles.expiryChip} title={`License expiring ${new Date(licExpiring.licenseExpiry).toLocaleDateString()}`}><FileText size={10} /> License</span>}
-                        {medExpiring && <span className={styles.expiryChip} title={`Medical fitness expiring ${new Date(medExpiring.medicalFitnessExpiry).toLocaleDateString()}`}><AlertTriangle size={10} /> Medical</span>}
+                        {licExpiring && <span className={styles.expiryChip} title={`${t("drivers.list.licenseExpiringTitle")} ${formatDate(licExpiring.licenseExpiry, lang)}`}><FileText size={10} /> {t("drivers.list.chipLicense")}</span>}
+                        {medExpiring && <span className={styles.expiryChip} title={`${t("drivers.list.medicalExpiringTitle")} ${formatDate(medExpiring.medicalFitnessExpiry, lang)}`}><AlertTriangle size={10} /> {t("drivers.list.chipMedical")}</span>}
                         {!licExpiring && !medExpiring && <span className={styles.noAlert}>—</span>}
                       </div>
                     </td>
@@ -189,9 +191,9 @@ export default function DriversListPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span>Page {page} of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>{t("drivers.list.prev")}</button>
+          <span>{t("drivers.list.pageWord")} {page} {t("drivers.list.ofWord")} {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>{t("drivers.list.next")}</button>
         </div>
       )}
     </div>

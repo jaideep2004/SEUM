@@ -157,3 +157,7 @@
   background: transparent; color: var(--color-text); font-size: var(--text-sm); font-weight: 600; cursor: pointer;
 }
 .secondaryBtn:hover { background: var(--color-hover); }
+
+/* RTL overrides */
+:global([dir="rtl"]) .table th { text-align: right; }
+:global([dir="rtl"]) .lowBadge { margin-left: 0; margin-right: 6px; }

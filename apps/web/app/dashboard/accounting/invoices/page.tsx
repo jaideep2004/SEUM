@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Plus, X, Trash2, Download, ArrowUpRight, Ban, RotateCcw, DollarSign } from "lucide-react";
+import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
@@ -8,10 +9,6 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("seum_access_token");
-}
-
-function formatCurrency(v: number) {
-  return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 const STATUSES = ["draft", "issued", "paid", "overdue", "cancelled", "refunded"];
@@ -30,6 +27,32 @@ function emptyLine(): LineItem {
 }
 
 export default function InvoicesPage() {
+  const { lang, t } = useLanguage();
+  const money = (v: number) => formatCurrency(v, lang);
+  const STATUS_LABELS: Record<string, string> = {
+    draft: t("finance.invoices.statusDraft"),
+    issued: t("finance.invoices.statusIssued"),
+    paid: t("finance.invoices.statusPaid"),
+    overdue: t("finance.invoices.statusOverdue"),
+    cancelled: t("finance.invoices.statusCancelled"),
+    refunded: t("finance.invoices.statusRefunded"),
+  };
+  const STATUS_CAP_LABELS: Record<string, string> = {
+    draft: t("finance.invoices.statusDraftCap"),
+    issued: t("finance.invoices.statusIssuedCap"),
+    paid: t("finance.invoices.statusPaidCap"),
+    overdue: t("finance.invoices.statusOverdueCap"),
+    cancelled: t("finance.invoices.statusCancelledCap"),
+    refunded: t("finance.invoices.statusRefundedCap"),
+  };
+  const METHOD_LABELS: Record<string, string> = {
+    cash: t("finance.invoices.methodCash"),
+    bank_transfer: t("finance.invoices.methodBank"),
+    card: t("finance.invoices.methodCard"),
+    cheque: t("finance.invoices.methodCheque"),
+    online: t("finance.invoices.methodOnline"),
+    other: t("finance.invoices.methodOther"),
+  };
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState({ total: 0, page: 1, pageSize: 20 });
@@ -217,38 +240,38 @@ export default function InvoicesPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1>Invoices</h1>
+        <h1>{t("finance.invoices.title")}</h1>
         <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={openCreate}>
-          <Plus size={14} /> New Invoice
+          <Plus size={14} /> {t("finance.invoices.new")}
         </button>
       </div>
 
       <div className={styles.filters}>
         <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}>
-          <option value="">All Statuses</option>
-          {STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          <option value="">{t("finance.invoices.allStatuses")}</option>
+          {STATUSES.map(s => <option key={s} value={s}>{STATUS_CAP_LABELS[s]}</option>)}
         </select>
-        <input placeholder="Customer name" value={filters.customer_name} onChange={e => setFilters({ ...filters, customer_name: e.target.value })} />
+        <input placeholder={t("finance.invoices.customerPh")} value={filters.customer_name} onChange={e => setFilters({ ...filters, customer_name: e.target.value })} />
         <input type="date" value={filters.start_date} onChange={e => setFilters({ ...filters, start_date: e.target.value })} />
         <input type="date" value={filters.end_date} onChange={e => setFilters({ ...filters, end_date: e.target.value })} />
-        <button className={styles.filterBtn} onClick={() => fetchInvoices()}>Apply</button>
+        <button className={styles.filterBtn} onClick={() => fetchInvoices()}>{t("finance.invoices.apply")}</button>
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading invoices...</div>
+        <div className={styles.loading}>{t("finance.invoices.loading")}</div>
       ) : invoices.length === 0 ? (
-        <div className={styles.loading}>No invoices found</div>
+        <div className={styles.loading}>{t("finance.invoices.empty")}</div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Invoice #</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Due Date</th>
-                <th>Total</th>
-                <th>Status</th>
+                <th>{t("finance.invoices.colNum")}</th>
+                <th>{t("finance.invoices.colCustomer")}</th>
+                <th>{t("finance.invoices.colDate")}</th>
+                <th>{t("finance.invoices.colDue")}</th>
+                <th>{t("finance.invoices.colTotal")}</th>
+                <th>{t("finance.invoices.colStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -256,10 +279,10 @@ export default function InvoicesPage() {
                 <tr key={inv.id} onClick={() => openDetail(inv)}>
                   <td className={styles.invoiceNum}>{inv.invoiceNumber}</td>
                   <td>{inv.customerName}</td>
-                  <td>{inv.invoiceDate}</td>
-                  <td>{inv.dueDate}</td>
-                  <td>{formatCurrency(inv.total)}</td>
-                  <td><span className={`${styles.statusBadge} ${statusColor(inv.status)}`}>{inv.status}</span></td>
+                  <td>{formatDate(inv.invoiceDate, lang)}</td>
+                  <td>{formatDate(inv.dueDate, lang)}</td>
+                  <td>{money(inv.total)}</td>
+                  <td><span className={`${styles.statusBadge} ${statusColor(inv.status)}`}>{STATUS_LABELS[inv.status] || inv.status}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -271,53 +294,53 @@ export default function InvoicesPage() {
       {createOpen && (
         <div className={styles.overlay} onClick={closeCreate}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h2>New Invoice</h2>
+            <h2>{t("finance.invoices.createTitle")}</h2>
             <form onSubmit={handleCreate}>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Customer Name *</label>
+                  <label>{t("finance.invoices.fCustomerName")}</label>
                   <input value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} required />
                 </div>
                 <div className={styles.field}>
-                  <label>Customer Contact</label>
-                  <input value={form.customer_contact} onChange={e => setForm({ ...form, customer_contact: e.target.value })} placeholder="Phone / Email" />
+                  <label>{t("finance.invoices.fCustomerContact")}</label>
+                  <input value={form.customer_contact} onChange={e => setForm({ ...form, customer_contact: e.target.value })} placeholder={t("finance.invoices.contactPh")} />
                 </div>
               </div>
               <div className={styles.fieldRow}>
                 <div className={styles.field}>
-                  <label>Invoice Date *</label>
+                  <label>{t("finance.invoices.fInvoiceDate")}</label>
                   <input type="date" value={form.invoice_date} onChange={e => setForm({ ...form, invoice_date: e.target.value })} required />
                 </div>
                 <div className={styles.field}>
-                  <label>Due Date *</label>
+                  <label>{t("finance.invoices.fDueDate")}</label>
                   <input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} required />
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Notes</label>
+                <label>{t("finance.invoices.fNotes")}</label>
                 <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
               </div>
 
               <div className={styles.lineItemsSection}>
-                <h3>Line Items</h3>
+                <h3>{t("finance.invoices.lineItems")}</h3>
                 <table className={styles.lineTable}>
                   <thead>
                     <tr>
-                      <th style={{ width: "30%" }}>Description</th>
-                      <th style={{ width: "12%" }}>Qty</th>
-                      <th style={{ width: "16%" }}>Unit Price</th>
-                      <th style={{ width: "16%" }}>Total</th>
-                      <th style={{ width: "20%" }}>Account</th>
+                      <th style={{ width: "30%" }}>{t("finance.invoices.liDescription")}</th>
+                      <th style={{ width: "12%" }}>{t("finance.invoices.liQty")}</th>
+                      <th style={{ width: "16%" }}>{t("finance.invoices.liUnitPrice")}</th>
+                      <th style={{ width: "16%" }}>{t("finance.invoices.liTotal")}</th>
+                      <th style={{ width: "20%" }}>{t("finance.invoices.liAccount")}</th>
                       <th style={{ width: 32 }}></th>
                     </tr>
                   </thead>
                   <tbody>
                     {form.line_items.map((line, i) => (
                       <tr key={line.id}>
-                        <td><input value={line.description} onChange={e => updateLine(i, "description", e.target.value)} placeholder="Service description" required /></td>
+                        <td><input value={line.description} onChange={e => updateLine(i, "description", e.target.value)} placeholder={t("finance.invoices.lineDescPh")} required /></td>
                         <td><input type="number" min="0" step="1" value={line.quantity || ""} onChange={e => updateLine(i, "quantity", e.target.value)} /></td>
                         <td><input type="number" min="0" step="0.01" value={line.unit_price || ""} onChange={e => updateLine(i, "unit_price", e.target.value)} /></td>
-                        <td style={{ fontWeight: 600 }}>{formatCurrency(line.quantity * line.unit_price)}</td>
+                        <td style={{ fontWeight: 600 }}>{money(line.quantity * line.unit_price)}</td>
                         <td>
                           <select value={line.account_id} onChange={e => updateLine(i, "account_id", e.target.value)}>
                             <option value="">—</option>
@@ -333,23 +356,23 @@ export default function InvoicesPage() {
                     ))}
                   </tbody>
                 </table>
-                <button type="button" className={styles.addLineBtn} onClick={addLine}><Plus size={13} /> Add Line</button>
+                <button type="button" className={styles.addLineBtn} onClick={addLine}><Plus size={13} /> {t("finance.invoices.addLine")}</button>
               </div>
 
               <div style={{ textAlign: "right", marginTop: 12, fontSize: "0.875rem" }}>
-                <div>Subtotal: <strong>{formatCurrency(subtotal)}</strong></div>
+                <div>{t("finance.invoices.subtotal")} <strong>{money(subtotal)}</strong></div>
                 <div style={{ marginTop: 4 }}>
-                  Tax: <input type="number" step="0.01" min="0" value={form.tax_amount || ""}
+                  {t("finance.invoices.tax")} <input type="number" step="0.01" min="0" value={form.tax_amount || ""}
                     onChange={e => setForm({ ...form, tax_amount: parseFloat(e.target.value) || 0 })}
                     style={{ width: 100, padding: "4px 8px", border: "1px solid var(--color-border)", borderRadius: 4, fontSize: "0.8125rem" }} />
                 </div>
-                <div style={{ marginTop: 8, fontSize: "1rem" }}>Total: <strong>{formatCurrency(total)}</strong></div>
+                <div style={{ marginTop: 8, fontSize: "1rem" }}>{t("finance.invoices.totalLabel")} <strong>{money(total)}</strong></div>
               </div>
 
               <div className={styles.modalActions}>
-                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={closeCreate}>Cancel</button>
+                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={closeCreate}>{t("finance.invoices.cancel")}</button>
                 <button type="submit" className={`${styles.actionBtn} ${styles.primaryBtn}`} disabled={actionLoading || form.line_items.some(l => !l.description)}>
-                  {actionLoading ? "Creating..." : "Create Invoice"}
+                  {actionLoading ? t("finance.invoices.creating") : t("finance.invoices.create")}
                 </button>
               </div>
             </form>
@@ -367,62 +390,62 @@ export default function InvoicesPage() {
             </div>
 
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Status</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoStatus")}</span>
               <span className={styles.infoValue}>
-                <span className={`${styles.statusBadge} ${statusColor(detailTarget.status)}`}>{detailTarget.status}</span>
+                <span className={`${styles.statusBadge} ${statusColor(detailTarget.status)}`}>{STATUS_LABELS[detailTarget.status] || detailTarget.status}</span>
               </span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Customer</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoCustomer")}</span>
               <span className={styles.infoValue}>{detailTarget.customerName}</span>
             </div>
             {detailTarget.customerContact && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Contact</span>
+                <span className={styles.infoLabel}>{t("finance.invoices.infoContact")}</span>
                 <span className={styles.infoValue}>{detailTarget.customerContact}</span>
               </div>
             )}
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Invoice Date</span>
-              <span className={styles.infoValue}>{detailTarget.invoiceDate}</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoInvoiceDate")}</span>
+              <span className={styles.infoValue}>{formatDate(detailTarget.invoiceDate, lang)}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Due Date</span>
-              <span className={styles.infoValue}>{detailTarget.dueDate}</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoDueDate")}</span>
+              <span className={styles.infoValue}>{formatDate(detailTarget.dueDate, lang)}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Subtotal</span>
-              <span className={styles.infoValue}>{formatCurrency(detailTarget.subtotal)}</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoSubtotal")}</span>
+              <span className={styles.infoValue}>{money(detailTarget.subtotal)}</span>
             </div>
             <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>Tax</span>
-              <span className={styles.infoValue}>{formatCurrency(detailTarget.taxAmount)}</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoTax")}</span>
+              <span className={styles.infoValue}>{money(detailTarget.taxAmount)}</span>
             </div>
             <div className={styles.infoRow} style={{ fontWeight: 700, fontSize: "1rem" }}>
-              <span className={styles.infoLabel}>Total</span>
-              <span className={styles.infoValue}>{formatCurrency(detailTarget.total)}</span>
+              <span className={styles.infoLabel}>{t("finance.invoices.infoTotal")}</span>
+              <span className={styles.infoValue}>{money(detailTarget.total)}</span>
             </div>
             {detailTarget.status === "paid" && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Paid</span>
-                <span className={styles.infoValue}>{formatCurrency(detailTarget.paidAmount)} on {detailTarget.paidAt?.slice(0, 10)} ({detailTarget.paymentMethod})</span>
+                <span className={styles.infoLabel}>{t("finance.invoices.infoPaid")}</span>
+                <span className={styles.infoValue}>{money(detailTarget.paidAmount)} {t("finance.invoices.paidOn")} {formatDate(detailTarget.paidAt?.slice(0, 10), lang)} ({detailTarget.paymentMethod})</span>
               </div>
             )}
             {detailTarget.notes && (
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Notes</span>
+                <span className={styles.infoLabel}>{t("finance.invoices.infoNotes")}</span>
                 <span className={styles.infoValue}>{detailTarget.notes}</span>
               </div>
             )}
 
-            <div className={styles.sectionTitle}>Line Items</div>
+            <div className={styles.sectionTitle}>{t("finance.invoices.detailLines")}</div>
             <table className={styles.detailLineTable}>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Unit Price</th>
-                  <th>Total</th>
+                  <th>{t("finance.invoices.liDescription")}</th>
+                  <th>{t("finance.invoices.liQty")}</th>
+                  <th>{t("finance.invoices.liUnitPrice")}</th>
+                  <th>{t("finance.invoices.liTotal")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -430,8 +453,8 @@ export default function InvoicesPage() {
                   <tr key={l.id}>
                     <td>{l.description}{l.accountName ? ` (${l.accountName})` : ""}</td>
                     <td>{l.quantity}</td>
-                    <td>{formatCurrency(l.unitPrice)}</td>
-                    <td style={{ fontWeight: 600 }}>{formatCurrency(l.total)}</td>
+                    <td>{money(l.unitPrice)}</td>
+                    <td style={{ fontWeight: 600 }}>{money(l.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -439,12 +462,12 @@ export default function InvoicesPage() {
 
             <div className={styles.actionsRow}>
               <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => downloadPdf(detailTarget)}>
-                <Download size={14} /> PDF
+                <Download size={14} /> {t("finance.invoices.pdf")}
               </button>
 
               {detailTarget.status === "draft" && (
                 <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => setConfirmAction({ type: "issue", invoice: detailTarget })}>
-                  <ArrowUpRight size={14} /> Issue
+                  <ArrowUpRight size={14} /> {t("finance.invoices.issue")}
                 </button>
               )}
               {(detailTarget.status === "issued" || detailTarget.status === "overdue") && (
@@ -452,17 +475,17 @@ export default function InvoicesPage() {
                   setPayModal(detailTarget);
                   setPayForm({ amount: detailTarget.total - detailTarget.paidAmount, method: "bank_transfer", date: new Date().toISOString().split("T")[0], reference: "" });
                 }}>
-                  <DollarSign size={14} /> Record Payment
+                  <DollarSign size={14} /> {t("finance.invoices.recordPayment")}
                 </button>
               )}
               {(detailTarget.status === "draft" || detailTarget.status === "issued") && (
                 <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={() => setConfirmAction({ type: "cancel", invoice: detailTarget })}>
-                  <Ban size={14} /> Cancel
+                  <Ban size={14} /> {t("finance.invoices.cancelBtn")}
                 </button>
               )}
               {detailTarget.status === "paid" && (
                 <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={() => setConfirmAction({ type: "refund", invoice: detailTarget })}>
-                  <RotateCcw size={14} /> Refund
+                  <RotateCcw size={14} /> {t("finance.invoices.refund")}
                 </button>
               )}
             </div>
@@ -474,16 +497,16 @@ export default function InvoicesPage() {
       {confirmAction && (
         <div className={styles.confirmOverlay} onClick={() => setConfirmAction(null)}>
           <div className={styles.confirmModal} onClick={e => e.stopPropagation()}>
-            <h3>{confirmAction.type === "issue" ? "Issue Invoice" : confirmAction.type === "cancel" ? "Cancel Invoice" : "Refund Invoice"}</h3>
+            <h3>{confirmAction.type === "issue" ? t("finance.invoices.confirmIssueTitle") : confirmAction.type === "cancel" ? t("finance.invoices.confirmCancelTitle") : t("finance.invoices.confirmRefundTitle")}</h3>
             <p>
-              {confirmAction.type === "issue" && `This will lock invoice ${confirmAction.invoice.invoiceNumber} and mark it as issued. Continue?`}
-              {confirmAction.type === "cancel" && `Cancel invoice ${confirmAction.invoice.invoiceNumber}?`}
-              {confirmAction.type === "refund" && `Issue a refund for invoice ${confirmAction.invoice.invoiceNumber}? This action is irreversible.`}
+              {confirmAction.type === "issue" && <>{t("finance.invoices.confirmIssuePre")} {confirmAction.invoice.invoiceNumber} {t("finance.invoices.confirmIssueSuf")}</>}
+              {confirmAction.type === "cancel" && <>{t("finance.invoices.confirmCancelPre")} {confirmAction.invoice.invoiceNumber}?</>}
+              {confirmAction.type === "refund" && <>{t("finance.invoices.confirmRefundPre")} {confirmAction.invoice.invoiceNumber}{t("finance.invoices.confirmRefundSuf")}</>}
             </p>
             <div className={styles.confirmActions}>
-              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setConfirmAction(null)}>Cancel</button>
+              <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setConfirmAction(null)}>{t("finance.invoices.cancel")}</button>
               <button className={`${styles.actionBtn} ${styles.dangerBtn}`} onClick={handleAction} disabled={actionLoading}>
-                {actionLoading ? "Processing..." : `Yes, ${confirmAction.type.charAt(0).toUpperCase() + confirmAction.type.slice(1)}`}
+                {actionLoading ? t("finance.invoices.processing") : <>{t("finance.invoices.confirmYesPre")} {confirmAction.type.charAt(0).toUpperCase() + confirmAction.type.slice(1)}</>}
               </button>
             </div>
           </div>
@@ -494,38 +517,38 @@ export default function InvoicesPage() {
       {payModal && (
         <div className={styles.overlay} onClick={() => setPayModal(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <h2>Record Payment</h2>
+            <h2>{t("finance.invoices.payTitle")}</h2>
             <form onSubmit={handlePay}>
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Invoice</span>
+                <span className={styles.infoLabel}>{t("finance.invoices.payInvoice")}</span>
                 <span className={styles.infoValue}>{payModal.invoiceNumber}</span>
               </div>
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Outstanding</span>
-                <span className={styles.infoValue}>{formatCurrency(payModal.total - payModal.paidAmount)}</span>
+                <span className={styles.infoLabel}>{t("finance.invoices.payOutstanding")}</span>
+                <span className={styles.infoValue}>{money(payModal.total - payModal.paidAmount)}</span>
               </div>
               <div className={styles.field}>
-                <label>Amount *</label>
+                <label>{t("finance.invoices.payAmount")}</label>
                 <input type="number" step="0.01" min="0" value={payForm.amount || ""} onChange={e => setPayForm({ ...payForm, amount: parseFloat(e.target.value) || 0 })} required />
               </div>
               <div className={styles.field}>
-                <label>Payment Method *</label>
+                <label>{t("finance.invoices.payMethod")}</label>
                 <select value={payForm.method} onChange={e => setPayForm({ ...payForm, method: e.target.value })}>
-                  {["cash", "bank_transfer", "card", "cheque", "online", "other"].map(m => <option key={m} value={m}>{m.replace("_", " ")}</option>)}
+                  {["cash", "bank_transfer", "card", "cheque", "online", "other"].map(m => <option key={m} value={m}>{METHOD_LABELS[m]}</option>)}
                 </select>
               </div>
               <div className={styles.field}>
-                <label>Payment Date *</label>
+                <label>{t("finance.invoices.payDate")}</label>
                 <input type="date" value={payForm.date} onChange={e => setPayForm({ ...payForm, date: e.target.value })} required />
               </div>
               <div className={styles.field}>
-                <label>Reference</label>
-                <input value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} placeholder="Cheque # / Transaction ID" />
+                <label>{t("finance.invoices.payReference")}</label>
+                <input value={payForm.reference} onChange={e => setPayForm({ ...payForm, reference: e.target.value })} placeholder={t("finance.invoices.payRefPh")} />
               </div>
               <div className={styles.modalActions}>
-                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setPayModal(null)}>Cancel</button>
+                <button type="button" className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => setPayModal(null)}>{t("finance.invoices.cancel")}</button>
                 <button type="submit" className={`${styles.actionBtn} ${styles.primaryBtn}`} disabled={actionLoading || !payForm.amount}>
-                  {actionLoading ? "Recording..." : "Record Payment"}
+                  {actionLoading ? t("finance.invoices.recording") : t("finance.invoices.paySubmit")}
                 </button>
               </div>
             </form>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FileText, AlertTriangle, Clock } from "lucide-react";
+import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 interface Document {
@@ -17,6 +18,7 @@ interface Document {
 }
 
 export default function DocumentsPage() {
+  const { lang, t } = useLanguage();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,7 +40,7 @@ export default function DocumentsPage() {
       if (!data.success) throw new Error(data.message);
       setDocuments(data.data);
     } catch (err: any) {
-      setError(err.message || "Failed to load documents");
+      setError(err.message || t("fleet.documents.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -50,6 +52,11 @@ export default function DocumentsPage() {
     return Math.ceil((expiry.getTime() - now.getTime()) / 86400000);
   }
 
+  function getDaysLabel(daysLeft: number): string {
+    if (daysLeft <= 0) return t("fleet.documents.expired");
+    return `${daysLeft} ${t("fleet.documents.days")}`;
+  }
+
   const expiringSoon = documents.filter((d) => d.expiryDate && getDaysUntilExpiry(d.expiryDate) <= 30);
   const expired = documents.filter((d) => d.expiryDate && getDaysUntilExpiry(d.expiryDate) <= 0);
 
@@ -58,9 +65,9 @@ export default function DocumentsPage() {
       <div className={styles.header}>
         <FileText size={24} className={styles.headerIcon} />
         <div>
-          <h1 className={styles.headerTitle}>Vehicle Documents</h1>
+          <h1 className={styles.headerTitle}>{t("fleet.documents.title")}</h1>
           <p className={styles.headerSub}>
-            {documents.length} document{documents.length !== 1 ? "s" : ""} on file
+            {documents.length} {documents.length !== 1 ? t("fleet.documents.docsPl") : t("fleet.documents.docSg")} {t("fleet.documents.onFile")}
           </p>
         </div>
       </div>
@@ -68,42 +75,42 @@ export default function DocumentsPage() {
       {expired.length > 0 && (
         <div className={`${styles.expiryBanner} ${styles.expiryBannerDanger}`}>
           <AlertTriangle size={18} />
-          {expired.length} document{expired.length !== 1 ? "s" : ""} expired — requires immediate attention
+          {expired.length} {expired.length !== 1 ? t("fleet.documents.docsPl") : t("fleet.documents.docSg")} {t("fleet.documents.expiredAttention")}
         </div>
       )}
 
       {expiringSoon.length > 0 && expired.length === 0 && (
         <div className={`${styles.expiryBanner} ${styles.expiryBannerWarning}`}>
           <Clock size={18} />
-          {expiringSoon.length} document{expiringSoon.length !== 1 ? "s" : ""} expiring within 30 days
+          {expiringSoon.length} {expiringSoon.length !== 1 ? t("fleet.documents.docsPl") : t("fleet.documents.docSg")} {t("fleet.documents.expiringAttention")}
         </div>
       )}
 
       {error && <div className={styles.error}>{error}</div>}
 
       {loading ? (
-        <div className={styles.loading}>Loading documents...</div>
+        <div className={styles.loading}>{t("fleet.documents.loading")}</div>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Vehicle</th>
-                <th>Document Type</th>
-                <th>Document No.</th>
-                <th>Issue Date</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
+                <th>{t("fleet.documents.colVehicle")}</th>
+                <th>{t("fleet.documents.colType")}</th>
+                <th>{t("fleet.documents.colNumber")}</th>
+                <th>{t("fleet.documents.colIssue")}</th>
+                <th>{t("fleet.documents.colExpiry")}</th>
+                <th>{t("fleet.documents.colStatus")}</th>
               </tr>
             </thead>
             <tbody>
               {documents.map((doc) => {
                 const daysLeft = doc.expiryDate ? getDaysUntilExpiry(doc.expiryDate) : null;
-                let expiryStyle = { bg: "rgba(16,185,129,0.12)", dot: "#10b981", label: `${daysLeft} days` };
+                let expiryStyle = { bg: "rgba(16,185,129,0.12)", dot: "#10b981", label: daysLeft !== null ? getDaysLabel(daysLeft) : "" };
                 if (daysLeft !== null) {
-                  if (daysLeft <= 0) expiryStyle = { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: "Expired" };
-                  else if (daysLeft <= 7) expiryStyle = { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: `${daysLeft} days` };
-                  else if (daysLeft <= 30) expiryStyle = { bg: "rgba(245,158,11,0.12)", dot: "#f59e0b", label: `${daysLeft} days` };
+                  if (daysLeft <= 0) expiryStyle = { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: getDaysLabel(daysLeft) };
+                  else if (daysLeft <= 7) expiryStyle = { bg: "rgba(239,68,68,0.12)", dot: "#ef4444", label: getDaysLabel(daysLeft) };
+                  else if (daysLeft <= 30) expiryStyle = { bg: "rgba(245,158,11,0.12)", dot: "#f59e0b", label: getDaysLabel(daysLeft) };
                 }
 
                 return (
@@ -125,10 +132,10 @@ export default function DocumentsPage() {
                       {doc.documentNumber || "—"}
                     </td>
                     <td style={{ color: "var(--color-text-secondary)" }}>
-                      {doc.issueDate ? new Date(doc.issueDate).toLocaleDateString() : "—"}
+                      {doc.issueDate ? formatDate(doc.issueDate, lang) : "—"}
                     </td>
                     <td style={{ color: "var(--color-text-secondary)" }}>
-                      {doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : "—"}
+                      {doc.expiryDate ? formatDate(doc.expiryDate, lang) : "—"}
                     </td>
                     <td>
                       {doc.expiryDate && daysLeft !== null ? (
@@ -137,7 +144,7 @@ export default function DocumentsPage() {
                           {expiryStyle.label}
                         </span>
                       ) : (
-                        <span style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}>No expiry</span>
+                        <span style={{ color: "var(--color-text-tertiary)", fontSize: 12 }}>{t("fleet.documents.noExpiry")}</span>
                       )}
                     </td>
                   </tr>
@@ -147,7 +154,7 @@ export default function DocumentsPage() {
           </table>
 
           {documents.length === 0 && !loading && (
-            <div className={styles.empty}>No documents found</div>
+            <div className={styles.empty}>{t("fleet.documents.empty")}</div>
           )}
         </div>
       )}
