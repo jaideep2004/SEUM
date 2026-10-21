@@ -1,0 +1,5 @@
+- generic [active] [ref=f10e1]:
+  - option "All Status" [selected]
+  - option "Draft"
+  - option "Approved"
+  - option "Paid"

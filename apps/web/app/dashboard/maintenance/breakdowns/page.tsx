@@ -75,7 +75,6 @@ export default function BreakdownsPage() {
 
   const fetchBuses = useCallback(async () => {
     const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch(`${API}/fleet/buses?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
@@ -91,7 +90,6 @@ export default function BreakdownsPage() {
   async function fetchBreakdowns() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100" });
       if (busFilter) params.set("bus_id", busFilter);
@@ -109,7 +107,6 @@ export default function BreakdownsPage() {
   async function fetchHeatmap() {
     setHeatLoading(true);
     const token = getToken();
-    if (!token) { setHeatLoading(false); return; }
     try {
       const res = await fetch(`${API}/maintenance/breakdowns/heatmap`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();

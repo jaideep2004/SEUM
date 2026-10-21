@@ -54,7 +54,6 @@ export default function EmployeePayrollPage() {
   async function fetchRecords() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100", period_start: periodStart, period_end: periodEnd });
       if (statusFilter) params.set("status", statusFilter);
@@ -80,7 +79,6 @@ export default function EmployeePayrollPage() {
     setStructureSaved(null);
     setStructureError("");
     const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch(`${API}/hr/payroll/salary-structures?employee_id=${employeeId}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();

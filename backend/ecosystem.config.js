@@ -2,6 +2,7 @@ module.exports = {
   apps: [{
     name: "seum-backend",
     script: "./dist/index.js",
+    cwd: __dirname,
     instances: 1,
     exec_mode: "fork",
     env: {

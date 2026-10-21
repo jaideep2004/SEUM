@@ -1,0 +1,7 @@
+- generic [active] [ref=f9e1]:
+  - option "All statuses" [selected]
+  - option "Scheduled"
+  - option "En Route"
+  - option "Delayed"
+  - option "Completed"
+  - option "Cancelled"

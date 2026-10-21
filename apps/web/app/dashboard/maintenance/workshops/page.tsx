@@ -65,7 +65,6 @@ export default function WorkshopsPage() {
   const fetchWorkshops = useCallback(async () => {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100" });
       if (internalFilter === "internal") params.set("is_internal", "true");
@@ -140,7 +139,6 @@ export default function WorkshopsPage() {
     setDetailTab("pending");
     setDetailLoading(true);
     const token = getToken();
-    if (!token) { setDetailLoading(false); return; }
     try {
       const res = await fetch(`${API}/maintenance/workshops/${w.id}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();

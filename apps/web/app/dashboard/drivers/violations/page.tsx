@@ -82,8 +82,6 @@ export default function DriverViolationsPage() {
   async function fetchViolations() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
-
     try {
       let url = `${API}/drivers/violations?pageSize=100`;
       if (statusFilter) url += `&status=${statusFilter}`;

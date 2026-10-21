@@ -1,0 +1,426 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e4]:
+    - complementary [ref=f2e5]:
+      - generic [ref=f2e6]: SEUM
+      - button "SEUM TECHNOLOGY" [ref=f2e13] [cursor=pointer]
+      - navigation [ref=f2e23]:
+        - generic [ref=f2e24]:
+          - generic [ref=f2e25]: Overview
+          - link "Operations Dashboard" [ref=f2e26] [cursor=pointer]:
+            - /url: /dashboard/operations
+        - generic [ref=f2e33]:
+          - generic [ref=f2e34]: Operations
+          - link "Trips" [ref=f2e35] [cursor=pointer]:
+            - /url: /dashboard/trips
+          - link "Trips Manager" [ref=f2e41] [cursor=pointer]:
+            - /url: /dashboard/trips/manager
+          - link "Import Trips" [ref=f2e46] [cursor=pointer]:
+            - /url: /dashboard/trips/import
+          - link "Trip Calendar" [ref=f2e51] [cursor=pointer]:
+            - /url: /dashboard/trips/calendar
+          - link "Trip Reports" [ref=f2e55] [cursor=pointer]:
+            - /url: /dashboard/trips/reports
+          - link "Recurring Trips" [ref=f2e59] [cursor=pointer]:
+            - /url: /dashboard/recurring-trips
+          - link "Schedules" [ref=f2e66] [cursor=pointer]:
+            - /url: /dashboard/schedules
+          - link "Routes" [ref=f2e70] [cursor=pointer]:
+            - /url: /dashboard/routes
+          - link "Monitoring" [ref=f2e74] [cursor=pointer]:
+            - /url: /dashboard/monitoring
+          - link "Delays" [ref=f2e82] [cursor=pointer]:
+            - /url: /dashboard/delays
+        - generic [ref=f2e86]:
+          - generic [ref=f2e87]: Fleet & Maintenance
+          - link "Fleet" [ref=f2e88] [cursor=pointer]:
+            - /url: /dashboard/fleet
+          - link "Vehicles" [ref=f2e95] [cursor=pointer]:
+            - /url: /dashboard/fleet/vehicles
+          - link "Documents" [ref=f2e101] [cursor=pointer]:
+            - /url: /dashboard/fleet/documents
+          - link "Readiness" [ref=f2e106] [cursor=pointer]:
+            - /url: /dashboard/fleet/readiness
+          - link "Fuel Logs" [ref=f2e111] [cursor=pointer]:
+            - /url: /dashboard/fleet/fuel
+          - link "Fuel Analytics" [ref=f2e116] [cursor=pointer]:
+            - /url: /dashboard/fleet/fuel/analytics
+          - link "Assignments" [ref=f2e120] [cursor=pointer]:
+            - /url: /dashboard/fleet/assignments
+          - link "Assignment Calendar" [ref=f2e124] [cursor=pointer]:
+            - /url: /dashboard/fleet/assignments/calendar
+          - link "Fleet Analytics" [ref=f2e128] [cursor=pointer]:
+            - /url: /dashboard/fleet/analytics
+          - link "Maintenance" [ref=f2e132] [cursor=pointer]:
+            - /url: /dashboard/maintenance
+          - link "Breakdowns" [ref=f2e136] [cursor=pointer]:
+            - /url: /dashboard/maintenance/breakdowns
+          - link "Spare Parts" [ref=f2e140] [cursor=pointer]:
+            - /url: /dashboard/maintenance/parts
+          - link "Workshops" [ref=f2e146] [cursor=pointer]:
+            - /url: /dashboard/maintenance/workshops
+          - link "Cost Tracking" [ref=f2e150] [cursor=pointer]:
+            - /url: /dashboard/maintenance/costs
+        - generic [ref=f2e154]:
+          - generic [ref=f2e155]: Live Tracking
+          - link "Live Trips" [ref=f2e156] [cursor=pointer]:
+            - /url: /dashboard/live-trips
+          - link "Geofencing" [ref=f2e160] [cursor=pointer]:
+            - /url: /dashboard/geofencing
+          - link "Speed Monitor" [ref=f2e165] [cursor=pointer]:
+            - /url: /dashboard/speed
+        - generic [ref=f2e170]:
+          - generic [ref=f2e171]: Bookings & Customers
+          - link "Booking Dashboard" [ref=f2e172] [cursor=pointer]:
+            - /url: /dashboard/bookings/dashboard
+          - link "Bookings" [ref=f2e179] [cursor=pointer]:
+            - /url: /dashboard/bookings
+          - link "New Booking" [ref=f2e184] [cursor=pointer]:
+            - /url: /dashboard/bookings/new
+          - link "Import Bookings" [ref=f2e189] [cursor=pointer]:
+            - /url: /dashboard/bookings/import
+          - link "Waitlist" [ref=f2e194] [cursor=pointer]:
+            - /url: /dashboard/bookings/waitlist
+          - link "Customers" [ref=f2e198] [cursor=pointer]:
+            - /url: /dashboard/customers
+        - generic [ref=f2e205]:
+          - generic [ref=f2e206]: Drivers & Workforce
+          - link "Drivers" [ref=f2e207] [cursor=pointer]:
+            - /url: /dashboard/drivers
+          - link "Driver Attendance" [ref=f2e213] [cursor=pointer]:
+            - /url: /dashboard/drivers/attendance
+          - link "Driver Leaves" [ref=f2e218] [cursor=pointer]:
+            - /url: /dashboard/drivers/leaves
+          - link "Driver Violations" [ref=f2e222] [cursor=pointer]:
+            - /url: /dashboard/drivers/violations
+          - link "Driver Scores" [ref=f2e226] [cursor=pointer]:
+            - /url: /dashboard/drivers/scores
+        - generic [ref=f2e230]:
+          - generic [ref=f2e231]: Company
+          - link "Communications" [ref=f2e232] [cursor=pointer]:
+            - /url: /dashboard/communications
+        - generic [ref=f2e236]:
+          - generic [ref=f2e237]: Account
+          - link "Notifications 2" [ref=f2e238] [cursor=pointer]:
+            - /url: /dashboard/notifications
+            - generic [ref=f2e242]: Notifications
+            - generic [ref=f2e243]: "2"
+      - generic [ref=f2e245]:
+        - button "Close" [ref=f2e249] [cursor=pointer]
+        - paragraph [ref=f2e253]: Need Help?
+        - paragraph [ref=f2e254]: Contact our support team for assistance
+        - button "Contact Support" [ref=f2e255] [cursor=pointer]
+      - generic [ref=f2e256]:
+        - generic [ref=f2e257]: OH
+        - generic [ref=f2e259]:
+          - generic [ref=f2e260]: Omar Hassan
+          - generic [ref=f2e261]: Operations Manager
+        - button "Collapse sidebar" [ref=f2e262] [cursor=pointer]
+    - generic [ref=f2e265]:
+      - banner [ref=f2e266]:
+        - generic [ref=f2e267]:
+          - button "Menu" [ref=f2e268] [cursor=pointer]
+          - generic [ref=f2e272] [cursor=pointer]: Oct 12, 2026 - Oct 18, 2026
+        - generic [ref=f2e274]:
+          - button "عربي" [ref=f2e275] [cursor=pointer]
+          - button "Toggle theme" [ref=f2e276] [cursor=pointer]
+          - button "Notifications" [ref=f2e280] [cursor=pointer]:
+            - generic [ref=f2e284]: "2"
+          - button "OH Omar Hassan Operations Manager" [ref=f2e288] [cursor=pointer]:
+            - generic [ref=f2e289]: OH
+            - generic [ref=f2e290]:
+              - generic [ref=f2e291]: Omar Hassan
+              - generic [ref=f2e292]: Operations Manager
+      - main [ref=f2e293]:
+        - generic [ref=f2e294]:
+          - link "Back to Trips" [ref=f2e295] [cursor=pointer]:
+            - /url: /dashboard/trips
+          - heading "New Trip" [level=1] [ref=f2e298]
+          - generic [ref=f2e299]:
+            - generic [ref=f2e300]:
+              - generic [ref=f2e301]:
+                - generic [ref=f2e302]: Agent — linked to Accounts (company customers)
+                - generic [ref=f2e407]:
+                  - generic [ref=f2e408]: SEUM DEMO
+                  - generic [ref=f2e409]: "0500044995"
+                  - generic [ref=f2e410]:
+                    - link "View" [ref=f2e411] [cursor=pointer]:
+                      - /url: /dashboard/customers/6ab0df60-86b4-4d17-bee8-0940332a13b6
+                    - button "Clear" [ref=f2e412] [cursor=pointer]
+              - generic [ref=f2e304]:
+                - generic [ref=f2e305]: Nationality
+                - combobox [ref=f2e306]:
+                  - option "Select nationality"
+                  - option "EGAPT" [selected]
+                  - option "Saudi Arabia"
+                  - option "Afghanistan"
+                  - option "Albania"
+                  - option "Algeria"
+                  - option "Andorra"
+                  - option "Angola"
+                  - option "Antigua and Barbuda"
+                  - option "Argentina"
+                  - option "Armenia"
+                  - option "Australia"
+                  - option "Austria"
+                  - option "Azerbaijan"
+                  - option "Bahamas"
+                  - option "Bahrain"
+                  - option "Bangladesh"
+                  - option "Barbados"
+                  - option "Belarus"
+                  - option "Belgium"
+                  - option "Belize"
+                  - option "Benin"
+                  - option "Bhutan"
+                  - option "Bolivia"
+                  - option "Bosnia and Herzegovina"
+                  - option "Botswana"
+                  - option "Brazil"
+                  - option "Brunei"
+                  - option "Bulgaria"
+                  - option "Burkina Faso"
+                  - option "Burundi"
+                  - option "Cambodia"
+                  - option "Cameroon"
+                  - option "Canada"
+                  - option "Cape Verde"
+                  - option "Central African Republic"
+                  - option "Chad"
+                  - option "Chile"
+                  - option "China"
+                  - option "Colombia"
+                  - option "Comoros"
+                  - option "Congo"
+                  - option "DR Congo"
+                  - option "Costa Rica"
+                  - option "Ivory Coast"
+                  - option "Croatia"
+                  - option "Cuba"
+                  - option "Cyprus"
+                  - option "Czech Republic"
+                  - option "Denmark"
+                  - option "Djibouti"
+                  - option "Dominica"
+                  - option "Dominican Republic"
+                  - option "Ecuador"
+                  - option "Egypt"
+                  - option "El Salvador"
+                  - option "Equatorial Guinea"
+                  - option "Eritrea"
+                  - option "Estonia"
+                  - option "Eswatini"
+                  - option "Ethiopia"
+                  - option "Fiji"
+                  - option "Finland"
+                  - option "France"
+                  - option "Gabon"
+                  - option "Gambia"
+                  - option "Georgia"
+                  - option "Germany"
+                  - option "Ghana"
+                  - option "Greece"
+                  - option "Grenada"
+                  - option "Guatemala"
+                  - option "Guinea"
+                  - option "Guinea-Bissau"
+                  - option "Guyana"
+                  - option "Haiti"
+                  - option "Honduras"
+                  - option "Hungary"
+                  - option "Iceland"
+                  - option "India"
+                  - option "Indonesia"
+                  - option "Iran"
+                  - option "Iraq"
+                  - option "Ireland"
+                  - option "Italy"
+                  - option "Jamaica"
+                  - option "Japan"
+                  - option "Jordan"
+                  - option "Kazakhstan"
+                  - option "Kenya"
+                  - option "Kiribati"
+                  - option "North Korea"
+                  - option "South Korea"
+                  - option "Kuwait"
+                  - option "Kyrgyzstan"
+                  - option "Laos"
+                  - option "Latvia"
+                  - option "Lebanon"
+                  - option "Lesotho"
+                  - option "Liberia"
+                  - option "Libya"
+                  - option "Liechtenstein"
+                  - option "Lithuania"
+                  - option "Luxembourg"
+                  - option "Madagascar"
+                  - option "Malawi"
+                  - option "Malaysia"
+                  - option "Maldives"
+                  - option "Mali"
+                  - option "Malta"
+                  - option "Marshall Islands"
+                  - option "Mauritania"
+                  - option "Mauritius"
+                  - option "Mexico"
+                  - option "Micronesia"
+                  - option "Moldova"
+                  - option "Monaco"
+                  - option "Mongolia"
+                  - option "Montenegro"
+                  - option "Morocco"
+                  - option "Mozambique"
+                  - option "Myanmar"
+                  - option "Namibia"
+                  - option "Nauru"
+                  - option "Nepal"
+                  - option "Netherlands"
+                  - option "New Zealand"
+                  - option "Nicaragua"
+                  - option "Niger"
+                  - option "Nigeria"
+                  - option "North Macedonia"
+                  - option "Norway"
+                  - option "Oman"
+                  - option "Pakistan"
+                  - option "Palau"
+                  - option "Palestine"
+                  - option "Panama"
+                  - option "Papua New Guinea"
+                  - option "Paraguay"
+                  - option "Peru"
+                  - option "Philippines"
+                  - option "Poland"
+                  - option "Portugal"
+                  - option "Qatar"
+                  - option "Romania"
+                  - option "Russia"
+                  - option "Rwanda"
+                  - option "Saint Kitts and Nevis"
+                  - option "Saint Lucia"
+                  - option "Saint Vincent"
+                  - option "Samoa"
+                  - option "San Marino"
+                  - option "Sao Tome and Principe"
+                  - option "Senegal"
+                  - option "Serbia"
+                  - option "Seychelles"
+                  - option "Sierra Leone"
+                  - option "Singapore"
+                  - option "Slovakia"
+                  - option "Slovenia"
+                  - option "Solomon Islands"
+                  - option "Somalia"
+                  - option "South Africa"
+                  - option "South Sudan"
+                  - option "Spain"
+                  - option "Sri Lanka"
+                  - option "Sudan"
+                  - option "Suriname"
+                  - option "Sweden"
+                  - option "Switzerland"
+                  - option "Syria"
+                  - option "Taiwan"
+                  - option "Tajikistan"
+                  - option "Tanzania"
+                  - option "Thailand"
+                  - option "Timor-Leste"
+                  - option "Togo"
+                  - option "Tonga"
+                  - option "Trinidad and Tobago"
+                  - option "Tunisia"
+                  - option "Turkey"
+                  - option "Turkmenistan"
+                  - option "Tuvalu"
+                  - option "Uganda"
+                  - option "Ukraine"
+                  - option "United Arab Emirates"
+                  - option "United Kingdom"
+                  - option "United States"
+                  - option "Uruguay"
+                  - option "Uzbekistan"
+                  - option "Vanuatu"
+                  - option "Vatican City"
+                  - option "Venezuela"
+                  - option "Vietnam"
+                  - option "Yemen"
+                  - option "Zambia"
+                  - option "Zimbabwe"
+                - generic [ref=f2e413]: Auto-filled from the selected agent's nationality
+            - generic [ref=f2e307]:
+              - generic [ref=f2e308]: Trip Type *
+              - generic [ref=f2e309]: Single Trip
+              - generic [ref=f2e311]: Single trip = 1 leg · Round trip = 2+ legs — set automatically
+            - generic [ref=f2e312]:
+              - generic [ref=f2e313]:
+                - generic [ref=f2e314]: Vehicle Type
+                - combobox [ref=f2e315]:
+                  - option "Select vehicle type" [selected]
+                  - option "Bus"
+                  - option "Coaster"
+                  - option "Hiace"
+                  - option "Staria"
+                  - option "GMC"
+                  - option "Sedan"
+              - generic [ref=f2e316]:
+                - generic [ref=f2e317]: No. of Vehicles
+                - spinbutton "e.g. 2" [ref=f2e318]
+              - generic [ref=f2e319]:
+                - generic [ref=f2e320]: Group Leader
+                - textbox "e.g. Ahmed Khan" [ref=f2e321]
+              - generic [ref=f2e322]:
+                - generic [ref=f2e323]: Group Leader No
+                - textbox "e.g. +966500000000" [ref=f2e324]
+            - generic [ref=f2e325]:
+              - heading "Program Information" [level=3] [ref=f2e326]
+              - generic [ref=f2e332]:
+                - generic [ref=f2e333]:
+                  - generic [ref=f2e334]: Trip Title
+                  - textbox "e.g. Hajj Group 12 - Makkah Package" [ref=f2e335]
+                - generic [ref=f2e336]:
+                  - generic [ref=f2e337]: Groups
+                  - generic [ref=f2e338]: Add one entry per passenger group — group number and pax count
+                - generic [ref=f2e339]:
+                  - strong [ref=f2e341]: Group 1
+                  - generic [ref=f2e342]:
+                    - generic [ref=f2e343]:
+                      - generic [ref=f2e344]: Group No
+                      - textbox [ref=f2e345]
+                    - generic [ref=f2e346]:
+                      - generic [ref=f2e347]: No of Pax
+                      - spinbutton [ref=f2e348]
+                - button "Add Group" [ref=f2e350] [cursor=pointer]
+            - generic [ref=f2e352]:
+              - heading "Flight Information" [level=3] [ref=f2e353]
+              - button "Add Flight" [ref=f2e356] [cursor=pointer]
+            - generic [ref=f2e358]:
+              - heading "Hotel Information" [level=3] [ref=f2e359]
+              - button "Add Hotel" [ref=f2e363] [cursor=pointer]
+            - generic [ref=f2e365]:
+              - heading "Trip Legs (stops with dates)" [level=3] [ref=f2e366]
+              - generic [ref=f2e367]:
+                - generic [ref=f2e368]: "1"
+                - generic [ref=f2e369]:
+                  - textbox "From" [ref=f2e370]
+                  - textbox "To" [ref=f2e371]
+                  - textbox "Date" [ref=f2e372]
+                  - textbox "Departure" [ref=f2e373]
+                  - combobox [ref=f2e374]:
+                    - option "Route Type" [selected]
+                    - option "Arrival"
+                    - option "Departure"
+                    - option "Intercity"
+                    - option "Intracity"
+                  - generic [ref=f2e375]:
+                    - checkbox "Overnight" [ref=f2e376]
+                    - text: Overnight
+                - button [disabled] [ref=f2e377]
+              - button "Add Leg" [ref=f2e381] [cursor=pointer]
+            - generic [ref=f2e383]:
+              - generic [ref=f2e384]: Notes
+              - textbox [ref=f2e385]
+            - button "Generate Trip Estimate" [ref=f2e387] [cursor=pointer]
+  - alert [ref=f2e2]
+  - generic [ref=f2e394] [cursor=pointer]:
+    - generic [ref=f2e397]: 1 error
+    - button "Hide Errors" [ref=f2e398]

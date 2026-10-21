@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as tripService from '../services/tripService';
+import * as tripImportService from '../services/tripImportService';
 import { createTripSchema, updateTripSchema, delayTripSchema, cancelTripSchema, tripQuerySchema, addPassengerSchema } from '../validators/operations';
 import { sendSuccess, sendPaginated } from '../utils/response';
 
@@ -92,5 +93,39 @@ export async function getTripCalendar(req: Request, res: Response, next: NextFun
     if (!startDate || !endDate) return sendSuccess(res, [], 'Calendar data retrieved');
     const trips = await tripService.getTripCalendar(req.user!.tenantId, startDate, endDate);
     return sendSuccess(res, trips, 'Calendar data retrieved');
+  } catch (err) { next(err); }
+}
+
+// ─── Excel Import (mirrors bookingController import pattern) ───
+
+export async function downloadTripTemplate(req: Request, res: Response, next: NextFunction) {
+  try {
+    const buf = tripImportService.generateTemplateBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="seum-trip-import-template.xlsx"');
+    res.setHeader('Content-Length', String(buf.length));
+    res.send(buf);
+  } catch (err) { next(err); }
+}
+
+export async function importTrips(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: { message: 'No file uploaded — attach an .xlsx file as field "file"' } });
+    }
+    const name = (req.file.originalname || '').toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid file type — only .xlsx is accepted' } });
+    }
+    const result = await tripImportService.importTrips(req.user!.tenantId, req.file.buffer, req.user!.id);
+    if (!result.success) {
+      // Fail-safe: validation errors — 422 with per-row errors, no trips created
+      return res.status(422).json({
+        success: false,
+        error: { message: 'Import validation failed — no trips created', details: result.errors },
+        data: result,
+      });
+    }
+    sendSuccess(res, result, `Imported ${result.createdCount} trip(s)`, undefined, 201);
   } catch (err) { next(err); }
 }

@@ -1,0 +1,5 @@
+- generic [active] [ref=f6e1]:
+  - option "All types" [selected]
+  - option "Individual"
+  - option "Company"
+  - alert [ref=f6e2]

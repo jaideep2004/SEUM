@@ -11,6 +11,8 @@
     "migrate:phase2.7": "tsx src/migrate-phase2.7.ts",
     "migrate:phase2.8": "tsx src/migrate-phase2.8.ts",
     "migrate:phase2.9": "tsx src/migrate-phase2.9.ts",
+    "migrate:phase2.10": "tsx src/migrate-phase2.10.ts",
+    "migrate:phase2.11": "tsx src/migrate-phase2.11.ts",
     "migrate:phase9": "tsx src/migrate-phase9.ts",
     "migrate:run": "tsx src/run-migrations.ts",
     "fix:missing-tables": "tsx src/scripts/fix-missing-tables.ts",

@@ -106,7 +106,8 @@ export default function TripDetailPage() {
 
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>
-          {trip.tripTitle || trip.routeName || t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.id?.slice(0, 8)}</span>
+          {trip.tripTitle || trip.routeName ||
+t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.tripNumber || trip.id?.slice(0, 8)}</span>
         </h1>
         <div className={styles.headerRight}>
           <span className={styles.typeTag}>{trip.tripType === "round" ? t("trips.detail.roundTrip") : t("trips.detail.singleTrip")}</span>
@@ -183,7 +184,7 @@ export default function TripDetailPage() {
             )}
           </div>
 
-          {trip.tripType === "round" && trip.legs && trip.legs.length > 0 && (
+          {trip.legs && trip.legs.length > 0 && (
             <div className={styles.card}>
               <h3 className={styles.cardTitle}><Route size={14} /> {t("trips.detail.legsTitle")}</h3>
               <div className={styles.legsTimeline}>
@@ -194,7 +195,7 @@ export default function TripDetailPage() {
                       {idx < trip.legs.length - 1 && <div className={styles.legLine} />}
                     </div>
                     <div className={styles.legContent}>
-                      <div className={styles.legPath}>{leg.origin} → {leg.destination}</div>
+                      <div className={styles.legPath}>{leg.legCode || `${trip.tripNumber || ""}-S${leg.legNo || idx + 1}`} · {leg.origin} → {leg.destination}</div>
                       <div className={styles.legMeta}>
                         {formatDate(leg.legDate, lang)}
                         {leg.departureTime && <> · {t("trips.detail.dep")} {leg.departureTime.slice(0, 5)}</>}
@@ -231,6 +232,7 @@ export default function TripDetailPage() {
               )}
               {trip.groupNo && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.groupNo")}</span><span>{trip.groupNo}</span></div>}
               {trip.noOfPax != null && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.noOfPax")}</span><span>{trip.noOfPax}</span></div>}
+              {trip.sellingPrice != null && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.sellingPrice")}</span><span>{formatCurrency(Number(trip.sellingPrice), lang)}</span></div>}
               {trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.vehicleType")}</span><span>{trip.vehicleType}{trip.vehicleCount ? ` × ${trip.vehicleCount}` : ""}</span></div>}
               {trip.vehicleCount != null && !trip.vehicleType && <div className={styles.detailRow}><span className={styles.detailLabel}>{t("trips.detail.vehicleCount")}</span><span>{trip.vehicleCount}</span></div>}
               {Array.isArray(trip.groups) && trip.groups.length > 0 && (
@@ -414,7 +416,7 @@ export default function TripDetailPage() {
               <h3 className={styles.manifestSection}>{t("trips.detail.tripInfo")}</h3>
               <table className={styles.manifestTable}>
                 <tbody>
-                  {[[t("trips.detail.mTripTitle"), trip.tripTitle], [t("trips.detail.mVehicleType"), trip.vehicleType], [t("trips.detail.mGroupLeader"), trip.groupLeader], [t("trips.detail.mGroupLeaderNo"), trip.groupLeaderNo], [t("trips.detail.mNationality"), trip.nationality], [t("trips.detail.mAgent"), trip.agent], [t("trips.detail.mGroupNo"), trip.groupNo], [t("trips.detail.mNoOfPax"), trip.noOfPax != null ? String(trip.noOfPax) : "—"], [t("trips.detail.mRoute"), trip.routeName || "—"]]
+                  {[[t("trips.detail.mTripTitle"), trip.tripTitle], [t("trips.detail.mVehicleType"), trip.vehicleType], [t("trips.detail.mGroupLeader"), trip.groupLeader], [t("trips.detail.mGroupLeaderNo"), trip.groupLeaderNo], [t("trips.detail.mNationality"), trip.nationality], [t("trips.detail.mAgent"), trip.agent], [t("trips.detail.mGroupNo"), trip.groupNo], [t("trips.detail.mNoOfPax"), trip.noOfPax != null ? String(trip.noOfPax) : "—"], [t("trips.detail.mSellingPrice"), trip.sellingPrice != null ? formatCurrency(Number(trip.sellingPrice), lang) : null], [t("trips.detail.mRoute"), trip.routeName || "—"]]
                     .filter(([k, v]) => v)
                     .map(([k, v], i) => (
                       <tr key={i}><td>{k}</td><td>{v}</td></tr>
@@ -432,7 +434,7 @@ export default function TripDetailPage() {
                     <tbody>
                       {trip.legs.map((leg: any, idx: number) => (
                         <tr key={leg.id || idx}>
-                          <td>{idx + 1}</td>
+                          <td>{leg.legCode || `${trip.tripNumber || ""}-S${leg.legNo || idx + 1}`}</td>
                           <td>{leg.origin}</td>
                           <td>{leg.destination}</td>
                           <td>{leg.legDate}</td>

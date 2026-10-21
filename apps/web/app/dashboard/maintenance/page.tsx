@@ -62,7 +62,6 @@ export default function MaintenancePage() {
 
   const fetchBuses = useCallback(async () => {
     const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch(`${API}/fleet/buses?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
@@ -78,7 +77,6 @@ export default function MaintenancePage() {
   async function fetchTasks() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100" });
       if (busFilter) params.set("bus_id", busFilter);
@@ -96,7 +94,6 @@ export default function MaintenancePage() {
   async function fetchCalendar() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const res = await fetch(`${API}/maintenance/tasks/calendar?year=${calYear}&month=${calMonth}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();

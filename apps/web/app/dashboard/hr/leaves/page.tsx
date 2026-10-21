@@ -82,7 +82,6 @@ export default function EmployeeLeavesPage() {
 
   async function fetchRoster() {
     const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch(`${API}/hr/employees?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
@@ -98,7 +97,6 @@ export default function EmployeeLeavesPage() {
   useEffect(() => {
     if (!selectedEmployee) { setBalance(null); return; }
     const token = getToken();
-    if (!token) return;
     fetch(`${API}/hr/employee-leaves/balance/${selectedEmployee}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { if (d.success) setBalance(d.data); })
@@ -108,7 +106,6 @@ export default function EmployeeLeavesPage() {
   async function fetchLeaves() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100" });
       if (statusFilter) params.set("status", statusFilter);

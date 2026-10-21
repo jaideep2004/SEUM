@@ -62,7 +62,6 @@ export default function PartsPage() {
 
   const fetchBuses = useCallback(async () => {
     const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch(`${API}/fleet/buses?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
@@ -80,7 +79,6 @@ export default function PartsPage() {
   async function fetchParts() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ pageSize: "100" });
       if (search) params.set("search", search);

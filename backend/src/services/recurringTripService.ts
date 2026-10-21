@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { query, queryOne } from '../db';
 import { NotFoundError, ConflictError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { nextTripNumber } from './tripService';
 import type { CreateRecurringTripPatternInput, UpdateRecurringTripPatternInput, RecurringTripPatternQuery, GenerateTripsInput } from '../validators/operations';
 
 interface PatternRow {
@@ -356,15 +357,16 @@ export async function generateTrips(tenantId: string, userId: string | null, pat
     if (existing) { current.setDate(current.getDate() + 1); continue; }
 
     const tripId = uuid();
+    const genNumber = await nextTripNumber(tenantId);
     await query(
-      `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type,
+      `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type, trip_number,
         scheduled_date, scheduled_start_time, scheduled_end_time, notes, created_by,
         trip_title, vehicle_type, vehicle_count, group_leader, group_leader_no, nationality,
         agent, group_no, no_of_pax, nusuk_info, groups, flights, hotels)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+               $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`,
       [tripId, tenantId, pattern.route_id, pattern.bus_id, pattern.driver_id,
-       pattern.trip_type, dateStr, pattern.scheduled_start_time,
+       pattern.trip_type, genNumber, dateStr, pattern.scheduled_start_time,
        pattern.scheduled_end_time, `Auto-generated from pattern ${patternId}`, userId,
        pattern.trip_title, pattern.vehicle_type, pattern.vehicle_count,
        pattern.group_leader,
@@ -377,10 +379,10 @@ export async function generateTrips(tenantId: string, userId: string | null, pat
       for (let i = 0; i < patternLegs.length; i++) {
         const leg = patternLegs[i];
         await query(
-          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
+          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, leg_code, origin, destination,
             leg_date, departure_time, arrival_time, overnight_flag, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-          [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          [uuid(), tenantId, tripId, i + 1, `${genNumber}-S${i + 1}`, leg.origin, leg.destination,
            addDays(dateStr, leg.day_offset), leg.departure_time, leg.arrival_time,
            leg.overnight_flag, leg.notes]
         );

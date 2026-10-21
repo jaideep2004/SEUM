@@ -287,6 +287,16 @@ Client clarification: exactly **2 trip types**:
   - ✅ Nationality country dropdown (EN+AR, ~250 countries in `apps/web/lib/countries.ts`); flight From/To are country selects
   - ✅ Dynamic flights: flightType `arrival` auto-sets To = Saudi Arabia (home), `departure` auto-sets From = Saudi Arabia (editable after)
   - ✅ Auto rough draft invoice on manual trip creation (amount 0 pending finance pricing, references trip) + in-app notifications to `company_admin` + `finance_accountant` (`tripService.autoDraftInvoiceForTrip`, failure-isolated; pattern auto-generation skips to avoid invoice spam)
+- ✅ **Client feedback v3 — trip logic overhaul (within Phase 0-8 scope):**
+  - ✅ Trip type derived from legs (1 leg = single, 2+ = round); manual toggle removed, type badge auto-updates
+  - ✅ Single group leader (+ number) moved right after Vehicle section — one leader for all groups
+  - ✅ Groups simplified to Group No + Pax (+ nationality dropdown, Nusuk kept)
+  - ✅ Flight type moved first in each flight row; From/To are searchable city dropdowns (EN+AR, `apps/web/lib/cities.ts` + `SearchableSelect.tsx`); arrival clears To / departure clears From with Saudi-city hint
+  - ✅ Route Information section deleted — legs-only form; scheduled date/time derived from first leg; bus/driver assigned later in Trips Manager
+  - ✅ "Generate Trip Estimate" button creates trip (+ rough invoice) and redirects to Trips Manager
+  - ✅ Trip numbers `TR-YYYY-NNNN` + leg codes `<No>-S1..Sn` (migration `migrate-phase2.10.ts`, `nextTripNumber`, backfilled, shown in detail/manifest/manager)
+  - ✅ Excel trip import: template download + upload + fail-safe row validation + batch create (`tripImportService.ts`, `GET/POST /operations/trips/import/template|import`, `/dashboard/trips/import`)
+  - ✅ Trips Manager page (`/dashboard/trips/manager`): date/status/needs-driver/search filters, assign driver (modal) + bus (inline), start/delay/cancel actions, highlight on redirect; nav items added (operationsWrite)
 
 ---
 

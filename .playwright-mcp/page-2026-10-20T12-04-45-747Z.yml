@@ -1,0 +1,55 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e4]:
+    - generic [ref=f4e6]:
+      - generic [ref=f4e16]:
+        - generic [ref=f4e17]: SEUM
+        - generic [ref=f4e18]: SMART TRANSPORTATION ERP
+      - heading "Intelligent Transportation. Connected Operations." [level=1] [ref=f4e19]: Intelligent Transportation.Connected Operations.
+      - paragraph [ref=f4e21]: Real-time visibility, AI safety monitoring, fleet intelligence and complete ERP control in one unified platform.
+      - generic [ref=f4e22]:
+        - generic [ref=f4e23]:
+          - generic [ref=f4e27]: Live Tracking
+          - generic [ref=f4e28]: Real-time GPS Monitoring
+        - generic [ref=f4e29]:
+          - generic [ref=f4e32]: AI Safety
+          - generic [ref=f4e33]: DMS, ADAS & Smart Alerts
+        - generic [ref=f4e34]:
+          - generic [ref=f4e38]: CCTV Monitoring
+          - generic [ref=f4e39]: Live View & Video Playback
+        - generic [ref=f4e40]:
+          - generic [ref=f4e43]: Smart Analytics
+          - generic [ref=f4e44]: Powerful Reports & KPIs
+      - paragraph [ref=f4e45]: © 2025 SEUM Technology. All rights reserved.
+    - generic [ref=f4e46]:
+      - generic [ref=f4e47] [cursor=pointer]: English
+      - generic [ref=f4e54]:
+        - heading "Welcome Back" [level=2] [ref=f4e63]
+        - paragraph [ref=f4e64]: Sign in to your SEUM account
+        - generic [ref=f4e65]:
+          - generic [ref=f4e66]:
+            - generic [ref=f4e67]: Email Address
+            - textbox "Email Address" [ref=f4e69]:
+              - /placeholder: youremail@company.com
+              - text: super@seum.com
+          - generic [ref=f4e70]:
+            - generic [ref=f4e71]: Password
+            - generic [ref=f4e72]:
+              - textbox "Password" [ref=f4e73]:
+                - /placeholder: ••••••••••••••••
+                - text: admin123
+              - button [ref=f4e74] [cursor=pointer]
+          - link "Forgot Password?" [ref=f4e79] [cursor=pointer]:
+            - /url: /forgot-password
+          - generic [ref=f4e80] [cursor=pointer]:
+            - checkbox "Remember me" [checked]
+            - generic [ref=f4e82]: Remember me
+          - button "Signing in…" [disabled] [ref=f4e105]
+        - generic [ref=f4e87]: or continue with
+        - generic [ref=f4e89]:
+          - button "Google" [ref=f4e90] [cursor=pointer]
+          - button "Microsoft" [ref=f4e96] [cursor=pointer]
+        - paragraph [ref=f4e103]:
+          - text: New to SEUM?
+          - link "Contact Your Administrator" [ref=f4e104] [cursor=pointer]:
+            - /url: "#"
+  - alert [ref=f4e2]

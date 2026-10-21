@@ -1,0 +1,187 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e3]:
+    - complementary [ref=f5e4]:
+      - generic [ref=f5e5]: SEUM
+      - button "SEUM TECHNOLOGY" [ref=f5e12] [cursor=pointer]
+      - navigation [ref=f5e22]:
+        - generic [ref=f5e23]:
+          - generic [ref=f5e24]: Overview
+          - link "Platform Dashboard" [ref=f5e25] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Dashboard" [ref=f5e32] [cursor=pointer]:
+            - /url: /dashboard/company
+          - link "Operations Dashboard" [ref=f5e39] [cursor=pointer]:
+            - /url: /dashboard/operations
+        - generic [ref=f5e46]:
+          - generic [ref=f5e47]: Platform
+          - link "Companies" [ref=f5e48] [cursor=pointer]:
+            - /url: /dashboard/companies
+          - link "Subscriptions" [ref=f5e54] [cursor=pointer]:
+            - /url: /dashboard/subscriptions
+          - link "Plans" [ref=f5e58] [cursor=pointer]:
+            - /url: /dashboard/plans
+          - link "Archived" [ref=f5e64] [cursor=pointer]:
+            - /url: /dashboard/archived
+        - generic [ref=f5e69]:
+          - generic [ref=f5e70]: Operations
+          - link "Trips" [ref=f5e71] [cursor=pointer]:
+            - /url: /dashboard/trips
+          - link "Trips Manager" [ref=f5e77] [cursor=pointer]:
+            - /url: /dashboard/trips/manager
+          - link "Import Trips" [ref=f5e82] [cursor=pointer]:
+            - /url: /dashboard/trips/import
+          - link "Trip Calendar" [ref=f5e87] [cursor=pointer]:
+            - /url: /dashboard/trips/calendar
+          - link "Trip Reports" [ref=f5e91] [cursor=pointer]:
+            - /url: /dashboard/trips/reports
+          - link "Recurring Trips" [ref=f5e95] [cursor=pointer]:
+            - /url: /dashboard/recurring-trips
+          - link "Schedules" [ref=f5e102] [cursor=pointer]:
+            - /url: /dashboard/schedules
+          - link "Routes" [ref=f5e106] [cursor=pointer]:
+            - /url: /dashboard/routes
+          - link "Monitoring" [ref=f5e110] [cursor=pointer]:
+            - /url: /dashboard/monitoring
+          - link "Delays" [ref=f5e118] [cursor=pointer]:
+            - /url: /dashboard/delays
+        - generic [ref=f5e122]:
+          - generic [ref=f5e123]: Fleet & Maintenance
+          - link "Fleet" [ref=f5e124] [cursor=pointer]:
+            - /url: /dashboard/fleet
+          - link "Vehicles" [ref=f5e131] [cursor=pointer]:
+            - /url: /dashboard/fleet/vehicles
+          - link "Documents" [ref=f5e137] [cursor=pointer]:
+            - /url: /dashboard/fleet/documents
+          - link "Readiness" [ref=f5e142] [cursor=pointer]:
+            - /url: /dashboard/fleet/readiness
+          - link "Fuel Logs" [ref=f5e147] [cursor=pointer]:
+            - /url: /dashboard/fleet/fuel
+          - link "Fuel Analytics" [ref=f5e152] [cursor=pointer]:
+            - /url: /dashboard/fleet/fuel/analytics
+          - link "Assignments" [ref=f5e156] [cursor=pointer]:
+            - /url: /dashboard/fleet/assignments
+          - link "Assignment Calendar" [ref=f5e160] [cursor=pointer]:
+            - /url: /dashboard/fleet/assignments/calendar
+          - link "Fleet Analytics" [ref=f5e164] [cursor=pointer]:
+            - /url: /dashboard/fleet/analytics
+          - link "Maintenance" [ref=f5e168] [cursor=pointer]:
+            - /url: /dashboard/maintenance
+          - link "Breakdowns" [ref=f5e172] [cursor=pointer]:
+            - /url: /dashboard/maintenance/breakdowns
+          - link "Spare Parts" [ref=f5e176] [cursor=pointer]:
+            - /url: /dashboard/maintenance/parts
+          - link "Workshops" [ref=f5e182] [cursor=pointer]:
+            - /url: /dashboard/maintenance/workshops
+          - link "Cost Tracking" [ref=f5e186] [cursor=pointer]:
+            - /url: /dashboard/maintenance/costs
+        - generic [ref=f5e190]:
+          - generic [ref=f5e191]: Live Tracking
+          - link "Live Trips" [ref=f5e192] [cursor=pointer]:
+            - /url: /dashboard/live-trips
+          - link "Geofencing" [ref=f5e196] [cursor=pointer]:
+            - /url: /dashboard/geofencing
+          - link "Speed Monitor" [ref=f5e201] [cursor=pointer]:
+            - /url: /dashboard/speed
+        - generic [ref=f5e206]:
+          - generic [ref=f5e207]: Bookings & Customers
+          - link "Booking Dashboard" [ref=f5e208] [cursor=pointer]:
+            - /url: /dashboard/bookings/dashboard
+          - link "Bookings" [ref=f5e215] [cursor=pointer]:
+            - /url: /dashboard/bookings
+          - link "New Booking" [ref=f5e220] [cursor=pointer]:
+            - /url: /dashboard/bookings/new
+          - link "Import Bookings" [ref=f5e225] [cursor=pointer]:
+            - /url: /dashboard/bookings/import
+          - link "Waitlist" [ref=f5e230] [cursor=pointer]:
+            - /url: /dashboard/bookings/waitlist
+          - link "Customers" [ref=f5e234] [cursor=pointer]:
+            - /url: /dashboard/customers
+        - generic [ref=f5e241]:
+          - generic [ref=f5e242]: Drivers & Workforce
+          - link "Drivers" [ref=f5e243] [cursor=pointer]:
+            - /url: /dashboard/drivers
+          - link "Driver Attendance" [ref=f5e249] [cursor=pointer]:
+            - /url: /dashboard/drivers/attendance
+          - link "Driver Leaves" [ref=f5e254] [cursor=pointer]:
+            - /url: /dashboard/drivers/leaves
+          - link "Driver Violations" [ref=f5e258] [cursor=pointer]:
+            - /url: /dashboard/drivers/violations
+          - link "Driver Scores" [ref=f5e262] [cursor=pointer]:
+            - /url: /dashboard/drivers/scores
+          - link "Driver Payroll" [ref=f5e266] [cursor=pointer]:
+            - /url: /dashboard/drivers/payroll
+        - generic [ref=f5e270]:
+          - generic [ref=f5e271]: HR
+          - link "Employees" [ref=f5e272] [cursor=pointer]:
+            - /url: /dashboard/hr/employees
+          - link "HR Attendance" [ref=f5e277] [cursor=pointer]:
+            - /url: /dashboard/hr/attendance
+          - link "HR Payroll" [ref=f5e282] [cursor=pointer]:
+            - /url: /dashboard/hr/payroll
+          - link "HR Leaves" [ref=f5e286] [cursor=pointer]:
+            - /url: /dashboard/hr/leaves
+        - generic [ref=f5e290]:
+          - generic [ref=f5e291]: Finance
+          - link "Chart of Accounts" [ref=f5e292] [cursor=pointer]:
+            - /url: /dashboard/accounts
+          - link "Journal Entries" [ref=f5e296] [cursor=pointer]:
+            - /url: /dashboard/accounting/journal-entries
+          - link "Invoices" [ref=f5e301] [cursor=pointer]:
+            - /url: /dashboard/accounting/invoices
+          - link "Expenses" [ref=f5e306] [cursor=pointer]:
+            - /url: /dashboard/accounting/expenses
+          - link "Trip Profitability" [ref=f5e311] [cursor=pointer]:
+            - /url: /dashboard/accounting/trip-profitability
+          - link "Financial Reports" [ref=f5e315] [cursor=pointer]:
+            - /url: /dashboard/accounting/reports
+          - link "Payroll Batches" [ref=f5e319] [cursor=pointer]:
+            - /url: /dashboard/accounting/payroll
+          - link "Bank Accounts" [ref=f5e323] [cursor=pointer]:
+            - /url: /dashboard/accounting/bank-accounts
+        - generic [ref=f5e328]:
+          - generic [ref=f5e329]: Company
+          - link "Users" [ref=f5e330] [cursor=pointer]:
+            - /url: /dashboard/users
+          - link "Communications" [ref=f5e337] [cursor=pointer]:
+            - /url: /dashboard/communications
+          - link "Audit Logs" [ref=f5e341] [cursor=pointer]:
+            - /url: /dashboard/audit-logs
+        - generic [ref=f5e346]:
+          - generic [ref=f5e347]: Account
+          - link "Notifications" [ref=f5e348] [cursor=pointer]:
+            - /url: /dashboard/notifications
+      - generic [ref=f5e354]:
+        - button "Close" [ref=f5e358] [cursor=pointer]
+        - paragraph [ref=f5e362]: Need Help?
+        - paragraph [ref=f5e363]: Contact our support team for assistance
+        - button "Contact Support" [ref=f5e364] [cursor=pointer]
+      - generic [ref=f5e365]:
+        - generic [ref=f5e366]: SA
+        - generic [ref=f5e368]:
+          - generic [ref=f5e369]: Super Admin
+          - generic [ref=f5e370]: Super Admin
+        - button "Collapse sidebar" [ref=f5e371] [cursor=pointer]
+    - generic [ref=f5e374]:
+      - banner [ref=f5e375]:
+        - generic [ref=f5e376]:
+          - button "Menu" [ref=f5e377] [cursor=pointer]
+          - generic [ref=f5e381] [cursor=pointer]: Oct 19, 2026 - Oct 25, 2026
+        - generic [ref=f5e383]:
+          - button "عربي" [ref=f5e384] [cursor=pointer]
+          - button "Toggle theme" [ref=f5e385] [cursor=pointer]
+          - button "Notifications" [ref=f5e389] [cursor=pointer]
+          - button "SA Super Admin Super Admin" [ref=f5e395] [cursor=pointer]:
+            - generic [ref=f5e396]: SA
+            - generic [ref=f5e397]:
+              - generic [ref=f5e398]: Super Admin
+              - generic [ref=f5e399]: Super Admin
+      - main [ref=f5e400]:
+        - generic [ref=f5e401]:
+          - generic [ref=f5e403]:
+            - heading "Super Admin Dashboard" [level=1] [ref=f5e404]
+            - paragraph [ref=f5e405]: Overview of SEUM Platform
+          - generic [ref=f5e406]: Loading platform overview...
+  - alert [ref=f5e407]
+  - generic [ref=f5e410] [cursor=pointer]:
+    - generic [ref=f5e413]: 1 error
+    - button "Hide Errors" [ref=f5e414]

@@ -83,6 +83,7 @@ export const manifestSchema = z.object({
   agentId: z.string().uuid().optional().nullable(),
   groupNo: z.string().max(50).optional(),
   noOfPax: z.number().int().min(0).optional(),
+  sellingPrice: z.number().min(0).optional(),
   nusukInfo: z.record(z.unknown()).optional(),
   groups: z.array(tripGroupSchema).max(50).optional(),
   flights: z.array(flightSchema).optional(),

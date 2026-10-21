@@ -53,8 +53,6 @@ export default function DriverAttendancePage() {
   async function fetchData() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
-
     try {
       const [attRes, dashRes, monthlyRes] = await Promise.all([
         fetch(`${API}/drivers/attendance/list?date=${date}&pageSize=100`, {

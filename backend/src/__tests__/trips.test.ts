@@ -64,6 +64,7 @@ describe("createTrip", () => {
       .mockResolvedValueOnce({ id: RID })      // route exists
       .mockResolvedValueOnce({ id: BID })      // bus exists
       .mockResolvedValueOnce({ status: 'ready' }) // bus readiness - ready
+      .mockResolvedValueOnce(null)             // no prior trip number
       .mockResolvedValueOnce(makeTripRow());   // getTripById row
     mockQuery
       .mockResolvedValueOnce([makeTripRow()])  // INSERT RETURNING (inside transaction)
@@ -77,7 +78,7 @@ describe("createTrip", () => {
       scheduledDate: "2026-07-20", scheduledStartTime: "08:00",
     });
     expect(result.status).toBe("scheduled");
-    expect(mockQueryOne).toHaveBeenCalledTimes(4);
+    expect(mockQueryOne).toHaveBeenCalledTimes(5);
     // allow async auto-invoice to settle, then verify rough draft invoice
     await new Promise((r) => setTimeout(r, 20));
     expect(mockCreateInvoice).toHaveBeenCalledTimes(1);
@@ -93,6 +94,7 @@ describe("createTrip", () => {
       .mockResolvedValueOnce({ id: RID })
       .mockResolvedValueOnce({ id: BID })
       .mockResolvedValueOnce({ status: 'ready' })
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(makeTripRow());
     mockQuery
       .mockResolvedValueOnce([makeTripRow()])
@@ -113,6 +115,7 @@ describe("createTrip", () => {
       .mockResolvedValueOnce({ id: RID })
       .mockResolvedValueOnce({ id: BID })
       .mockResolvedValueOnce({ status: 'ready' }) // bus readiness - ready
+      .mockResolvedValueOnce({ trip_number: "TR-2026-0041" }) // last trip number
       .mockResolvedValueOnce(makeTripRow({ trip_type: "round", trip_title: "Hajj Group 12" }));
     mockQuery
       .mockResolvedValueOnce([makeTripRow({ trip_type: "round" })]) // INSERT trip
@@ -139,10 +142,72 @@ describe("createTrip", () => {
     expect(result.legCount).toBe(2);
   });
 
+  it("assigns sequential trip numbers and leg codes", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ id: RID })
+      .mockResolvedValueOnce({ id: BID })
+      .mockResolvedValueOnce({ status: 'ready' })
+      .mockResolvedValueOnce({ trip_number: "TR-2026-0041" })
+      .mockResolvedValueOnce(makeTripRow({ trip_number: "TR-2026-0042" }));
+    const legInserts: any[][] = [];
+    mockQuery
+      .mockImplementationOnce(() => Promise.resolve([makeTripRow({ trip_number: "TR-2026-0042" })]))
+      .mockImplementation((sql: string, params: any[]) => {
+        if (String(sql).includes("INSERT INTO trip_legs")) legInserts.push(params);
+        if (String(sql).includes("SELECT * FROM route_stops")) return Promise.resolve([]);
+        if (String(sql).includes("FROM trip_passengers")) return Promise.resolve([]);
+        if (String(sql).includes("FROM trip_legs")) return Promise.resolve([]);
+        return Promise.resolve([]);
+      });
+    mockCreateInvoice.mockResolvedValue({ id: "INV-9", invoice_number: "INV-2026-0009" });
+    const result = await createTrip(TID, UID, {
+      routeId: RID, busId: BID, tripType: "round",
+      scheduledDate: "2026-08-01", scheduledStartTime: "08:00",
+      legs: [
+        { origin: "Jeddah", destination: "Madinah", legDate: "2026-08-01" },
+        { origin: "Madinah", destination: "Makkah", legDate: "2026-08-03" },
+      ],
+    });
+    expect((result as any).tripNumber).toBe("TR-2026-0042");
+    expect(legInserts).toHaveLength(2);
+    expect(legInserts[0][4]).toBe("TR-2026-0042-S1");
+    expect(legInserts[1][4]).toBe("TR-2026-0042-S2");
+    await new Promise((r) => setTimeout(r, 20));
+  });
+
   it("throws NotFoundError when route missing", async () => {
     mockQueryOne.mockResolvedValueOnce(null);
     await expect(createTrip(TID, UID, { routeId: RID, busId: BID, tripType: "single", scheduledDate: "2026-07-20", scheduledStartTime: "08:00" }))
       .rejects.toThrow(NotFoundError);
+  });
+
+  it("regenerates leg codes from the parent trip number on legs replace", async () => {
+    mockQueryOne
+      .mockResolvedValueOnce({ id: TRIP_ID })                    // existing trip
+      .mockResolvedValueOnce({ trip_number: "TR-2026-0099" })    // parent number
+      .mockResolvedValueOnce(makeTripRow({ trip_number: "TR-2026-0099" })); // getTripById row
+    const legInserts: any[][] = [];
+    mockQuery.mockImplementation((sql: string, params: any[]) => {
+      const s = String(sql);
+      if (s.includes("INSERT INTO trip_legs")) { legInserts.push(params); return Promise.resolve({}); }
+      if (s.includes("FROM trip_legs")) {
+        return Promise.resolve([
+          { id: "leg-1", trip_id: TRIP_ID, leg_no: 1, leg_code: "TR-2026-0099-S1", origin: "Jeddah", destination: "Madinah", leg_date: "2026-08-01", departure_time: "08:00", arrival_time: null, overnight_flag: false, notes: null },
+          { id: "leg-2", trip_id: TRIP_ID, leg_no: 2, leg_code: "TR-2026-0099-S2", origin: "Madinah", destination: "Makkah", leg_date: "2026-08-03", departure_time: "09:00", arrival_time: null, overnight_flag: true, notes: null },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+    const result = await updateTrip(TID, TRIP_ID, {
+      legs: [
+        { origin: "Jeddah", destination: "Madinah", legDate: "2026-08-01" },
+        { origin: "Madinah", destination: "Makkah", legDate: "2026-08-03" },
+      ],
+    } as any);
+    expect(legInserts).toHaveLength(2);
+    expect(legInserts[0][4]).toBe("TR-2026-0099-S1");
+    expect(legInserts[1][4]).toBe("TR-2026-0099-S2");
+    expect((result as any).legs[0].legCode).toBe("TR-2026-0099-S1");
   });
 });
 

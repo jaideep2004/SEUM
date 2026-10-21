@@ -45,7 +45,6 @@ export default function EmployeeAttendancePage() {
 
   async function fetchToday() {
     const token = getToken();
-    if (!token) return;
     try {
       const [rosterRes, todayRes, monthlyRes] = await Promise.all([
         fetch(`${API}/hr/employees?pageSize=100&status=active`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -64,7 +63,6 @@ export default function EmployeeAttendancePage() {
   async function fetchRecords() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       const params = new URLSearchParams({ start_date: startDate, end_date: endDate, pageSize: "100" });
       if (employeeFilter) params.set("employee_id", employeeFilter);

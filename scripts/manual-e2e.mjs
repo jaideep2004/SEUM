@@ -168,7 +168,9 @@ async function phase12(sessions) {
   // per-role access matrix (allowed + forbidden pairs)
   const matrix = [
     ["company", "/users?pageSize=5", 200, "/tenants", 403],
-    ["ops", "/operations/routes?pageSize=5", 200, "/fleet/buses?pageSize=5", 403],
+    // ops sees everything tenant-level EXCEPT Finance & HR (client roles decision Sep 2026):
+    // fleet buses are VISIBLE to ops now (200), finance invoices stay forbidden (403)
+    ["ops", "/operations/routes?pageSize=5", 200, "/accounting/invoices?pageSize=5", 403],
     ["fleet", "/fleet/buses?pageSize=5", 200, "/users?pageSize=5", 403],
     ["finance", "/accounting/invoices?pageSize=5", 200, "/fleet/buses?pageSize=5", 403],
     ["hr", "/drivers/leaves?pageSize=5", 200, "/fleet/buses?pageSize=5", 403],

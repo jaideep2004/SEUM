@@ -16,7 +16,8 @@ function escapeHtml(value: string): string {
 
 interface TripRow {
   id: string; tenant_id: string; route_id: string | null; bus_id: string | null;
-  driver_id: string | null; trip_type: string; scheduled_date: string;
+  driver_id: string | null; trip_type: string; trip_number: string | null;
+  scheduled_date: string;
   scheduled_start_time: string; scheduled_end_time: string | null;
   actual_start_time: string | null; actual_end_time: string | null;
   status: string; delay_minutes: number | null; delay_reason: string | null;
@@ -27,14 +28,33 @@ interface TripRow {
   vehicle_count: number | null;
   group_leader: string | null; group_leader_no: string | null;
   nationality: string | null; agent: string | null; group_no: string | null;
-  no_of_pax: number | null; nusuk_info: any; groups: any; flights: any; hotels: any;
+  no_of_pax: number | null; selling_price: number | null;
+  nusuk_info: any; groups: any; flights: any; hotels: any;
   created_at: string; updated_at: string; deleted_at: string | null;
 }
 
 interface TripLegRow {
-  id: string; trip_id: string; leg_no: number; origin: string; destination: string;
+  id: string; trip_id: string; leg_no: number; leg_code: string | null;
+  origin: string; destination: string;
   leg_date: string; departure_time: string | null; arrival_time: string | null;
   overnight_flag: boolean; route_type: string | null; notes: string | null;
+}
+
+/** Next trip number TR-YYYY-NNNN per tenant (mirrors invoice numbering). */
+export async function nextTripNumber(tenantId: string): Promise<string> {
+  const year = new Date().getFullYear();
+  const last = await queryOne<{ trip_number: string }>(
+    `SELECT trip_number FROM trips WHERE tenant_id = $1 AND trip_number LIKE $2
+     ORDER BY trip_number DESC LIMIT 1`,
+    [tenantId, `TR-${year}-%`]
+  );
+  let seq = 1;
+  if (last?.trip_number) {
+    const parts = last.trip_number.split('-');
+    const n = parseInt(parts[parts.length - 1], 10);
+    if (Number.isFinite(n)) seq = n + 1;
+  }
+  return `TR-${year}-${String(seq).padStart(4, '0')}`;
 }
 
 interface PassengerRow {
@@ -47,6 +67,7 @@ interface PassengerRow {
 function mapLeg(row: TripLegRow) {
   return {
     id: row.id, tripId: row.trip_id, legNo: row.leg_no,
+    legCode: row.leg_code || null,
     origin: row.origin, destination: row.destination,
     legDate: row.leg_date, departureTime: row.departure_time,
     arrivalTime: row.arrival_time, overnightFlag: row.overnight_flag,
@@ -59,9 +80,11 @@ function mapManifest(row: TripRow) {
   return {
     tripTitle: row.trip_title, vehicleType: row.vehicle_type,
     vehicleCount: row.vehicle_count,
+    tripNumber: (row as any).trip_number || null,
     groupLeader: row.group_leader, groupLeaderNo: row.group_leader_no,
     nationality: row.nationality, agent: row.agent, groupNo: row.group_no,
-    noOfPax: row.no_of_pax, nusukInfo: row.nusuk_info,
+    noOfPax: row.no_of_pax, sellingPrice: row.selling_price ?? null,
+    nusukInfo: row.nusuk_info,
     groups: row.groups || [],
     flights: row.flights, hotels: row.hotels,
   };
@@ -155,6 +178,7 @@ export async function createTrip(tenantId: string, userId: string, input: Create
 
   const tripId = uuid();
   const tripType = input.tripType || 'single';
+  const tripNumber = await nextTripNumber(tenantId);
 
   // Flat manifest fallback from first group (legacy readers use flat columns)
   const firstGroup = (Array.isArray((input as any).groups) && (input as any).groups.length > 0)
@@ -168,18 +192,19 @@ export async function createTrip(tenantId: string, userId: string, input: Create
 
   await transaction(async (client) => {
     const res = await client.query(
-      `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type, scheduled_date,
+      `INSERT INTO trips (id, tenant_id, route_id, bus_id, driver_id, trip_type, trip_number, scheduled_date,
         scheduled_start_time, scheduled_end_time, notes, created_by,
         trip_title, vehicle_type, vehicle_count, group_leader, group_leader_no, nationality,
-        agent, agent_id, group_no, no_of_pax, nusuk_info, groups, flights, hotels)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
-               $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
+        agent, agent_id, group_no, no_of_pax, selling_price, nusuk_info, groups, flights, hotels)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+               $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27) RETURNING *`,
       [tripId, tenantId, input.routeId || null, input.busId || null, input.driverId || null,
-       tripType, input.scheduledDate, input.scheduledStartTime, input.scheduledEndTime || null,
+       tripType, tripNumber, input.scheduledDate, input.scheduledStartTime, input.scheduledEndTime || null,
        input.notes || null, userId,
        input.tripTitle || null, input.vehicleType || null, (input as any).vehicleCount ?? null,
        effGroupLeader, effGroupLeaderNo, effNationality, resolvedAgentDisplay || null,
-       resolvedAgentId, effGroupNo, effNoOfPax, effNusukInfo ? JSON.stringify(effNusukInfo) : null,
+       resolvedAgentId, effGroupNo, effNoOfPax, (input as any).sellingPrice ?? null,
+       effNusukInfo ? JSON.stringify(effNusukInfo) : null,
        (input as any).groups ? JSON.stringify((input as any).groups) : null,
        input.flights ? JSON.stringify(input.flights) : null,
        input.hotels ? JSON.stringify(input.hotels) : null]
@@ -191,10 +216,10 @@ export async function createTrip(tenantId: string, userId: string, input: Create
       for (let i = 0; i < input.legs.length; i++) {
         const leg = input.legs[i] as any;
         await client.query(
-          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
+          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, leg_code, origin, destination,
             leg_date, departure_time, arrival_time, overnight_flag, route_type, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-          [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [uuid(), tenantId, tripId, i + 1, `${tripNumber}-S${i + 1}`, leg.origin, leg.destination,
            leg.legDate, leg.departureTime || null, leg.arrivalTime || null,
            leg.overnightFlag ?? false, (leg.routeType || null) as any, leg.notes || null]
         );
@@ -296,7 +321,7 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
   if (queryParams.startDate) { conditions.push(`t.scheduled_date >= $${idx++}`); params.push(queryParams.startDate); }
   if (queryParams.endDate) { conditions.push(`t.scheduled_date <= $${idx++}`); params.push(queryParams.endDate); }
   if (queryParams.search) {
-    conditions.push(`(t.notes ILIKE $${idx} OR t.trip_type ILIKE $${idx} OR t.trip_title ILIKE $${idx} OR t.group_leader ILIKE $${idx})`);
+    conditions.push(`(t.notes ILIKE $${idx} OR t.trip_type ILIKE $${idx} OR t.trip_title ILIKE $${idx} OR t.group_leader ILIKE $${idx} OR t.trip_number ILIKE $${idx})`);
     params.push(`%${queryParams.search}%`);
     idx++;
   }
@@ -337,6 +362,7 @@ export async function listTrips(tenantId: string, queryParams: TripQuery) {
       tripTitle: r.trip_title, groupLeader: r.group_leader, groupNo: r.group_no,
       noOfPax: r.no_of_pax, legCount: r.leg_count || 0,
       vehicleType: r.vehicle_type, vehicleCount: r.vehicle_count,
+      tripNumber: r.trip_number || null,
       agent: r.agent, agentId: r.agent_id, agentName: r.agent_name,
       agentCompanyName: r.agent_company_name, agentPhone: r.agent_phone, agentEmail: r.agent_email,
     })),
@@ -439,7 +465,8 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
     vehicleCount: 'vehicle_count',
     groupLeader: 'group_leader', groupLeaderNo: 'group_leader_no',
     nationality: 'nationality', agent: 'agent', groupNo: 'group_no',
-    noOfPax: 'no_of_pax', nusukInfo: 'nusuk_info', groups: 'groups',
+    noOfPax: 'no_of_pax', sellingPrice: 'selling_price',
+    nusukInfo: 'nusuk_info', groups: 'groups',
   };
   const fields: string[] = [];
   const params: any[] = [];
@@ -463,15 +490,19 @@ export async function updateTrip(tenantId: string, tripId: string, input: Update
 
   // Replace legs if provided (full replacement of the leg set)
   if (input.legs !== undefined) {
+    const parent = await queryOne<{ trip_number: string | null }>(
+      'SELECT trip_number FROM trips WHERE id = $1 AND tenant_id = $2', [tripId, tenantId]
+    );
+    const parentNo = parent?.trip_number || 'TRIP';
     await transaction(async (client) => {
       await client.query('DELETE FROM trip_legs WHERE trip_id = $1', [tripId]);
       for (let i = 0; i < (input.legs || []).length; i++) {
         const leg = input.legs![i] as any;
         await client.query(
-          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, origin, destination,
+          `INSERT INTO trip_legs (id, tenant_id, trip_id, leg_no, leg_code, origin, destination,
             leg_date, departure_time, arrival_time, overnight_flag, route_type, notes)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-          [uuid(), tenantId, tripId, i + 1, leg.origin, leg.destination,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [uuid(), tenantId, tripId, i + 1, `${parentNo}-S${i + 1}`, leg.origin, leg.destination,
            leg.legDate, leg.departureTime || null, leg.arrivalTime || null,
            leg.overnightFlag ?? false, (leg.routeType || null) as any, leg.notes || null]
         );

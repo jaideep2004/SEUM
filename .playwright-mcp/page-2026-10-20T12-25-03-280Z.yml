@@ -1,0 +1,13 @@
+- generic [active] [ref=f18e1]:
+  - option "All buses" [selected]
+  - option "All statuses" [selected]
+  - option "Scheduled"
+  - option "In Progress"
+  - option "Completed"
+  - option "Cancelled"
+  - option "All priorities" [selected]
+  - option "low"
+  - option "medium"
+  - option "high"
+  - option "critical"
+  - alert [ref=f18e2]

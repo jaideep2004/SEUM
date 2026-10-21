@@ -30,7 +30,6 @@ export default function CustomerProfilePage({ params }: { params: { id: string }
   useEffect(() => {
     (async () => {
       const token = getToken();
-      if (!token) return;
       try {
         const res = await fetch(`${API}/bookings/customers/${params.id}`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();

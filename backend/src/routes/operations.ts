@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import * as routeController from '../controllers/routeController';
 import * as tripController from '../controllers/tripController';
 import * as recurringTripController from '../controllers/recurringTripController';
@@ -24,6 +25,19 @@ router.delete('/routes/:id/stops/:stopId', authenticate, requireRole(...OPS_WRIT
 
 // ─── Trip Calendar (must precede /trips/:id) ───
 router.get('/trips/calendar', authenticate, requireRole(...OPS_READ), tripController.getTripCalendar);
+
+// ─── Trip Excel Import (must precede /trips/:id) ───
+const tripImportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    // Accept but controller will validate extension; multer filter permissive
+    cb(null, true);
+  },
+});
+
+router.get('/trips/import/template', authenticate, requireRole(...OPS_READ), tripController.downloadTripTemplate);
+router.post('/trips/import', authenticate, requireRole(...OPS_WRITE), tripImportUpload.single('file'), tripController.importTrips);
 
 // ─── Trips ───
 router.post('/trips', authenticate, requireRole(...OPS_WRITE), tripController.createTrip);

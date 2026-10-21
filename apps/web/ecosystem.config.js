@@ -1,8 +1,9 @@
 module.exports = {
   apps: [{
     name: "seum-frontend",
-    script: "node_modules/next/dist/bin/next",
+    script: "npm",
     args: "start",
+    cwd: __dirname,
     instances: 1,
     exec_mode: "fork",
     env: {

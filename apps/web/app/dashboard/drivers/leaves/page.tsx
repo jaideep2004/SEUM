@@ -64,8 +64,6 @@ export default function DriverLeavesPage() {
   async function fetchLeaves() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
-
     try {
       let url = `${API}/drivers/leaves?pageSize=100`;
       if (statusFilter) url += `&status=${statusFilter}`;

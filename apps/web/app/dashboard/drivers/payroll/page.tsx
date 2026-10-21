@@ -40,7 +40,6 @@ export default function DriverPayrollPage() {
   async function fetchRecords() {
     setLoading(true);
     const token = getToken();
-    if (!token) { setLoading(false); return; }
     try {
       let url = `${API}/drivers/payroll?pageSize=100`;
       if (statusFilter) url += `&status=${statusFilter}`;

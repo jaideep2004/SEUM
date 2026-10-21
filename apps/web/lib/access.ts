@@ -31,6 +31,7 @@ import {
   Route,
   Settings,
   Truck,
+  Upload,
   UserCheck,
   Users,
   Wallet,
@@ -105,6 +106,8 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "Operations",
     items: [
       { label: "Trips", href: "/dashboard/trips", icon: Route, capability: "operationsRead" },
+      { label: "Trips Manager", href: "/dashboard/trips/manager", icon: ClipboardList, capability: "operationsWrite" },
+      { label: "Import Trips", href: "/dashboard/trips/import", icon: Upload, capability: "operationsWrite" },
       { label: "Trip Calendar", href: "/dashboard/trips/calendar", icon: Calendar, capability: "operationsRead" },
       { label: "Trip Reports", href: "/dashboard/trips/reports", icon: BarChart3, capability: "operationsRead" },
       { label: "Recurring Trips", href: "/dashboard/recurring-trips", icon: Repeat, capability: "operationsRead" },
