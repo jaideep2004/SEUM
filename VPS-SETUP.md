@@ -11,8 +11,8 @@ Gather:
 
 - VPS: Ubuntu 22.04/24.04, **2 GB RAM minimum** (Next.js build; 1 GB works only with swap), 2 vCPU.
 - Domain with DNS control. This guide uses:
-  - `seum.example.com` → web (A record)
-  - `api.seum.example.com` → API (A record)
+  - `test.seumerp.com` → web (A record)
+  - `api.seumerp.com` → API (A record)
 - Existing Supabase `DATABASE_URL` (recommended: keep the same DB, no data migration).
 - The values of the current `backend/.env` (DB URL, JWT secrets, SMTP). **Keep the same JWT
   secrets** if you don't want to force every user to log in again.
@@ -20,6 +20,12 @@ Gather:
   Supabase; uploaded files live on the server disk and are NOT in the repo.
 
 > Commit and push your latest code first — deploying by `git clone` only gets committed code.
+
+> DNS: create **A records** for `test` and `api` pointing to the VPS public IPv4, and **delete any
+> stale AAAA records** for those names (old hosting/parking). If an AAAA record exists and points
+> elsewhere, Let's Encrypt may validate over IPv6 and fail with `404`/`unauthorized`. Verify with
+> `dig +short A test.seumerp.com` and `dig +short AAAA test.seumerp.com` before running Certbot.
+> No `www` record is needed; do not pass `-d www...` to Certbot unless it exists.
 
 ---
 
@@ -103,10 +109,10 @@ PORT=4000
 NODE_ENV=production
 
 # Web origin(s), comma-separated
-CORS_ORIGIN=https://seum.example.com
+CORS_ORIGIN=https://test.seumerp.com
 
 # Used in password-reset / notification links
-APP_URL=https://seum.example.com
+APP_URL=https://test.seumerp.com
 
 AUDIT_LOG_RETENTION_DAYS=90
 
@@ -131,7 +137,7 @@ GPS_INGEST_KEY=...
 ### 3.2 `apps/web/.env`
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.seum.example.com/api/v1
+NEXT_PUBLIC_API_URL=https://api.seumerp.com/api/v1
 ```
 
 **Important:** `NEXT_PUBLIC_*` is baked at build time. Set this file **before** running
@@ -252,10 +258,10 @@ map $http_upgrade $connection_upgrade {
 Create `/etc/nginx/sites-available/seum`:
 
 ```nginx
-# Web — seum.example.com
+# Web — test.seumerp.com
 server {
     listen 80;
-    server_name seum.example.com www.seum.example.com;
+    server_name test.seumerp.com;
 
     client_max_body_size 25m;
 
@@ -270,10 +276,10 @@ server {
     }
 }
 
-# API — api.seum.example.com
+# API — api.seumerp.com
 server {
     listen 80;
-    server_name api.seum.example.com;
+    server_name api.seumerp.com;
 
     # Uploads are limited to 10 MB in multer; keep headroom
     client_max_body_size 25m;
@@ -312,9 +318,7 @@ systemctl reload nginx
 ## 8. HTTPS (required for login)
 
 ```bash
-certbot --nginx \
-  -d seum.example.com -d www.seum.example.com \
-  -d api.seum.example.com
+certbot --nginx -d test.seumerp.com -d api.seumerp.com
 # choose "Redirect" when asked
 
 certbot renew --dry-run
@@ -342,13 +346,13 @@ Uploads are served by the API at `/uploads/...`; they are not in git and must su
 
 | Check | Expected |
 |---|---|
-| `https://seum.example.com/login` | Login page over HTTPS |
+| `https://test.seumerp.com/login` | Login page over HTTPS |
 | Login `super@seum.com` | Dashboard loads |
 | Customers / Trips pages | Lists load (real data) |
 | Create trip + PDF | Trip created; print sheet opens |
 | `/dashboard/live-trips` | Socket connects (no console errors) |
-| Upload a document | File appears, URL under `api.seum.example.com/uploads/...` |
-| `https://api.seum.example.com/api/v1/health` | `{"success":true,...}` |
+| Upload a document | File appears, URL under `api.seumerp.com/uploads/...` |
+| `https://api.seumerp.com/api/v1/health` | `{"success":true,...}` |
 | `pm2 status` | Both processes `online`, restart count stable |
 
 ---
@@ -394,6 +398,10 @@ Never run `npm run dev` / `next dev` on the production server.
 
 ## Troubleshooting
 
+- **Certbot fails with `404`/`unauthorized` or `NXDOMAIN`** — DNS is not pointing at this server.
+  Add the missing A records, delete stale AAAA records, confirm with
+  `dig +short A <domain>` / `dig +short AAAA <domain>`, and do not request `www` unless that
+  record exists. Re-run Certbot after propagation.
 - **Login succeeds but session drops instantly** — cookies are `Secure`; the site must be
   served over HTTPS, and `CORS_ORIGIN` must exactly match the web origin (scheme + host).
 - **Browser calls `localhost:4000`** — `NEXT_PUBLIC_API_URL` was missing when `next build` ran.

@@ -99,6 +99,8 @@ export const tripsEn: Record<string, string> = {
   "trips.new.rtIntracity": "Intracity",
   "trips.new.overnight": "Overnight",
   "trips.new.addLeg": "Add Leg",
+  "trips.new.legsAutoHint": "Legs are auto-filled from your flights &amp; hotels: arrival pickup, departure 3 hrs before the flight, and hotel ziyarah next morning at 07:00. Add extra legs manually if needed.",
+  "trips.new.ziyarah": "Ziyarah",
   "trips.new.creating": "Creating...",
   "trips.new.createTrip": "Create Trip",
 
@@ -492,6 +494,8 @@ export const tripsAr: Record<string, string> = {
   "trips.new.rtIntracity": "داخل المدينة",
   "trips.new.overnight": "مبيت",
   "trips.new.addLeg": "إضافة مرحلة",
+  "trips.new.legsAutoHint": "تُملأ المراحل تلقائياً من الرحلات والفنادق: الاستقبال عند الوصول، المغادرة قبل الرحلة بثلاث ساعات، والزيارة في صباح اليوم التالي الساعة 07:00. يمكن إضافة مراحل يدوياً.",
+  "trips.new.ziyarah": "زيارة",
   "trips.new.creating": "جارٍ الإنشاء…",
   "trips.new.createTrip": "إنشاء الرحلة",
 

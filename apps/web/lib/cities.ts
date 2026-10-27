@@ -194,6 +194,9 @@ export const CITIES: City[] = [
   { en: "Auckland", ar: "أوكلاند", countryEn: "New Zealand", iata: "AKL", airportEn: "Auckland Airport", airportAr: "مطار أوكلاند" },
 ];
 
+/** Saudi cities only — used where the client wants city names without airports (e.g. hotel city). */
+export const SAUDI_CITIES: City[] = CITIES.filter((c) => c.countryEn === "Saudi Arabia");
+
 /**
  * Display label for a city option: "City — Airport Name (IATA)" when airport
  * data is known, else falls back to "City (Country)".

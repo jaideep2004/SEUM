@@ -195,7 +195,7 @@ t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.tripNumb
                       {idx < trip.legs.length - 1 && <div className={styles.legLine} />}
                     </div>
                     <div className={styles.legContent}>
-                      <div className={styles.legPath}>{leg.legCode || `${trip.tripNumber || ""}-S${leg.legNo || idx + 1}`} · {leg.origin} → {leg.destination}</div>
+                      <div className={styles.legPath}>{leg.legCode || `${trip.tripNumber || ""}-S${leg.legNo || idx + 1}`} · {leg.origin} → {leg.destination}{leg.hotel ? ` · ${leg.hotel}` : ""}</div>
                       <div className={styles.legMeta}>
                         {formatDate(leg.legDate, lang)}
                         {leg.departureTime && <> · {t("trips.detail.dep")} {leg.departureTime.slice(0, 5)}</>}
@@ -436,7 +436,7 @@ t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.tripNumb
                         <tr key={leg.id || idx}>
                           <td>{leg.legCode || `${trip.tripNumber || ""}-S${leg.legNo || idx + 1}`}</td>
                           <td>{leg.origin}</td>
-                          <td>{leg.destination}</td>
+                          <td>{leg.destination}{leg.hotel ? ` (${leg.hotel})` : ""}</td>
                           <td>{leg.legDate}</td>
                           <td>{leg.departureTime?.slice(0, 5) || "—"}</td>
                         </tr>

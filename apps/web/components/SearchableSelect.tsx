@@ -95,7 +95,7 @@ export default function SearchableSelect({
               {o.label}
             </button>
           ))}
-          {allowCustom && q && !exactMatch && (
+          {allowCustom && (
             <button
               type="button"
               onMouseDown={(e) => {
@@ -104,7 +104,7 @@ export default function SearchableSelect({
               }}
               style={{ width: "100%", textAlign: "start", padding: "7px 10px", border: "none", borderTop: "1px solid var(--color-border)", background: "transparent", color: "var(--color-primary, #2563eb)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}
             >
-              {customLabel || "Other"}: {query.trim()}
+              {customLabel || "Other"}
             </button>
           )}
         </div>

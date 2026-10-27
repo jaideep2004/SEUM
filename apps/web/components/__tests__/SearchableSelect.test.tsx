@@ -36,4 +36,24 @@ describe("SearchableSelect", () => {
     render(<SearchableSelect value="Custom City" onChange={() => {}} options={OPTIONS} placeholder="From" />);
     expect((screen.getByPlaceholderText("From") as HTMLInputElement).value).toBe("Custom City");
   });
+
+  it("commits a custom value when the 'Other' option is clicked", async () => {
+    const onChange = vi.fn();
+    render(<SearchableSelect value="" onChange={onChange} options={OPTIONS} placeholder="From" allowCustom customLabel="Other" />);
+    const input = screen.getByPlaceholderText("From");
+    await userEvent.click(input);
+    await userEvent.type(input, "Al Ula Test");
+    await userEvent.click(screen.getByRole("button", { name: "Other" }));
+    expect(onChange).toHaveBeenCalledWith("Al Ula Test");
+  });
+
+  it("commits a custom value on Enter when allowCustom is set", async () => {
+    const onChange = vi.fn();
+    render(<SearchableSelect value="" onChange={onChange} options={OPTIONS} placeholder="From" allowCustom customLabel="Other" />);
+    const input = screen.getByPlaceholderText("From");
+    await userEvent.click(input);
+    await userEvent.type(input, "Al Ula Test");
+    await userEvent.keyboard("{Enter}");
+    expect(onChange).toHaveBeenCalledWith("Al Ula Test");
+  });
 });

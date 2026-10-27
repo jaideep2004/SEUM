@@ -6,7 +6,7 @@ import { ArrowLeft, Save, Plus, Trash2, Users, Plane, Hotel, FileDown, Printer }
 import Link from "next/link";
 import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
 import { COUNTRIES, countryLabel } from "@/lib/countries";
-import { CITIES, cityLabel } from "@/lib/cities";
+import { CITIES, cityLabel, SAUDI_CITIES } from "@/lib/cities";
 import SearchableSelect from "@/components/SearchableSelect";
 import styles from "./page.module.css";
 
@@ -45,6 +45,62 @@ function emptyGroup() {
 
 function emptyHotel() {
   return { city: "", hotel: "", from: "", to: "" };
+}
+
+function hhmmMinus3h(t: string) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  if (h == null || m == null) return t;
+  const d = new Date(); d.setHours(h, m, 0, 0); d.setHours(d.getHours() - 3);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function add1day(d: string) {
+  if (!d) return "";
+  const [y, mo, da] = d.split("-").map(Number);
+  if (y == null || mo == null || da == null) return d;
+  const x = new Date(y, mo - 1, da); x.setDate(x.getDate() + 1);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+}
+
+function iataOf(city: string) {
+  if (!city) return "";
+  const c = CITIES.find((x) => x.en === city);
+  return c?.iata || city;
+}
+
+/** Auto-populate trip legs from flights + hotels (client rule):
+ *  - arrival flight : arrival city → first hotel city, at flight time
+ *  - departure flight: last hotel city → departure airport, 3 hrs before flight
+ *  - hotel          : city → "CITY ZIYARAH" next morning 07:00, then checkout transfer to next hotel city
+ */
+function computeLegs(flights: any[], hotels: any[]) {
+  const legs: any[] = [];
+  const fl = (flights || []).filter((x: any) => x.flightNo || x.airline || x.from || x.to).sort((a: any, b: any) => (a.date || "").localeCompare(b.date || ""));
+  const ho = (hotels || []).filter((x: any) => x.city || x.hotel).sort((a: any, b: any) => (a.from || "").localeCompare(b.from || ""));
+  const firstCity = ho[0]?.city || "";
+  const lastCity = ho[ho.length - 1]?.city || "";
+  for (const f of fl) {
+    if (f.flightType === "arrival") {
+      legs.push({ origin: f.to, destination: firstCity, legDate: f.date, departureTime: f.time, source: "flight", hotel: "" });
+    } else if (f.flightType === "departure") {
+      legs.push({ origin: lastCity, destination: iataOf(f.from), legDate: f.date, departureTime: hhmmMinus3h(f.time), source: "flight", hotel: "" });
+    } else {
+      legs.push({ origin: f.from, destination: f.to, legDate: f.date, departureTime: f.time, source: "flight", hotel: "" });
+    }
+  }
+  for (let i = 0; i < ho.length; i++) {
+    const h = ho[i]; const nxt = ho[i + 1];
+    legs.push({ origin: h.city, destination: `${h.city} ZIYARAH`, legDate: add1day(h.from), departureTime: "07:00", source: "hotel", hotel: h.hotel || "" });
+    if (nxt) legs.push({ origin: h.city, destination: iataOf(nxt.city), legDate: h.to, departureTime: "10:00", source: "hotel", hotel: h.hotel || "" });
+  }
+  // Organize properly by date then time so legs run in chronological order
+  legs.sort((a: any, b: any) => {
+    const da = (a.legDate || "").localeCompare(b.legDate || "");
+    if (da !== 0) return da;
+    return (a.departureTime || "").localeCompare(b.departureTime || "");
+  });
+  return legs;
 }
 
 export default function NewTripPage() {
@@ -182,6 +238,11 @@ export default function NewTripPage() {
   function setHotel(idx: number, key: string, value: any) {
     setForm((f: any) => ({ ...f, hotels: f.hotels.map((x: any, i: number) => i === idx ? { ...x, [key]: value } : x) }));
   }
+
+  // Auto-populate legs whenever flights or hotels change
+  useEffect(() => {
+    setForm((f: any) => ({ ...f, legs: computeLegs(f.flights || [], f.hotels || []) }));
+  }, [form.flights, form.hotels]);
 
   function saveDraft() {
     try {
@@ -510,26 +571,40 @@ export default function NewTripPage() {
             <div key={idx} className={styles.legRow}>
               <div className={styles.legNo}>{idx + 1}</div>
               <div className={styles.legFields}>
-                <select value={fl.flightType || ""} onChange={(e) => setFlightType(idx, e.target.value)} title={t("trips.new.flightType")} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12, minWidth: 110 }}>
-                  <option value="">{t("trips.new.flightType")}</option>
-                  {FLIGHT_TYPES.map(o => <option key={o.value} value={o.value}>{o.value === "arrival" ? t("trips.new.rtArrival") : t("trips.new.rtDeparture")}</option>)}
-                </select>
-                <input placeholder={t("trips.new.flightNo")} value={fl.flightNo} onChange={(e) => setFlight(idx, "flightNo", e.target.value)} />
-                <input placeholder={t("trips.new.airline")} value={fl.airline} onChange={(e) => setFlight(idx, "airline", e.target.value)} />
-                <SearchableSelect
-                  value={fl.from} onChange={(v) => setFlight(idx, "from", v)}
-                  options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
-                  placeholder={t("common.from")} title={`${t("common.from")} — ${t("trips.new.flightCityHint")}`}
-                  allowCustom customLabel={t("trips.new.otherCity")}
-                />
-                <SearchableSelect
-                  value={fl.to} onChange={(v) => setFlight(idx, "to", v)}
-                  options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
-                  placeholder={t("common.to")} title={`${t("common.to")} — ${t("trips.new.flightCityHint")}`}
-                  allowCustom customLabel={t("trips.new.otherCity")}
-                />
-                <input type="date" title={t("trips.new.ttDate")} value={fl.date} onChange={(e) => setFlight(idx, "date", e.target.value)} />
-                <input type="time" title={t("trips.new.ttTime")} value={fl.time} onChange={(e) => setFlight(idx, "time", e.target.value)} />
+                <div className={styles.fldType}>
+                  <select value={fl.flightType || ""} onChange={(e) => setFlightType(idx, e.target.value)} title={t("trips.new.flightType")}>
+                    <option value="">{t("trips.new.flightType")}</option>
+                    {FLIGHT_TYPES.map(o => <option key={o.value} value={o.value}>{o.value === "arrival" ? t("trips.new.rtArrival") : t("trips.new.rtDeparture")}</option>)}
+                  </select>
+                </div>
+                <div className={styles.fldNo}>
+                  <input placeholder={t("trips.new.flightNo")} value={fl.flightNo} onChange={(e) => setFlight(idx, "flightNo", e.target.value)} />
+                </div>
+                <div className={styles.fldAirline}>
+                  <input placeholder={t("trips.new.airline")} value={fl.airline} onChange={(e) => setFlight(idx, "airline", e.target.value)} />
+                </div>
+                <div className={styles.fldCity}>
+                  <SearchableSelect
+                    value={fl.from} onChange={(v) => setFlight(idx, "from", v)}
+                    options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
+                    placeholder={t("common.from")} title={`${t("common.from")} — ${t("trips.new.flightCityHint")}`}
+                    allowCustom customLabel={t("trips.new.otherCity")}
+                  />
+                </div>
+                <div className={styles.fldCity}>
+                  <SearchableSelect
+                    value={fl.to} onChange={(v) => setFlight(idx, "to", v)}
+                    options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
+                    placeholder={t("common.to")} title={`${t("common.to")} — ${t("trips.new.flightCityHint")}`}
+                    allowCustom customLabel={t("trips.new.otherCity")}
+                  />
+                </div>
+                <div className={styles.fldDate}>
+                  <input type="date" title={t("trips.new.ttDate")} value={fl.date} onChange={(e) => setFlight(idx, "date", e.target.value)} />
+                </div>
+                <div className={styles.fldTime}>
+                  <input type="time" title={t("trips.new.ttTime")} value={fl.time} onChange={(e) => setFlight(idx, "time", e.target.value)} />
+                </div>
               </div>
               {fl.flightType && (
                 <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
@@ -553,10 +628,23 @@ export default function NewTripPage() {
             <div key={idx} className={styles.legRow}>
               <div className={styles.legNo}>{idx + 1}</div>
               <div className={styles.legFields}>
-                <input placeholder={t("trips.new.city")} value={ht.city} onChange={(e) => setHotel(idx, "city", e.target.value)} />
-                <input placeholder={t("trips.new.hotel")} value={ht.hotel} onChange={(e) => setHotel(idx, "hotel", e.target.value)} />
-                <input type="date" title={t("trips.new.ttCheckIn")} value={ht.from} onChange={(e) => setHotel(idx, "from", e.target.value)} />
-                <input type="date" title={t("trips.new.ttCheckOut")} value={ht.to} onChange={(e) => setHotel(idx, "to", e.target.value)} />
+                <div className={styles.fldCity}>
+                  <SearchableSelect
+                    value={ht.city} onChange={(v) => setHotel(idx, "city", v)}
+                    options={SAUDI_CITIES.map(c => ({ value: c.en, label: lang === "ar" ? c.ar : c.en }))}
+                    placeholder={t("trips.new.city")} title={`${t("trips.new.city")} — ${t("trips.new.flightCityHint")}`}
+                    allowCustom customLabel={t("trips.new.otherCity")}
+                  />
+                </div>
+                <div className={styles.fldHotel}>
+                  <input placeholder={t("trips.new.hotel")} value={ht.hotel} onChange={(e) => setHotel(idx, "hotel", e.target.value)} />
+                </div>
+                <div className={styles.fldDate}>
+                  <input type="date" title={t("trips.new.ttCheckIn")} value={ht.from} onChange={(e) => setHotel(idx, "from", e.target.value)} />
+                </div>
+                <div className={styles.fldDate}>
+                  <input type="date" title={t("trips.new.ttCheckOut")} value={ht.to} onChange={(e) => setHotel(idx, "to", e.target.value)} />
+                </div>
               </div>
               <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, hotels: f.hotels.filter((_: any, i: number) => i !== idx) }))}>
                 <Trash2 size={13} />
@@ -568,37 +656,24 @@ export default function NewTripPage() {
           </button>
         </div>
 
-        {/* 5. TRIP LEGS (only legs per client — 1 leg = single, 2+ = round) */}
+        {/* 5. TRIP LEGS — auto-populated from flights + hotels (1 leg = single, 2+ = round) */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>{t("trips.new.legsTitle")}</h3>
+          <span style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginBottom: 8, display: "block" }}>{t("trips.new.legsAutoHint")}</span>
           {form.legs.map((leg: any, idx: number) => (
             <div key={idx} className={styles.legRow}>
               <div className={styles.legNo}>{idx + 1}</div>
               <div className={styles.legFields}>
-                <SearchableSelect
-                  value={leg.origin} onChange={(v) => setLeg(idx, "origin", v)}
-                  options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
-                  placeholder={t("common.from")} title={`${t("common.from")} — ${t("trips.new.flightCityHint")}`}
-                  allowCustom customLabel={t("trips.new.otherCity")}
-                />
-                <SearchableSelect
-                  value={leg.destination} onChange={(v) => setLeg(idx, "destination", v)}
-                  options={CITIES.map(c => ({ value: c.en, label: cityLabel(c, lang) }))}
-                  placeholder={t("common.to")} title={`${t("common.to")} — ${t("trips.new.flightCityHint")}`}
-                  allowCustom customLabel={t("trips.new.otherCity")}
-                />
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
+                  <span style={{ fontWeight: 600, fontSize: 12 }}>{esc(leg.origin)}</span>
+                  <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>→</span>
+                  <span style={{ fontWeight: 600, fontSize: 12 }}>{esc(leg.destination)}{leg.hotel ? ` · ${esc(leg.hotel)}` : ""}</span>
+                  {leg.source === "hotel" && <span style={{ fontSize: 10, color: "var(--color-text-secondary)", marginLeft: 8 }}>{t("trips.new.ziyarah")}</span>}
+                </div>
                 <input type="date" title={t("trips.new.ttDate")} value={leg.legDate} onChange={(e) => setLeg(idx, "legDate", e.target.value)} />
                 <input type="time" title={t("trips.new.ttDeparture")} value={leg.departureTime} onChange={(e) => setLeg(idx, "departureTime", e.target.value)} />
-                <select value={leg.routeType || ""} onChange={(e) => setLeg(idx, "routeType", e.target.value)} style={{ padding: "6px 8px", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", background: "var(--color-bg)", color: "var(--color-text)", fontSize: 12 }}>
-                  <option value="">{t("trips.new.routeType")}</option>
-                  {ROUTE_TYPES.map(o => <option key={o.value} value={o.value}>{o.value === "arrival" ? t("trips.new.rtArrival") : o.value === "departure" ? t("trips.new.rtDeparture") : o.value === "intercity" ? t("trips.new.rtIntercity") : t("trips.new.rtIntracity")}</option>)}
-                </select>
-                <label className={styles.overnightLabel}>
-                  <input type="checkbox" checked={leg.overnight} onChange={(e) => setLeg(idx, "overnight", e.target.checked)} />
-                  {t("trips.new.overnight")}
-                </label>
               </div>
-              <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, legs: f.legs.filter((_: any, i: number) => i !== idx) }))} disabled={form.legs.length <= 1}>
+              <button type="button" className={styles.removeBtn} onClick={() => setForm((f: any) => ({ ...f, legs: f.legs.filter((_: any, i: number) => i !== idx) }))}>
                 <Trash2 size={13} />
               </button>
             </div>
