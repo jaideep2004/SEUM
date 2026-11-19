@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Play, AlertTriangle, XCircle, UserCheck, ArrowLeft } from "lucide-react";
+import { Search, Play, AlertTriangle, XCircle, UserCheck, ArrowLeft, Pencil } from "lucide-react";
 import DriverAssignModal from "@/components/DriverAssignModal";
 import { useLanguage, formatDate } from "@/lib/i18n";
 import styles from "./page.module.css";
@@ -277,6 +277,16 @@ function TripsManagerInner() {
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      {!locked && (
+                        <Link
+                          href={`/dashboard/trips/${trip.id}/edit`}
+                          className={styles.iconBtn}
+                          title={t("trips.manager.edit")}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Pencil size={13} />
+                        </Link>
+                      )}
                       <button
                         className={styles.assignBtn}
                         title={t("trips.manager.assignDriver")}

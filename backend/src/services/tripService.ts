@@ -418,10 +418,13 @@ export async function getTripById(tenantId: string, tripId: string) {
 }
 
 export async function updateTrip(tenantId: string, tripId: string, input: UpdateTripInput) {
-  const existing = await queryOne<TripRow>(
-    'SELECT id FROM trips WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [tripId, tenantId]
+  const existing = await queryOne<{ id: string; status: string }>(
+    'SELECT id, status FROM trips WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [tripId, tenantId]
   );
   if (!existing) throw new NotFoundError('Trip not found');
+  if (existing.status === 'completed' || existing.status === 'cancelled') {
+    throw new ConflictError(`Cannot edit a ${existing.status} trip`);
+  }
 
   // Prevent reassignment to a non-ready bus
   const newBusId = (input as any).busId;

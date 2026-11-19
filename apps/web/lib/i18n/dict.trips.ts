@@ -101,8 +101,19 @@ export const tripsEn: Record<string, string> = {
   "trips.new.addLeg": "Add Leg",
   "trips.new.legsAutoHint": "Legs are auto-filled from your flights &amp; hotels: arrival pickup, departure 3 hrs before the flight, and hotel ziyarah next morning at 07:00. Add extra legs manually if needed.",
   "trips.new.ziyarah": "Ziyarah",
+  "trips.new.manualLeg": "Manual",
   "trips.new.creating": "Creating...",
   "trips.new.createTrip": "Create Trip",
+
+  // ─── Edit trip (dashboard/trips/[id]/edit/page) ───
+  "trips.edit.back": "Back to Trip",
+  "trips.edit.title": "Edit Trip",
+  "trips.edit.save": "Save Changes",
+  "trips.edit.saving": "Saving…",
+  "trips.edit.failedUpdate": "Failed to update trip",
+  "trips.edit.loadFailed": "Failed to load trip",
+  "trips.edit.legsHint": "Legs are editable. Add, remove or adjust legs manually — changes are saved when you update the trip.",
+  "trips.edit.locked": "This trip is completed or cancelled and can no longer be edited.",
 
   // ─── Trip reports (dashboard/trips/reports/page) ───
   "trips.reports.totalTrips": "Total Trips",
@@ -190,6 +201,7 @@ export const tripsEn: Record<string, string> = {
   "trips.detail.roundTrip": "Round Trip",
   "trips.detail.singleTrip": "Single Trip",
   "trips.detail.printManifest": "Print Manifest",
+  "trips.detail.editTrip": "Edit Trip",
   "trips.detail.failedTo": "Failed to",
   "trips.detail.failedAddPassenger": "Failed to add passenger",
   "trips.detail.detailsTitle": "Trip Details",
@@ -416,6 +428,7 @@ export const tripsEn: Record<string, string> = {
   "trips.manager.start": "Start",
   "trips.manager.delay": "Delay",
   "trips.manager.cancel": "Cancel",
+  "trips.manager.edit": "Edit trip",
   "trips.manager.empty": "No trips for this day.",
   "trips.manager.delayMinutesPrompt": "Delay minutes:",
   "trips.manager.delayReasonPrompt": "Delay reason:",
@@ -496,8 +509,19 @@ export const tripsAr: Record<string, string> = {
   "trips.new.addLeg": "إضافة مرحلة",
   "trips.new.legsAutoHint": "تُملأ المراحل تلقائياً من الرحلات والفنادق: الاستقبال عند الوصول، المغادرة قبل الرحلة بثلاث ساعات، والزيارة في صباح اليوم التالي الساعة 07:00. يمكن إضافة مراحل يدوياً.",
   "trips.new.ziyarah": "زيارة",
+  "trips.new.manualLeg": "يدوي",
   "trips.new.creating": "جارٍ الإنشاء…",
   "trips.new.createTrip": "إنشاء الرحلة",
+
+  // ─── تعديل الرحلة ───
+  "trips.edit.back": "العودة إلى الرحلة",
+  "trips.edit.title": "تعديل الرحلة",
+  "trips.edit.save": "حفظ التغييرات",
+  "trips.edit.saving": "جارٍ الحفظ…",
+  "trips.edit.failedUpdate": "فشل تحديث الرحلة",
+  "trips.edit.loadFailed": "فشل تحميل الرحلة",
+  "trips.edit.legsHint": "يمكن تعديل المراحل وإضافة أو حذف مراحل يدوياً — تُحفظ التغييرات عند تحديث الرحلة.",
+  "trips.edit.locked": "هذه الرحلة مكتملة أو ملغاة ولم يعد بالإمكان تعديلها.",
 
   // ─── تقارير الرحلات ───
   "trips.reports.totalTrips": "إجمالي الرحلات",
@@ -585,6 +609,7 @@ export const tripsAr: Record<string, string> = {
   "trips.detail.roundTrip": "رحلة ذهاب وعودة",
   "trips.detail.singleTrip": "رحلة مفردة",
   "trips.detail.printManifest": "طباعة الكشف",
+  "trips.detail.editTrip": "تعديل الرحلة",
   "trips.detail.failedTo": "فشل",
   "trips.detail.failedAddPassenger": "فشل إضافة الراكب",
   "trips.detail.detailsTitle": "تفاصيل الرحلة",
@@ -811,6 +836,7 @@ export const tripsAr: Record<string, string> = {
   "trips.manager.start": "بدء",
   "trips.manager.delay": "تأخير",
   "trips.manager.cancel": "إلغاء",
+  "trips.manager.edit": "تعديل الرحلة",
   "trips.manager.empty": "لا توجد رحلات لهذا اليوم.",
   "trips.manager.delayMinutesPrompt": "دقائق التأخير:",
   "trips.manager.delayReasonPrompt": "سبب التأخير:",

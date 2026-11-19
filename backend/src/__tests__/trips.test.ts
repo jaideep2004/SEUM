@@ -289,7 +289,7 @@ describe("getTripById", () => {
 describe("updateTrip", () => {
   it("updates trip fields", async () => {
     mockQueryOne
-      .mockResolvedValueOnce({ id: TRIP_ID })
+      .mockResolvedValueOnce({ id: TRIP_ID, status: "scheduled" })
       .mockResolvedValueOnce({ id: TRIP_ID, tenant_id: TID, route_id: RID, bus_id: BID, trip_type: "regular", scheduled_date: "2026-07-20", scheduled_start_time: "08:00:00", status: "scheduled", route_name: "Test", origin: "A", destination: "B", plate_number: "ABC", driver_name: null });
     mockQuery.mockResolvedValueOnce(undefined);
     mockQuery.mockResolvedValueOnce([]);
@@ -298,6 +298,14 @@ describe("updateTrip", () => {
 
     const result = await updateTrip(TID, TRIP_ID, { notes: "Updated" });
     expect(result.status).toBe("scheduled");
+  });
+
+  it("rejects editing completed and cancelled trips", async () => {
+    mockQueryOne.mockResolvedValueOnce({ id: TRIP_ID, status: "completed" });
+    await expect(updateTrip(TID, TRIP_ID, { notes: "X" })).rejects.toThrow(ConflictError);
+
+    mockQueryOne.mockResolvedValueOnce({ id: TRIP_ID, status: "cancelled" });
+    await expect(updateTrip(TID, TRIP_ID, { notes: "X" })).rejects.toThrow(ConflictError);
   });
 });
 

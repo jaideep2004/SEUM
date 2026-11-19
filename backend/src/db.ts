@@ -1,5 +1,11 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 import { config } from './config';
+
+// Postgres DATE is a calendar date, not an instant. The default pg parser turns
+// it into a JS Date at local midnight, which JSON-serializes to the previous day
+// in positive UTC offsets (e.g. IST) and makes date-only forms drift by a day.
+// Keep DATE columns as plain YYYY-MM-DD strings.
+types.setTypeParser(1082, (value: string) => value);
 
 export const pool = new Pool({
   host: config.db.host,

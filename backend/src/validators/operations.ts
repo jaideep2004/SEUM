@@ -107,7 +107,11 @@ export const createTripSchema = createTripSchemaBase.refine(v => v.tripType !== 
   path: ['legs'],
 });
 
-export const updateTripSchema = createTripSchemaBase.partial().omit({ routeId: true }).refine(
+export const updateTripSchema = createTripSchemaBase.partial().omit({ routeId: true }).extend({
+  // Nullable on update so an edit can clear these optional fields.
+  vehicleCount: z.number().int().min(1).max(100).nullable().optional(),
+  sellingPrice: z.number().min(0).nullable().optional(),
+}).refine(
   v => v.tripType !== 'round' || (v.legs !== undefined && v.legs.length >= 2),
   { message: 'Round trips require at least 2 legs (stops with dates)', path: ['legs'] }
 );

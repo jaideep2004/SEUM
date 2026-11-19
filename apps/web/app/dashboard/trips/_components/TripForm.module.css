@@ -54,3 +54,10 @@
 .fldHotel input { width: 100%; box-sizing: border-box; }
 .fldDate, .fldTime { width: 120px; flex-shrink: 0; }
 .fldDate input, .fldTime input { width: 100%; box-sizing: border-box; }
+
+@media (max-width: 720px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .page { padding: 16px; }
+  .form { padding: 16px; }
+  .formActions { flex-wrap: wrap; }
+}

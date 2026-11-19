@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Bus, User, Clock, FileText, UserPlus, Trash2, Play, CheckCircle, XCircle, AlertTriangle, UserCheck, Route, Users, Plane, Hotel, Printer, X } from "lucide-react";
+import { ArrowLeft, MapPin, Bus, User, Clock, FileText, UserPlus, Trash2, Play, CheckCircle, XCircle, AlertTriangle, UserCheck, Route, Users, Plane, Hotel, Printer, X, Pencil } from "lucide-react";
 import TripTimeline from "@/components/TripTimeline";
 import DriverAssignModal from "@/components/DriverAssignModal";
 import { useLanguage, formatDate, formatNumber, formatCurrency } from "@/lib/i18n";
@@ -111,6 +111,11 @@ t("trips.detail.titleFallback")} <span className={styles.tripId}>#{trip.tripNumb
         </h1>
         <div className={styles.headerRight}>
           <span className={styles.typeTag}>{trip.tripType === "round" ? t("trips.detail.roundTrip") : t("trips.detail.singleTrip")}</span>
+          {canModify && (
+            <Link href={`/dashboard/trips/${id}/edit`} className={styles.editBtn}>
+              <Pencil size={13} /> {t("trips.detail.editTrip")}
+            </Link>
+          )}
           {trip.tripType === "round" && (
             <button className={styles.manifestBtn} onClick={() => setShowManifest(true)}>
               <Printer size={13} /> {t("trips.detail.printManifest")}
